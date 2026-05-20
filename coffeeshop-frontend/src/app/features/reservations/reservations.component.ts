@@ -1,6 +1,6 @@
 import { Component, inject, signal, computed, OnInit, ChangeDetectionStrategy, DestroyRef } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { FormSelectComponent } from '../../shared/form-select/form-select.component';
 import { FormSelectOption } from '../../shared/form-select/form-select-option.model';
@@ -472,16 +472,32 @@ export class ReservationsComponent implements OnInit {
     partySize: [1, [Validators.required, Validators.min(1)]],
   });
 
+  private readonly requestEventId = toSignal(this.requestForm.controls.eventId.valueChanges, {
+    initialValue: this.requestForm.controls.eventId.value,
+  });
+
+  private readonly requestGuestUserId = toSignal(this.requestForm.controls.guestUserId.valueChanges, {
+    initialValue: this.requestForm.controls.guestUserId.value,
+  });
+
+  private readonly directEventId = toSignal(this.directForm.controls.eventId.valueChanges, {
+    initialValue: this.directForm.controls.eventId.value,
+  });
+
+  private readonly directGuestUserId = toSignal(this.directForm.controls.guestUserId.valueChanges, {
+    initialValue: this.directForm.controls.guestUserId.value,
+  });
+
   readonly requestTargetUserId = computed(() => {
     const profile = this.profileService.currentUser();
     if (!profile) return '';
     if (this.isShopOwner()) {
-      return this.requestForm.controls.guestUserId.value;
+      return this.requestGuestUserId();
     }
     return profile.id;
   });
 
-  readonly directTargetUserId = computed(() => this.directForm.controls.guestUserId.value);
+  readonly directTargetUserId = computed(() => this.directGuestUserId());
 
   readonly selectableEventsForRequest = computed(() => {
     const userId = this.requestTargetUserId();
@@ -502,19 +518,19 @@ export class ReservationsComponent implements OnInit {
   });
 
   readonly canSubmitRequest = computed(() => {
-    const eventId = this.requestForm.controls.eventId.value;
+    const eventId = this.requestEventId();
     if (!eventId) return false;
     const userId = this.requestTargetUserId();
     if (!userId) return false;
-    return !this.eventIdsBlockedForUser(userId).has(eventId);
+    return this.selectableEventsForRequest().some(e => e.eventId === eventId);
   });
 
   readonly canSubmitDirectReservation = computed(() => {
-    const eventId = this.directForm.controls.eventId.value;
+    const eventId = this.directEventId();
     if (!eventId) return false;
     const userId = this.directTargetUserId();
     if (!userId) return false;
-    return !this.eventIdsBlockedForUser(userId).has(eventId);
+    return this.selectableEventsForDirect().some(e => e.eventId === eventId);
   });
 
   readonly shopSelectedWithoutEvents = computed(() => {

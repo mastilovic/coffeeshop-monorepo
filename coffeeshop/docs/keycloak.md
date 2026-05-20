@@ -7,6 +7,18 @@ This project uses Keycloak for backend token exchange with API credential login,
 - `docker-compose` starts Keycloak with `--import-realm`.
 - Realm config is stored in `docker/keycloak/realm-coffeeshop.json`.
 
+## Token lifetimes
+
+Configured in `docker/keycloak/realm-coffeeshop.json` (realm-level, seconds):
+
+| Setting | Value | Effect |
+|---------|-------|--------|
+| `accessTokenLifespan` | 3600 | Access token valid for **1 hour** (`expires_in` in login/refresh responses) |
+| `ssoSessionMaxLifespan` / `clientSessionMaxLifespan` | 5184000 | Refresh token / session hard cap **60 days** |
+| `ssoSessionIdleTimeout` / `clientSessionIdleTimeout` | 2592000 | Session invalidated after **30 days** without activity (refresh bumps idle) |
+
+After changing lifetimes, recreate Keycloak (`docker compose up -d --force-recreate keycloak`). If `expires_in` stays at the old value, confirm settings in Admin UI or reset the `postgres_keycloak_data` volume (dev only). Users must log in again for new token durations.
+
 ## Admin console (Docker)
 
 Open **http://localhost:8080/admin** (default master admin: `admin` / `admin` from compose).
@@ -62,7 +74,7 @@ Set these values in `.env` (see `.env.example`):
 1. Client sends `POST /login` with JSON body:
    `{"email":"user@example.com","password":"secret"}`.
 2. App exchanges credentials at Keycloak token endpoint and returns:
-   `{"access_token":"...","refresh_token":"...","expires_in":300,"token_type":"Bearer"}`.
+   `{"access_token":"...","refresh_token":"...","expires_in":3600,"token_type":"Bearer"}`.
 3. All protected requests must send `Authorization: Bearer <access_token>`.
    Cookie-only auth without a bearer token should be treated as legacy behavior, not the default integration.
 4. Client refreshes tokens with `POST /auth/refresh` and body:
@@ -153,7 +165,7 @@ In docker-compose the backend expects:
 | Mistake | Symptom |
 |---------|---------|
 | Paste `refresh_token` instead of `access_token` | 401 on POST |
-| Expired `access_token` (~300s default) | 401 on POST |
+| Expired `access_token` (~3600s / 1h) | 401 on POST |
 | Stale token left in Authorize after earlier session | 401 on POST |
 | Paste `Bearer eyJ...` when Swagger already prefixes `Bearer` | Malformed header → 401 |
 | JWT `iss` is `http://localhost:8080/...` but backend expects `http://keycloak:8080/...` | 401 on POST; GET may still 200 |

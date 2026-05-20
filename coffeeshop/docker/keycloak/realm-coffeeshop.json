@@ -5,6 +5,11 @@
   "loginWithEmailAllowed": true,
   "duplicateEmailsAllowed": false,
   "resetPasswordAllowed": true,
+  "accessTokenLifespan": 3600,
+  "ssoSessionIdleTimeout": 2592000,
+  "ssoSessionMaxLifespan": 5184000,
+  "clientSessionIdleTimeout": 2592000,
+  "clientSessionMaxLifespan": 5184000,
   "roles": {
     "realm": [
       { "name": "customer" },
