@@ -46,7 +46,7 @@ public final class UserShopSpecifications {
                 final String pattern = "%" + normalized + "%";
                 predicates.add(cb.or(
                         cb.like(normalizedExpr(cb, user.get("name")), pattern),
-                        cb.like(normalizedExpr(cb, user.get("email")), pattern)));
+                        cb.like(normalizedExpr(cb, user.get("username")), pattern)));
             }
 
             return cb.and(predicates.toArray(Predicate[]::new));

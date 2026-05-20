@@ -96,6 +96,7 @@ class ShopMultiOwnerIntegrationTest {
                 "/api/v1/user",
                 new HttpEntity<>(Map.of(
                         "name", name,
+                        "username", IntegrationTestUsers.usernameFromEmail(email),
                         "email", email,
                         "password", "secret",
                         "userType", userType), headers),

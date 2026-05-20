@@ -10,7 +10,10 @@ import com.coffeeshop.coffeeshop.repository.UserRepository;
 import com.coffeeshop.coffeeshop.repository.UserSpecifications;
 import com.coffeeshop.coffeeshop.service.UserService;
 import com.coffeeshop.coffeeshop.service.UserShopService;
+import com.coffeeshop.coffeeshop.util.UsernameValidator;
 import org.springframework.data.domain.Page;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -73,6 +76,13 @@ public class UserServiceImpl implements UserService {
         if (entity.getId() != null) {
             throw new IllegalArgumentException("User ID must be null on create");
         }
+        UsernameValidator.requireValid(entity.getUsername());
+        if (userRepository.existsByUsernameIgnoreCase(entity.getUsername())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "An account with this username already exists");
+        }
+        if (entity.getEmail() != null && userRepository.existsByEmailIgnoreCase(entity.getEmail())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "An account with this email already exists");
+        }
         if (entity.getReviews() != null && !entity.getReviews().isEmpty()) {
             throw new IllegalArgumentException("Reviews cannot be set on user create");
         }
@@ -95,7 +105,19 @@ public class UserServiceImpl implements UserService {
         if (entity.getName() != null) {
             existing.setName(entity.getName());
         }
+        if (entity.getUsername() != null) {
+            UsernameValidator.requireValid(entity.getUsername());
+            if (userRepository.existsByUsernameIgnoreCase(entity.getUsername())
+                    && !entity.getUsername().equalsIgnoreCase(existing.getUsername())) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "An account with this username already exists");
+            }
+            existing.setUsername(entity.getUsername());
+        }
         if (entity.getEmail() != null) {
+            if (userRepository.existsByEmailIgnoreCase(entity.getEmail())
+                    && !entity.getEmail().equalsIgnoreCase(existing.getEmail())) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "An account with this email already exists");
+            }
             existing.setEmail(entity.getEmail());
         }
         if (entity.getPassword() != null) {

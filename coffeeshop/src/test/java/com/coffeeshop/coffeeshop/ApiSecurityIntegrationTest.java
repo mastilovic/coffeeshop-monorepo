@@ -51,6 +51,7 @@ class ApiSecurityIntegrationTest {
                 new HttpEntity<>(
                         Map.of(
                                 "name", "A",
+                                "username", "user_a",
                                 "email", "a@b.com",
                                 "password", "x",
                                 "userType", "CUSTOMER"),
@@ -72,6 +73,7 @@ class ApiSecurityIntegrationTest {
                 new HttpEntity<>(
                         Map.of(
                                 "name", "Register Bearer",
+                                "username", "register_bearer",
                                 "email", "register-bearer@example.com",
                                 "password", "secret",
                                 "role", "customer"),
@@ -90,6 +92,7 @@ class ApiSecurityIntegrationTest {
                 new HttpEntity<>(
                         Map.of(
                                 "name", "B",
+                                "username", "user_b",
                                 "email", "b@b.com",
                                 "password", "x",
                                 "userType", "CUSTOMER"),

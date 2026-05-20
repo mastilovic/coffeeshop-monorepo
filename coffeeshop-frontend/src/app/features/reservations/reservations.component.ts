@@ -633,7 +633,7 @@ export class ReservationsComponent implements OnInit {
   readonly guestSelectOptions = computed((): FormSelectOption[] =>
     this.users().map(u => ({
       value: u.id,
-      label: `${u.name} (${u.email})`,
+      label: `${u.name} (${u.username})`,
     })),
   );
 

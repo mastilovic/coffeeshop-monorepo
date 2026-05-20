@@ -6,6 +6,9 @@ import jakarta.validation.constraints.Pattern;
 
 public record RegisterRequest(
         @NotBlank String name,
+        @NotBlank
+        @Pattern(regexp = "^[a-zA-Z0-9_]{3,30}$", message = "username must be 3-30 alphanumeric characters or underscores")
+        String username,
         @NotBlank @Email String email,
         @NotBlank String password,
         @NotBlank

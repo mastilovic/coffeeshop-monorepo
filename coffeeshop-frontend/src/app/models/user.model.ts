@@ -7,7 +7,7 @@ import { PageResponseDto } from './event.model';
 export interface UserListItemDto {
   id: string;
   name: string;
-  email: string;
+  username: string;
   userType: 'CUSTOMER' | 'SHOP_OWNER' | 'ADMIN';
   roles: RoleResponseDto[];
 }
@@ -17,6 +17,18 @@ export type UserListPage = PageResponseDto<UserListItemDto>;
 export interface UserResponseDto {
   id: string;
   name: string;
+  username: string;
+  userType: 'CUSTOMER' | 'SHOP_OWNER' | 'ADMIN';
+  roles: RoleResponseDto[];
+  favouriteShops: ShopSummaryDto[];
+  reviews: ReviewResponseDto[];
+  reservations: ReservationResponseDto[];
+}
+
+export interface UserProfileResponseDto {
+  id: string;
+  name: string;
+  username: string;
   email: string;
   userType: 'CUSTOMER' | 'SHOP_OWNER' | 'ADMIN';
   roles: RoleResponseDto[];
@@ -28,11 +40,12 @@ export interface UserResponseDto {
 export interface UserSummaryDto {
   id: string;
   name: string;
-  email: string;
+  username: string;
 }
 
 export interface UserCreateRequest {
   name: string;
+  username: string;
   email: string;
   password?: string;
   userType: 'CUSTOMER' | 'SHOP_OWNER' | 'ADMIN';
@@ -41,7 +54,8 @@ export interface UserCreateRequest {
 
 export interface UserUpdateRequest {
   name: string;
-  email: string;
+  username?: string;
+  email?: string;
   password?: string;
   userType: 'CUSTOMER' | 'SHOP_OWNER' | 'ADMIN';
   roleIds: string[];
@@ -50,6 +64,7 @@ export interface UserUpdateRequest {
 
 export interface RegisterRequest {
   name: string;
+  username: string;
   email: string;
   password: string;
   role: 'customer' | 'shop_owner';

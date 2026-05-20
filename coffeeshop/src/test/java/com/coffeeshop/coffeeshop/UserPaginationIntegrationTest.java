@@ -53,12 +53,12 @@ class UserPaginationIntegrationTest {
     }
 
     @Test
-    void searchByEmail_returnsMatchingPage() {
+    void searchByUsername_returnsMatchingPage() {
         final HttpHeaders headers = authHeaders();
-        createUser(headers, "Email Search User", "email-search-user@example.com", "CUSTOMER");
+        createUser(headers, "Username Search User", "username-search-user@example.com", "CUSTOMER");
 
         final ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
-                "/api/v1/user?q=email-search-user&page=0&size=10",
+                "/api/v1/user?q=username_search_user&page=0&size=10",
                 HttpMethod.GET,
                 new HttpEntity<>(headers),
                 new ParameterizedTypeReference<>() {
@@ -69,7 +69,7 @@ class UserPaginationIntegrationTest {
         @SuppressWarnings("unchecked")
         final List<Map<String, Object>> content = (List<Map<String, Object>>) response.getBody().get("content");
         assertThat(content).hasSize(1);
-        assertThat(content.get(0).get("email")).isEqualTo("email-search-user@example.com");
+        assertThat(content.get(0).get("username")).isEqualTo("username_search_user");
     }
 
     @Test
@@ -127,6 +127,7 @@ class UserPaginationIntegrationTest {
                 "/api/v1/user",
                 new HttpEntity<>(Map.of(
                         "name", name,
+                        "username", IntegrationTestUsers.usernameFromEmail(email),
                         "email", email,
                         "password", "secret",
                         "userType", userType), headers),

@@ -34,6 +34,12 @@ const ROLE_SELECT_OPTIONS: FormSelectOption[] = [
           </div>
 
           <div class="form-group">
+            <label for="username">Username</label>
+            <input id="username" type="text" class="form-input" formControlName="username"
+                   placeholder="your_username" />
+          </div>
+
+          <div class="form-group">
             <label for="email">Email</label>
             <input id="email" type="email" class="form-input" formControlName="email"
                    placeholder="you@example.com" />
@@ -82,6 +88,7 @@ export class RegisterComponent {
 
   readonly form = this.fb.nonNullable.group({
     name: ['', Validators.required],
+    username: ['', [Validators.required, Validators.pattern(/^[a-zA-Z0-9_]{3,30}$/)]],
     email: ['', [Validators.required, Validators.email]],
     password: ['', [Validators.required, Validators.minLength(6)]],
     role: ['customer' as 'customer' | 'shop_owner'],
@@ -92,8 +99,8 @@ export class RegisterComponent {
     this.loading.set(true);
     this.errorMessage.set('');
 
-    const { name, email, password, role } = this.form.getRawValue();
-    this.authService.registerAndLogin(name, email, password, role).subscribe({
+    const { name, username, email, password, role } = this.form.getRawValue();
+    this.authService.registerAndLogin(name, username, email, password, role).subscribe({
       next: () => {
         this.loading.set(false);
         this.profileService.getProfile().subscribe();
@@ -111,7 +118,7 @@ export class RegisterComponent {
         const status = err.status;
         if (status === 404) {
           this.errorMessage.set(
-            err.error?.message ?? 'An account with this email already exists.',
+            err.error?.message ?? 'An account with this email or username already exists.',
           );
         } else if (status === 403) {
           this.errorMessage.set('You cannot register with this role.');

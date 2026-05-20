@@ -117,6 +117,7 @@ class ReservationRequestIntegrationTest {
                 "/api/v1/user",
                 new HttpEntity<>(Map.of(
                         "name", "Deny Flow User",
+                        "username", "reservation_deny_user",
                         "email", "reservation-deny-user@example.com",
                         "password", "secret",
                         "userType", "CUSTOMER"), headers),
@@ -669,6 +670,7 @@ class ReservationRequestIntegrationTest {
                 "/api/v1/user",
                 new HttpEntity<>(Map.of(
                         "name", name,
+                        "username", IntegrationTestUsers.usernameFromEmail(email),
                         "email", email,
                         "password", "secret",
                         "userType", userType), headers),

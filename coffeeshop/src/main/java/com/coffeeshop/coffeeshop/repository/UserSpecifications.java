@@ -38,7 +38,7 @@ public final class UserSpecifications {
                 final String pattern = "%" + normalized + "%";
                 predicates.add(cb.or(
                         cb.like(normalizedExpr(cb, root.get("name")), pattern),
-                        cb.like(normalizedExpr(cb, root.get("email")), pattern)));
+                        cb.like(normalizedExpr(cb, root.get("username")), pattern)));
             }
 
             if (predicates.isEmpty()) {

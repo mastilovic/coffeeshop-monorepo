@@ -7,6 +7,7 @@ import java.util.UUID;
 
 public class UserCreateRequest {
     private String name;
+    private String username;
     private String email;
     private String password;
     private UserType userType;
@@ -18,6 +19,14 @@ public class UserCreateRequest {
 
     public void setName(final String name) {
         this.name = name;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(final String username) {
+        this.username = username;
     }
 
     public String getEmail() {

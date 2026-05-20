@@ -44,8 +44,8 @@ const USER_TYPE_SELECT_OPTIONS: FormSelectOption[] = [
                 <input class="form-input" formControlName="name" />
               </div>
               <div class="form-group">
-                <label>Email</label>
-                <input class="form-input" type="email" formControlName="email" />
+                <label>Username</label>
+                <input class="form-input" formControlName="username" />
               </div>
             </div>
             <div class="form-group">
@@ -68,7 +68,7 @@ const USER_TYPE_SELECT_OPTIONS: FormSelectOption[] = [
         <input
           class="form-input events-search"
           type="search"
-          placeholder="Search by name or email..."
+          placeholder="Search by name or username..."
           aria-label="Search users"
           [value]="searchInput()"
           (input)="onSearchInput($event)"
@@ -85,7 +85,7 @@ const USER_TYPE_SELECT_OPTIONS: FormSelectOption[] = [
             <thead>
               <tr>
                 <th>Name</th>
-                <th>Email</th>
+                <th>Username</th>
                 <th>Type</th>
                 <th>Roles</th>
                 <th>Actions</th>
@@ -95,7 +95,7 @@ const USER_TYPE_SELECT_OPTIONS: FormSelectOption[] = [
               @for (user of users(); track user.id) {
                 <tr>
                   <td>{{ user.name }}</td>
-                  <td>{{ user.email }}</td>
+                  <td>{{ user.username }}</td>
                   <td><span class="badge badge-role">{{ user.userType }}</span></td>
                   <td>
                     @for (role of user.roles; track role.id) {
@@ -164,7 +164,7 @@ export class UsersComponent implements OnInit {
 
   readonly form = this.fb.nonNullable.group({
     name: ['', Validators.required],
-    email: ['', [Validators.required, Validators.email]],
+    username: ['', [Validators.required, Validators.pattern(/^[a-zA-Z0-9_]{3,30}$/)]],
     userType: ['CUSTOMER' as 'CUSTOMER' | 'SHOP_OWNER' | 'ADMIN'],
     roleIds: [[] as string[]],
   });
@@ -240,7 +240,7 @@ export class UsersComponent implements OnInit {
     this.showForm.set(true);
     this.form.patchValue({
       name: user.name,
-      email: user.email,
+      username: user.username,
       userType: user.userType,
       roleIds: user.roles.map(r => r.id),
     });

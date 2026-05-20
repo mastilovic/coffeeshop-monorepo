@@ -6,6 +6,7 @@ import com.coffeeshop.coffeeshop.model.User;
 import com.coffeeshop.coffeeshop.model.dto.response.UserResponseDto;
 import com.coffeeshop.coffeeshop.model.enums.UserType;
 import com.coffeeshop.coffeeshop.repository.UserRepository;
+import com.coffeeshop.coffeeshop.util.UsernameValidator;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.CannotCreateTransactionException;
@@ -20,6 +21,7 @@ import java.util.UUID;
 public class RegistrationService {
 
     private static final String DUPLICATE_EMAIL_MESSAGE = "An account with this email already exists";
+    private static final String DUPLICATE_USERNAME_MESSAGE = "An account with this username already exists";
 
     private final KeycloakAdminClient keycloakAdminClient;
     private final UserRepository userRepository;
@@ -38,6 +40,10 @@ public class RegistrationService {
     public UserResponseDto register(final RegisterRequest request) {
         if ("admin".equalsIgnoreCase(request.role())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "admin role is not allowed for self-registration");
+        }
+        UsernameValidator.requireValid(request.username());
+        if (userRepository.existsByUsernameIgnoreCase(request.username())) {
+            throw new ResourceNotFoundException(DUPLICATE_USERNAME_MESSAGE);
         }
         if (userRepository.existsByEmailIgnoreCase(request.email())) {
             throw new ResourceNotFoundException(DUPLICATE_EMAIL_MESSAGE);
@@ -62,6 +68,7 @@ public class RegistrationService {
         }
         final User user = new User();
         user.setName(request.name());
+        user.setUsername(request.username());
         user.setEmail(request.email());
         user.setPassword(null);
         user.setUserType(userType);

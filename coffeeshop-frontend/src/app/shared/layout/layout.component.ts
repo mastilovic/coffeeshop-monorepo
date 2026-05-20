@@ -39,7 +39,7 @@ import { DialogHostComponent } from '../dialog-host/dialog-host.component';
           <div class="topbar-left"></div>
           <div class="topbar-right">
             <div class="profile-menu" (click)="profileOpen.set(!profileOpen())">
-              <span class="profile-email">{{ authService.currentUserEmail() ?? 'User' }}</span>
+              <span class="profile-username">{{ profileService.currentUser()?.username ?? 'User' }}</span>
               <span class="profile-caret">&#9662;</span>
 
               @if (profileOpen()) {
@@ -173,7 +173,7 @@ import { DialogHostComponent } from '../dialog-host/dialog-host.component';
     .profile-menu:hover {
       background: #16213e;
     }
-    .profile-email {
+    .profile-username {
       font-size: 0.875rem;
       color: #e0e0e0;
     }
@@ -223,7 +223,7 @@ import { DialogHostComponent } from '../dialog-host/dialog-host.component';
 })
 export class LayoutComponent implements OnInit {
   readonly authService = inject(AuthService);
-  private readonly profileService = inject(ProfileService);
+  readonly profileService = inject(ProfileService);
 
   readonly sidebarCollapsed = signal(false);
   readonly profileOpen = signal(false);

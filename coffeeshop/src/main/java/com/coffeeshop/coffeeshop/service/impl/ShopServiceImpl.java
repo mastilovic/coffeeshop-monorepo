@@ -15,8 +15,6 @@ import com.coffeeshop.coffeeshop.service.ShopService;
 import com.coffeeshop.coffeeshop.service.UserService;
 import com.coffeeshop.coffeeshop.service.UserShopService;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
@@ -63,19 +61,7 @@ public class ShopServiceImpl implements ShopService {
 
     @Override
     public List<Shop> findByCurrentUser() {
-        final var authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (!(authentication instanceof JwtAuthenticationToken jwtAuth)) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Bearer token required");
-        }
-        final var jwt = jwtAuth.getToken();
-        String email = jwt.getClaimAsString("email");
-        if (email == null || email.isBlank()) {
-            email = jwt.getClaimAsString("preferred_username");
-        }
-        if (email == null || email.isBlank()) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access token must include an email claim");
-        }
-        final User user = userService.getByEmail(email);
+        final User user = currentUserService.requireCurrentUser();
         return userShopService.findOwnedShops(user.getId());
     }
 

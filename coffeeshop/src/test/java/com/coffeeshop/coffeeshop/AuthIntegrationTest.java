@@ -65,6 +65,7 @@ class AuthIntegrationTest {
     void login_wrongPassword_returns401() {
         final User user = new User();
         user.setName("Login User");
+        user.setUsername("login_wrong");
         user.setEmail("login-wrong@example.com");
         user.setUserType(UserType.CUSTOMER);
         user.setKeycloakSubject(UUID.randomUUID().toString());
@@ -93,6 +94,7 @@ class AuthIntegrationTest {
         headers.setContentType(MediaType.APPLICATION_JSON);
         final Map<String, String> body = Map.of(
                 "name", "Dup User",
+                "username", "dup_user",
                 "email", "dup@example.com",
                 "password", "secret123",
                 "role", "customer");

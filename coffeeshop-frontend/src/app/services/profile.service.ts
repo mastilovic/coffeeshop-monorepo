@@ -2,17 +2,17 @@ import { inject, Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
 import { environment } from '../../environments/environment';
-import { UserResponseDto } from '../models/user.model';
+import { UserProfileResponseDto } from '../models/user.model';
 
 @Injectable({ providedIn: 'root' })
 export class ProfileService {
   private readonly http = inject(HttpClient);
 
-  readonly currentUser = signal<UserResponseDto | null>(null);
+  readonly currentUser = signal<UserProfileResponseDto | null>(null);
 
-  getProfile(): Observable<UserResponseDto> {
+  getProfile(): Observable<UserProfileResponseDto> {
     const url = environment.profileUrl ?? `${environment.apiUrl}/profile`;
-    return this.http.get<UserResponseDto>(url)
+    return this.http.get<UserProfileResponseDto>(url)
       .pipe(tap(user => this.currentUser.set(user)));
   }
 

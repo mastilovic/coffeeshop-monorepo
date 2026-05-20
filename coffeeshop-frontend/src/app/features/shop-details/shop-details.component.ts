@@ -131,7 +131,7 @@ type ReservationSubTab = 'pending' | 'approved' | 'denied';
             <input
               class="form-input events-search"
               type="search"
-              placeholder="Search by name or email..."
+              placeholder="Search by name or username..."
               aria-label="Search community members"
               [value]="membersSearchInput()"
               (input)="onMembersSearchInput($event)"
@@ -145,10 +145,10 @@ type ReservationSubTab = 'pending' | 'approved' | 'denied';
           } @else {
             <div class="table-container mb-3">
               <table class="data-table">
-                <thead><tr><th>Name</th><th>Email</th></tr></thead>
+                <thead><tr><th>Name</th><th>Username</th></tr></thead>
                 <tbody>
                   @for (u of members(); track u.id) {
-                    <tr><td>{{ u.name }}</td><td>{{ u.email }}</td></tr>
+                    <tr><td>{{ u.name }}</td><td>{{ u.username }}</td></tr>
                   }
                 </tbody>
               </table>

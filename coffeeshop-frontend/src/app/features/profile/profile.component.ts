@@ -5,7 +5,7 @@ import { FormSelectOption } from '../../shared/form-select/form-select-option.mo
 import { ProfileService } from '../../services/profile.service';
 import { UserService } from '../../services/user.service';
 import { ShopService } from '../../services/shop.service';
-import { UserResponseDto } from '../../models/user.model';
+import { UserProfileResponseDto } from '../../models/user.model';
 import { ShopSummaryDto } from '../../models/shop.model';
 
 @Component({
@@ -38,6 +38,10 @@ import { ShopSummaryDto } from '../../models/shop.model';
                 <input class="form-input" formControlName="name" />
               </div>
               <div class="form-group">
+                <label>Username</label>
+                <input class="form-input" formControlName="username" />
+              </div>
+              <div class="form-group">
                 <label>Email</label>
                 <input class="form-input" type="email" formControlName="email" />
               </div>
@@ -62,6 +66,10 @@ import { ShopSummaryDto } from '../../models/shop.model';
             <div>
               <span class="text-muted" style="font-size:0.75rem;display:block">Name</span>
               <span style="color:#fff">{{ user()!.name }}</span>
+            </div>
+            <div>
+              <span class="text-muted" style="font-size:0.75rem;display:block">Username</span>
+              <span style="color:#fff">{{ user()!.username }}</span>
             </div>
             <div>
               <span class="text-muted" style="font-size:0.75rem;display:block">Email</span>
@@ -99,7 +107,7 @@ export class ProfileComponent implements OnInit {
   private readonly userService = inject(UserService);
   private readonly shopService = inject(ShopService);
 
-  readonly user = signal<UserResponseDto | null>(null);
+  readonly user = signal<UserProfileResponseDto | null>(null);
   readonly allShops = signal<ShopSummaryDto[]>([]);
   readonly favouriteShopSelectOptions = computed((): FormSelectOption[] =>
     this.allShops().map(s => ({ value: s.id, label: s.name })),
@@ -110,6 +118,7 @@ export class ProfileComponent implements OnInit {
 
   readonly form = this.fb.nonNullable.group({
     name: ['', Validators.required],
+    username: ['', [Validators.required, Validators.pattern(/^[a-zA-Z0-9_]{3,30}$/)]],
     email: ['', [Validators.required, Validators.email]],
     favouriteShopIds: [[] as string[]],
   });
@@ -131,6 +140,7 @@ export class ProfileComponent implements OnInit {
     this.editing.set(true);
     this.form.patchValue({
       name: u.name,
+      username: u.username,
       email: u.email,
       favouriteShopIds: u.favouriteShops?.map(s => s.id) ?? [],
     });
@@ -145,6 +155,7 @@ export class ProfileComponent implements OnInit {
     const val = this.form.getRawValue();
     this.userService.update(u.id, {
       name: val.name,
+      username: val.username,
       email: val.email,
       userType: u.userType,
       roleIds: u.roles.map(r => r.id),

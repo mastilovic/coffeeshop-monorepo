@@ -6,6 +6,7 @@ import com.coffeeshop.coffeeshop.model.dto.request.UserCreateRequest;
 import com.coffeeshop.coffeeshop.model.dto.request.UserUpdateRequest;
 import com.coffeeshop.coffeeshop.model.dto.response.RoleResponseDto;
 import com.coffeeshop.coffeeshop.model.dto.response.UserListItemDto;
+import com.coffeeshop.coffeeshop.model.dto.response.UserProfileResponseDto;
 import com.coffeeshop.coffeeshop.model.dto.response.UserResponseDto;
 import com.coffeeshop.coffeeshop.model.dto.response.UserSummaryDto;
 import com.coffeeshop.coffeeshop.service.UserShopService;
@@ -45,7 +46,7 @@ public class UserMapper {
         final UserSummaryDto dto = new UserSummaryDto();
         dto.setId(user.getId());
         dto.setName(user.getName());
-        dto.setEmail(user.getEmail());
+        dto.setUsername(user.getUsername());
         dto.setUserType(user.getUserType());
         dto.setRoles(mapRoles(user.getRole()));
         return dto;
@@ -58,7 +59,7 @@ public class UserMapper {
         final UserListItemDto dto = new UserListItemDto();
         dto.setId(user.getId());
         dto.setName(user.getName());
-        dto.setEmail(user.getEmail());
+        dto.setUsername(user.getUsername());
         dto.setUserType(user.getUserType());
         dto.setRoles(mapRoles(user.getRole()));
         return dto;
@@ -71,6 +72,23 @@ public class UserMapper {
         final UserResponseDto dto = new UserResponseDto();
         dto.setId(user.getId());
         dto.setName(user.getName());
+        dto.setUsername(user.getUsername());
+        dto.setUserType(user.getUserType());
+        dto.setRoles(mapRoles(user.getRole()));
+        dto.setFavouriteShops(MappingUtils.mapList(userShopService.findFavouriteShops(user), shopMapper::toShopSummary));
+        dto.setReviews(MappingUtils.mapList(user.getReviews(), reviewMapper::toReviewResponse));
+        dto.setReservations(MappingUtils.mapList(user.getReservations(), reservationMapper::toReservationResponse));
+        return dto;
+    }
+
+    public UserProfileResponseDto toUserProfileResponse(final User user) {
+        if (user == null) {
+            return null;
+        }
+        final UserProfileResponseDto dto = new UserProfileResponseDto();
+        dto.setId(user.getId());
+        dto.setName(user.getName());
+        dto.setUsername(user.getUsername());
         dto.setEmail(user.getEmail());
         dto.setUserType(user.getUserType());
         dto.setRoles(mapRoles(user.getRole()));
@@ -83,6 +101,7 @@ public class UserMapper {
     public User toUser(final UserCreateRequest request) {
         final User user = new User();
         user.setName(request.getName());
+        user.setUsername(request.getUsername());
         user.setEmail(request.getEmail());
         user.setPassword(request.getPassword());
         user.setUserType(request.getUserType());
@@ -96,6 +115,9 @@ public class UserMapper {
         final User user = new User();
         if (request.getName() != null) {
             user.setName(request.getName());
+        }
+        if (request.getUsername() != null) {
+            user.setUsername(request.getUsername());
         }
         if (request.getEmail() != null) {
             user.setEmail(request.getEmail());

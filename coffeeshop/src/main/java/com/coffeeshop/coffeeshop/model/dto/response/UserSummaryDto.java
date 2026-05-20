@@ -8,7 +8,7 @@ import java.util.UUID;
 public class UserSummaryDto {
     private UUID id;
     private String name;
-    private String email;
+    private String username;
     private UserType userType;
     private List<RoleResponseDto> roles;
 
@@ -28,12 +28,12 @@ public class UserSummaryDto {
         this.name = name;
     }
 
-    public String getEmail() {
-        return email;
+    public String getUsername() {
+        return username;
     }
 
-    public void setEmail(final String email) {
-        this.email = email;
+    public void setUsername(final String username) {
+        this.username = username;
     }
 
     public UserType getUserType() {

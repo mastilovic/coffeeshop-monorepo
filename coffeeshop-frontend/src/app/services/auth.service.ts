@@ -38,11 +38,6 @@ export class AuthService {
     }
   });
 
-  readonly currentUserEmail = computed(() => {
-    const decoded = this.decodedToken();
-    return decoded?.email ?? decoded?.preferred_username ?? null;
-  });
-
   readonly realmRoles = computed<string[]>(() => {
     const decoded = this.decodedToken();
     return decoded?.realm_access?.roles ?? [];
@@ -55,17 +50,30 @@ export class AuthService {
       .pipe(tap(res => this.storeTokens(res)));
   }
 
-  register(name: string, email: string, password: string, role: 'customer' | 'shop_owner'): Observable<UserResponseDto> {
-    return this.http.post<UserResponseDto>(`${this.authBase}/register`, { name, email, password, role } as RegisterRequest);
+  register(
+    name: string,
+    username: string,
+    email: string,
+    password: string,
+    role: 'customer' | 'shop_owner',
+  ): Observable<UserResponseDto> {
+    return this.http.post<UserResponseDto>(`${this.authBase}/register`, {
+      name,
+      username,
+      email,
+      password,
+      role,
+    } as RegisterRequest);
   }
 
   registerAndLogin(
     name: string,
+    username: string,
     email: string,
     password: string,
     role: 'customer' | 'shop_owner',
   ): Observable<TokenResponse> {
-    return this.register(name, email, password, role).pipe(
+    return this.register(name, username, email, password, role).pipe(
       switchMap(() =>
         this.login(email, password).pipe(
           catchError(err => throwError(() => ({ ...err, registrationCompleted: true }))),

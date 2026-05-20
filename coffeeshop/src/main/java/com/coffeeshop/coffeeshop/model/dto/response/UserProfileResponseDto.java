@@ -5,10 +5,11 @@ import com.coffeeshop.coffeeshop.model.enums.UserType;
 import java.util.List;
 import java.util.UUID;
 
-public class UserResponseDto {
+public class UserProfileResponseDto {
     private UUID id;
     private String name;
     private String username;
+    private String email;
     private UserType userType;
     private List<RoleResponseDto> roles;
     private List<ShopSummaryDto> favouriteShops;
@@ -37,6 +38,14 @@ public class UserResponseDto {
 
     public void setUsername(final String username) {
         this.username = username;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(final String email) {
+        this.email = email;
     }
 
     public UserType getUserType() {

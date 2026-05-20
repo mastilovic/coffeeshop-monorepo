@@ -32,6 +32,7 @@ class UserCreateIntegrationTest {
     void createUser_withoutFavouriteShopIds_returnsCreatedAndEmptyFavouriteShops() {
         final Map<String, Object> body = Map.of(
                 "name", "Test User",
+                "username", "test_user_optional",
                 "email", "test-user-optional-shops@example.com",
                 "password", "secret",
                 "userType", "CUSTOMER");
