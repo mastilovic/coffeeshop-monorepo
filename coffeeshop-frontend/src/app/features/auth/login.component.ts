@@ -72,9 +72,16 @@ export class LoginComponent {
         this.profileService.getProfile().subscribe();
         void this.router.navigate(['/'], { replaceUrl: true });
       },
-      error: (err) => {
+      error: (err: { status?: number; error?: { message?: string } }) => {
         this.loading.set(false);
-        this.errorMessage.set(err.error?.message ?? 'Login failed. Please try again.');
+        const status = err.status;
+        if (status === 404) {
+          this.errorMessage.set('No account found with this email.');
+        } else if (status === 401) {
+          this.errorMessage.set(err.error?.message ?? 'Invalid email or password.');
+        } else {
+          this.errorMessage.set(err.error?.message ?? 'Login failed. Please try again.');
+        }
       },
     });
   }

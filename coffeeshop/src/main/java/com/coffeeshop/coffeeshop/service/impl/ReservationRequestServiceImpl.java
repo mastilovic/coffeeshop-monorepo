@@ -28,8 +28,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -86,8 +89,9 @@ public class ReservationRequestServiceImpl implements ReservationRequestService 
                 assertShopOwnedBy(shopId.get(), currentUser);
                 return reservationRequestRepository.findByShopId(shopId.get());
             }
-            return userShopRepository.findReservationRequestsByOwnerId(
-                    currentUser.getId(), UserShopRelationshipType.OWNER);
+            return mergeManagedAndPersonalRequests(
+                    currentUser.getId(),
+                    reservationRequestRepository.findByUserId(currentUser.getId()));
         }
         if (shopId.isPresent()) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Customers cannot list reservation requests by shop");
@@ -199,10 +203,13 @@ public class ReservationRequestServiceImpl implements ReservationRequestService 
         final boolean isOwner = currentUser.getUserType() == UserType.SHOP_OWNER
                 || userShopService.ownsAnyShop(currentUser.getId());
         if (isOwner) {
-            if (!userShopService.isOwner(currentUser, shop)) {
-                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not own this shop");
+            if (userShopService.isOwner(currentUser, shop)) {
+                return;
             }
-            return;
+            if (currentUser.getId().equals(userId)) {
+                return;
+            }
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not own this shop");
         }
         if (!currentUser.getId().equals(userId)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Customers can only create reservation requests for themselves");
@@ -220,6 +227,21 @@ public class ReservationRequestServiceImpl implements ReservationRequestService 
         if (!userShopService.isOwner(currentUser, request.getShop())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the shop owner can manage reservation requests");
         }
+    }
+
+    private List<ReservationRequest> mergeManagedAndPersonalRequests(
+            final UUID ownerId,
+            final List<ReservationRequest> personalRequests) {
+        final List<ReservationRequest> managedRequests = userShopRepository.findReservationRequestsByOwnerId(
+                ownerId, UserShopRelationshipType.OWNER);
+        final Map<UUID, ReservationRequest> merged = new LinkedHashMap<>();
+        for (final ReservationRequest request : managedRequests) {
+            merged.put(request.getId(), request);
+        }
+        for (final ReservationRequest request : personalRequests) {
+            merged.put(request.getId(), request);
+        }
+        return new ArrayList<>(merged.values());
     }
 
     private void assertShopOwnedBy(final UUID shopId, final User currentUser) {

@@ -109,8 +109,10 @@ export class RegisterComponent {
           return;
         }
         const status = err.status;
-        if (status === 409) {
-          this.errorMessage.set('An account with this email already exists.');
+        if (status === 404) {
+          this.errorMessage.set(
+            err.error?.message ?? 'An account with this email already exists.',
+          );
         } else if (status === 403) {
           this.errorMessage.set('You cannot register with this role.');
         } else {

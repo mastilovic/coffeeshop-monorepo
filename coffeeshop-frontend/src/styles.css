@@ -573,7 +573,7 @@ select.form-input {
   border-bottom-color: #d4a574;
 }
 
-/* Nested sub-tabs inside a main tab */
+/* Nested sub-tabs (standalone or inside panel header) */
 .tabs--sub {
   margin-bottom: 1rem;
 }
@@ -581,6 +581,205 @@ select.form-input {
 .tabs--sub .tab {
   font-size: 0.8125rem;
   padding: 0.5rem 1rem;
+}
+
+/* Two-level tab hierarchy: folder-tab shell (parent connects to child panel) */
+.tabs-nav {
+  margin-bottom: 1.5rem;
+}
+
+.tabs-nav__shell {
+  width: 100%;
+  border: 1px solid #2a2a3e;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #1a1a2e;
+}
+
+.tabs-nav__shell .tabs {
+  margin-bottom: 0;
+}
+
+.tabs-nav__shell > .tabs--primary {
+  display: flex;
+  flex-wrap: wrap;
+  width: 100%;
+  gap: 0;
+  padding: 0;
+  margin-bottom: 0;
+  border: none;
+  border-radius: 0;
+  border-bottom: 1px solid #2a2a3e;
+  background: #1a1a2e;
+}
+
+.tabs-nav__shell > .tabs--primary .tab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  border-radius: 0;
+  border: none;
+  border-right: 1px solid #2a2a3e;
+  border-bottom: 2px solid transparent;
+  padding: 0.75rem 1.25rem;
+  margin: 0;
+}
+
+.tabs-nav__shell > .tabs--primary .tab:last-child {
+  border-right: none;
+}
+
+.tabs-nav__shell > .tabs--primary .tab:hover:not(.active) {
+  background: #16213e;
+  color: #e0e0e0;
+}
+
+.tabs-nav__shell > .tabs--primary .tab.active {
+  background: #16213e;
+  color: #d4a574;
+  font-weight: 600;
+  border-bottom-color: #d4a574;
+  margin-bottom: 0;
+  padding-bottom: calc(0.75rem - 2px);
+}
+
+/* Standalone primary (if used outside shell) */
+.tabs--primary {
+  display: inline-flex;
+  width: fit-content;
+  max-width: 100%;
+  gap: 0.25rem;
+  padding: 0.25rem;
+  margin-bottom: 0;
+  border-bottom: none;
+  background: #1a1a2e;
+  border: 1px solid #2a2a3e;
+  border-radius: 10px;
+}
+
+.tabs--primary .tab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  border-radius: 8px;
+  border-bottom: none;
+  padding: 0.625rem 1rem;
+}
+
+.tabs--primary .tab:hover:not(.active) {
+  background: #2a2a3e;
+  color: #e0e0e0;
+}
+
+.tabs--primary .tab.active {
+  background: rgba(212, 165, 116, 0.18);
+  color: #d4a574;
+  font-weight: 600;
+  border-bottom: none;
+}
+
+.tabs-nav__shell > .tabs-nav__panel {
+  margin-top: 0;
+  background: #1a1a2e;
+  border: none;
+  border-radius: 0;
+  overflow: hidden;
+}
+
+.tabs-nav__panel {
+  margin-top: 0.75rem;
+  background: #1a1a2e;
+  border: 1px solid #2a2a3e;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.tabs-nav__shell .tabs-nav__panel-header .tabs--sub {
+  margin-bottom: 0;
+  padding: 0;
+  border-bottom: 1px solid #2a2a3e;
+  background: #16213e;
+}
+
+.tabs-nav__panel-header .tabs--sub {
+  margin-bottom: 0;
+  padding: 0;
+  border-bottom: 1px solid #2a2a3e;
+  background: #16213e;
+}
+
+.tabs-nav__shell .tabs-nav__panel-header .tabs--sub .tab,
+.tabs-nav__panel-header .tabs--sub .tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+  padding: 0.75rem 1.25rem;
+  border-right: 1px solid #2a2a3e;
+  border-radius: 0;
+}
+
+.tabs-nav__shell .tabs-nav__panel-header .tabs--sub .tab:last-child,
+.tabs-nav__panel-header .tabs--sub .tab:last-child {
+  border-right: none;
+}
+
+.tabs-nav__shell .tabs-nav__panel-header .tabs--sub .tab.active,
+.tabs-nav__panel-header .tabs--sub .tab.active {
+  background: #1a1a2e;
+  border-bottom-color: #d4a574;
+}
+
+.tabs-nav__panel-header .tabs--sub .tab:first-child {
+  padding-left: 1.25rem;
+}
+
+
+.tabs-nav__panel-body {
+  padding: 0;
+}
+
+.tabs-nav__panel-body .empty-state,
+.tabs-nav__panel-body .loading {
+  margin: 0;
+  padding: 1.25rem;
+}
+
+.tabs-nav__panel-body .table-container {
+  margin: 0;
+  border: none;
+  border-radius: 0;
+}
+
+.tabs-nav__panel-body .data-table th:first-child,
+.tabs-nav__panel-body .data-table td:first-child {
+  padding-left: 1.25rem;
+}
+
+.tabs-nav__panel-body .data-table th:last-child,
+.tabs-nav__panel-body .data-table td:last-child {
+  padding-right: 1.25rem;
+}
+
+.tab__label {
+  white-space: nowrap;
+}
+
+.tab__count {
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1;
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+  background: rgba(136, 136, 136, 0.2);
+  color: #aaa;
+}
+
+.tab.active .tab__count {
+  background: rgba(212, 165, 116, 0.25);
+  color: #d4a574;
 }
 
 /* Prevent form-select dropdown clipping inside tables */

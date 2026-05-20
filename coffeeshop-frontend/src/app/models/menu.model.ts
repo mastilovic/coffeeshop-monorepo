@@ -7,6 +7,14 @@ export const MENU_ITEM_TYPES: { value: MenuItemType; label: string }[] = [
   { value: 'OTHER', label: 'Other' },
 ];
 
+export type MenuCurrency = 'RSD' | 'EUR' | 'USD';
+
+export const MENU_CURRENCIES: { value: MenuCurrency; label: string }[] = [
+  { value: 'RSD', label: 'RSD' },
+  { value: 'EUR', label: 'EUR' },
+  { value: 'USD', label: 'USD' },
+];
+
 export interface MenuResponseDto {
   id: string;
   shopId?: string;
@@ -21,7 +29,7 @@ export interface MenuItemResponseDto {
   name: string;
   description: string;
   price: number;
-  priceCurrency: string;
+  priceCurrency: MenuCurrency;
   imageUrl: string;
   menuId: string;
   itemType: MenuItemType;
@@ -31,7 +39,7 @@ export interface MenuItemCreateRequest {
   name: string;
   description: string;
   price: number;
-  priceCurrency: string;
+  priceCurrency: MenuCurrency;
   imageUrl: string;
   menuId: string;
   itemType: MenuItemType;

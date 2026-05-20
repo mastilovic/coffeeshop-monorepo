@@ -1,9 +1,12 @@
 package com.coffeeshop.coffeeshop.auth;
 
+import com.coffeeshop.coffeeshop.exception.ResourceNotFoundException;
 import com.coffeeshop.coffeeshop.model.User;
 import com.coffeeshop.coffeeshop.repository.UserRepository;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 @Service
 public class AuthService {
@@ -23,9 +26,16 @@ public class AuthService {
 
     @Transactional
     public TokenResponse login(final LoginRequest request) {
-        final TokenResponse tokens = tokenClient.passwordGrant(request.email(), request.password());
-        linkUserIfNeeded(tokens.accessToken());
-        return tokens;
+        if (!userRepository.existsByEmailIgnoreCase(request.email())) {
+            throw new ResourceNotFoundException("not found");
+        }
+        try {
+            final TokenResponse tokens = tokenClient.passwordGrant(request.email(), request.password());
+            linkUserIfNeeded(tokens.accessToken());
+            return tokens;
+        } catch (final KeycloakAuthException ex) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid email or password", ex);
+        }
     }
 
     public TokenResponse refresh(final RefreshTokenRequest request) {

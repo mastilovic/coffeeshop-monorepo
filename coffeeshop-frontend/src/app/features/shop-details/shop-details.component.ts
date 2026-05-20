@@ -1,4 +1,5 @@
 import { Component, inject, signal, computed, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { FormSelectComponent } from '../../shared/form-select/form-select.component';
@@ -11,10 +12,11 @@ import { ReservationService } from '../../services/reservation.service';
 import { ReservationRequestService } from '../../services/reservation-request.service';
 import { ReviewService } from '../../services/review.service';
 import { ReviewCommentService } from '../../services/review-comment.service';
+import { EventService } from '../../services/event.service';
 import { ProfileService } from '../../services/profile.service';
 import { AuthService } from '../../services/auth.service';
 import { ShopResponseDto } from '../../models/shop.model';
-import { MenuItemResponseDto, MenuItemType, MENU_ITEM_TYPES } from '../../models/menu.model';
+import { MenuItemResponseDto, MenuItemType, MenuCurrency, MENU_ITEM_TYPES, MENU_CURRENCIES } from '../../models/menu.model';
 import { TableResponseDto } from '../../models/table.model';
 import { ReservationResponseDto, ReservationRequestResponseDto } from '../../models/reservation.model';
 import { EventResponseDto } from '../../models/event.model';
@@ -23,7 +25,19 @@ import { CommunityPostResponseDto } from '../../models/community.model';
 import { CommunityService } from '../../services/community.service';
 import { StarRatingComponent } from '../../shared/star-rating/star-rating.component';
 import { getAcceptReservationErrorMessage } from '../../utils/api-error';
+import {
+  canReserveForEvent,
+  eventAvailabilityLabel as formatEventAvailability,
+  eventIdsBlockedForUser,
+  isEventFull,
+} from '../../utils/reservation-event.utils';
 import { DialogService } from '../../services/dialog.service';
+import { DateTimePickerComponent } from '../../shared/date-time-picker/date-time-picker.component';
+import { todayIso } from '../../shared/calendar/calendar-date.utils';
+import {
+  futureDateValidator,
+  normalizeDateTimeLocal,
+} from '../../utils/event-form.utils';
 
 type Tab = 'users' | 'menu' | 'tables' | 'reservations' | 'events' | 'reviews';
 type ReservationSubTab = 'pending' | 'approved' | 'denied';
@@ -31,7 +45,14 @@ type ReservationSubTab = 'pending' | 'approved' | 'denied';
 @Component({
   selector: 'app-shop-details',
   standalone: true,
-  imports: [ReactiveFormsModule, FormsModule, RouterLink, StarRatingComponent, FormSelectComponent],
+  imports: [
+    ReactiveFormsModule,
+    FormsModule,
+    RouterLink,
+    StarRatingComponent,
+    FormSelectComponent,
+    DateTimePickerComponent,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="page">
@@ -75,7 +96,7 @@ type ReservationSubTab = 'pending' | 'approved' | 'denied';
         </div>
 
         <div class="tabs">
-          @for (t of tabs; track t.key) {
+          @for (t of visibleTabs(); track t.key) {
             <button class="tab" [class.active]="activeTab() === t.key" (click)="onTabChange(t.key)">
               {{ t.label }}
             </button>
@@ -203,7 +224,11 @@ type ReservationSubTab = 'pending' | 'approved' | 'denied';
                 <div class="form-row">
                   <div class="form-group">
                     <label>Currency</label>
-                    <input class="form-input" formControlName="priceCurrency" />
+                    <app-form-select
+                      formControlName="priceCurrency"
+                      placeholder="Currency"
+                      [options]="menuCurrencySelectOptions"
+                    />
                   </div>
                   <div class="form-group">
                     <label>Image URL</label>
@@ -269,7 +294,7 @@ type ReservationSubTab = 'pending' | 'approved' | 'denied';
             }
           }
 
-          @if (shop()!.menuHistory.length > 0) {
+          @if (!isCustomer() && shop()!.menuHistory.length > 0) {
             <h3 class="mt-4 mb-2">Menu history</h3>
             @for (historical of shop()!.menuHistory; track historical.id) {
               <details class="form-card mb-2">
@@ -330,7 +355,7 @@ type ReservationSubTab = 'pending' | 'approved' | 'denied';
               </form>
             </div>
           } @else {
-            <button class="btn btn-primary mb-2" (click)="showTableForm.set(true)">+ Add Table</button>
+            <button class="btn btn-primary mb-2" (click)="openAddTableForm()">+ Add Table</button>
           }
           }
 
@@ -430,14 +455,13 @@ type ReservationSubTab = 'pending' | 'approved' | 'denied';
                   </tbody>
                 </table>
               </div>
-            } @else {
+            } @else if (canSelfReserveAtShop()) {
               <div class="table-container">
                 <table class="data-table">
-                  <thead><tr><th>Guest</th><th>Event</th><th>Party Size</th><th>Status</th></tr></thead>
+                  <thead><tr><th>Event</th><th>Party Size</th><th>Status</th></tr></thead>
                   <tbody>
                     @for (req of pendingRequests(); track req.id) {
                       <tr>
-                        <td>{{ req.user?.name ?? '—' }}</td>
                         <td>{{ eventLabel(req) }}</td>
                         <td>{{ req.partySize }}</td>
                         <td><span class="badge badge-pending">{{ req.status }}</span></td>
@@ -451,15 +475,20 @@ type ReservationSubTab = 'pending' | 'approved' | 'denied';
 
           @if (reservationSubTab() === 'approved') {
             @if (reservations().length === 0) {
-              <div class="empty-state"><p>No approved reservations for this shop.</p></div>
+              <div class="empty-state"><p>{{ canSelfReserveAtShop() ? 'No confirmed reservations for this shop.' : 'No approved reservations for this shop.' }}</p></div>
             } @else {
               <div class="table-container">
                 <table class="data-table">
-                  <thead><tr><th>Guest</th><th>Event</th><th>Table</th><th>Party Size</th></tr></thead>
+                  <thead>
+                    <tr>
+                      @if (canManageShop()) { <th>Guest</th> }
+                      <th>Event</th><th>Table</th><th>Party Size</th>
+                    </tr>
+                  </thead>
                   <tbody>
                     @for (r of reservations(); track r.id) {
                       <tr>
-                        <td>{{ r.user.name }}</td>
+                        @if (canManageShop()) { <td>{{ r.user.name }}</td> }
                         <td>{{ eventLabel(r) }}</td>
                         <td>{{ r.table ? 'Table ' + r.table.number : 'N/A' }}</td>
                         <td>{{ r.partySize }}</td>
@@ -477,11 +506,16 @@ type ReservationSubTab = 'pending' | 'approved' | 'denied';
             } @else {
               <div class="table-container">
                 <table class="data-table">
-                  <thead><tr><th>Guest</th><th>Event</th><th>Party Size</th><th>Status</th></tr></thead>
+                  <thead>
+                    <tr>
+                      @if (canManageShop()) { <th>Guest</th> }
+                      <th>Event</th><th>Party Size</th><th>Status</th>
+                    </tr>
+                  </thead>
                   <tbody>
                     @for (req of deniedRequests(); track req.id) {
                       <tr>
-                        <td>{{ req.user?.name ?? '—' }}</td>
+                        @if (canManageShop()) { <td>{{ req.user?.name ?? '—' }}</td> }
                         <td>{{ eventLabel(req) }}</td>
                         <td>{{ req.partySize }}</td>
                         <td><span class="badge badge-denied">{{ req.status }}</span></td>
@@ -496,12 +530,59 @@ type ReservationSubTab = 'pending' | 'approved' | 'denied';
 
         <!-- EVENTS TAB -->
         @if (activeTab() === 'events') {
+          @if (canManageShop()) {
+            @if (showEventForm()) {
+              <div class="form-card mb-3">
+                <form [formGroup]="eventForm" (ngSubmit)="onEventSubmit()">
+                  <div class="form-row">
+                    <div class="form-group">
+                      <label>Event Name</label>
+                      <input class="form-input" formControlName="eventName" placeholder="Event name" />
+                    </div>
+                    <div class="form-group">
+                      <label>Event Date</label>
+                      <app-date-time-picker
+                        formControlName="eventDate"
+                        [minDate]="editingEventId() ? null : todayIsoValue()"
+                      />
+                      @if (eventForm.controls.eventDate.touched && eventForm.controls.eventDate.hasError('pastDate')) {
+                        <span class="form-error">Event date must be in the future.</span>
+                      }
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label>Description</label>
+                    <input class="form-input" formControlName="description" placeholder="Event description" />
+                  </div>
+                  <div class="form-actions">
+                    <button type="submit" class="btn btn-primary" [disabled]="eventForm.invalid">
+                      {{ editingEventId() ? 'Update' : 'Create' }}
+                    </button>
+                    <button type="button" class="btn btn-secondary" (click)="cancelEventForm()">Cancel</button>
+                  </div>
+                </form>
+              </div>
+            } @else {
+              <button class="btn btn-primary mb-2" (click)="openAddEventForm()">+ Add Event</button>
+            }
+          }
+
           @if (shop()!.events.length === 0) {
-            <div class="empty-state"><p>No events.</p></div>
+            <div class="empty-state">
+              <p>No events.</p>
+              @if (canManageShop()) {
+                <p class="text-muted">Add an event for customers to reserve.</p>
+              }
+            </div>
           } @else {
             <div class="table-container">
               <table class="data-table">
-                <thead><tr><th>Name</th><th>Date</th><th>Description</th><th>Availability</th></tr></thead>
+                <thead>
+                  <tr>
+                    <th>Name</th><th>Date</th><th>Description</th><th>Availability</th>
+                    @if (canSelfReserveAtShop() || canManageShop()) { <th>Actions</th> }
+                  </tr>
+                </thead>
                 <tbody>
                   @for (e of shop()!.events; track e.eventId) {
                     <tr>
@@ -509,10 +590,50 @@ type ReservationSubTab = 'pending' | 'approved' | 'denied';
                       <td>{{ e.eventDate }}</td>
                       <td>{{ e.description }}</td>
                       <td>{{ eventAvailabilityLabel(e) }}</td>
+                      @if (canSelfReserveAtShop() || canManageShop()) {
+                        <td>
+                          @if (canSelfReserveAtShop()) {
+                            <button
+                              type="button"
+                              class="btn btn-sm btn-primary"
+                              [disabled]="!canShowReserveButton(e)"
+                              [title]="reserveTooltip(e)"
+                              (click)="onReserveEventClick(e)"
+                            >
+                              Reserve
+                            </button>
+                          }
+                          @if (canManageShop()) {
+                            <div style="display:flex;gap:0.5rem">
+                              <button class="btn btn-sm btn-secondary" (click)="onEditEvent(e)">Edit</button>
+                              <button class="btn btn-sm btn-danger" (click)="onDeleteEvent(e)">Delete</button>
+                            </div>
+                          }
+                        </td>
+                      }
                     </tr>
                   }
                 </tbody>
               </table>
+            </div>
+          }
+
+          @if (canSelfReserveAtShop() && selectedEventForRequest(); as event) {
+            <div class="form-card mt-3">
+              <h3 class="mb-2">Request reservation</h3>
+              <p class="text-muted mb-2">{{ event.eventName }} &middot; {{ event.eventDate }}</p>
+              <form [formGroup]="eventRequestForm" (ngSubmit)="onSubmitEventRequest()">
+                <div class="form-group">
+                  <label>Party size</label>
+                  <input class="form-input" type="number" formControlName="partySize" min="1" />
+                </div>
+                <div class="form-actions">
+                  <button type="submit" class="btn btn-primary" [disabled]="eventRequestForm.invalid || !canSubmitEventRequest()">
+                    Submit request
+                  </button>
+                  <button type="button" class="btn btn-secondary" (click)="cancelEventRequest()">Cancel</button>
+                </div>
+              </form>
             </div>
           }
         }
@@ -658,6 +779,7 @@ export class ShopDetailsComponent implements OnInit {
   private readonly reviewService = inject(ReviewService);
   private readonly reviewCommentService = inject(ReviewCommentService);
   private readonly communityService = inject(CommunityService);
+  private readonly eventService = inject(EventService);
   private readonly dialog = inject(DialogService);
 
   readonly shop = signal<ShopResponseDto | null>(null);
@@ -666,7 +788,11 @@ export class ShopDetailsComponent implements OnInit {
   readonly reservationSubTab = signal<ReservationSubTab>('pending');
   readonly reservations = signal<ReservationResponseDto[]>([]);
   readonly allShopRequests = signal<ReservationRequestResponseDto[]>([]);
+  readonly allUserRequests = signal<ReservationRequestResponseDto[]>([]);
+  readonly allUserReservations = signal<ReservationResponseDto[]>([]);
   readonly selectedTableForRequest = signal<{ reqId: string; tableId: string } | null>(null);
+  readonly selectedEventForRequest = signal<EventResponseDto | null>(null);
+  readonly submittingEventRequest = signal(false);
 
   readonly pendingRequests = computed(() =>
     this.allShopRequests().filter(req => req.status === 'PENDING'),
@@ -682,6 +808,27 @@ export class ShopDetailsComponent implements OnInit {
     if (!shop || !profile) return false;
     if (this.authService.isAdmin()) return true;
     return shop.createdBy?.id === profile.id;
+  });
+
+  readonly isCustomer = computed(() => {
+    const profile = this.profileService.currentUser();
+    return !!profile && profile.userType === 'CUSTOMER' && !this.canManageShop();
+  });
+
+  readonly canSelfReserveAtShop = computed(() => !this.canManageShop());
+
+  readonly visibleTabs = computed(() =>
+    this.isCustomer() ? this.tabs.filter(t => t.key !== 'tables') : this.tabs,
+  );
+
+  readonly blockedEventIdsForCurrentUser = computed(() => {
+    const profile = this.profileService.currentUser();
+    if (!profile) return new Set<string>();
+    return eventIdsBlockedForUser(
+      this.allUserRequests(),
+      this.allUserReservations(),
+      profile.id,
+    );
   });
 
   readonly isShopOwner = computed(() => {
@@ -704,6 +851,9 @@ export class ShopDetailsComponent implements OnInit {
   readonly editingMenuItemId = signal<string | null>(null);
   readonly showTableForm = signal(false);
   readonly editingTableId = signal<string | null>(null);
+  readonly showEventForm = signal(false);
+  readonly editingEventId = signal<string | null>(null);
+  readonly todayIsoValue = todayIso;
   readonly showReviewForm = signal(false);
   readonly togglingFavourite = signal(false);
   readonly communityPosts = signal<CommunityPostResponseDto[]>([]);
@@ -738,12 +888,16 @@ export class ShopDetailsComponent implements OnInit {
     value: t.value,
     label: t.label,
   }));
+  readonly menuCurrencySelectOptions: FormSelectOption[] = MENU_CURRENCIES.map(c => ({
+    value: c.value,
+    label: c.label,
+  }));
 
   readonly menuForm = this.fb.nonNullable.group({
     name: ['', Validators.required],
     description: [''],
     price: [0, [Validators.required, Validators.min(0)]],
-    priceCurrency: ['USD'],
+    priceCurrency: ['RSD' as MenuCurrency, Validators.required],
     imageUrl: [''],
     itemType: ['FOOD' as MenuItemType, Validators.required],
   });
@@ -757,6 +911,16 @@ export class ShopDetailsComponent implements OnInit {
     rating: [0, [Validators.required, Validators.min(1), Validators.max(5)]],
     description: ['', Validators.required],
     commentsEnabled: [true],
+  });
+
+  readonly eventRequestForm = this.fb.nonNullable.group({
+    partySize: [1, [Validators.required, Validators.min(1)]],
+  });
+
+  readonly eventForm = this.fb.nonNullable.group({
+    eventName: ['', Validators.required],
+    eventDate: ['', Validators.required],
+    description: [''],
   });
 
   readonly commentDrafts = signal<Record<string, string>>({});
@@ -773,6 +937,9 @@ export class ShopDetailsComponent implements OnInit {
       next: (shop) => {
         this.shop.set(shop);
         this.loading.set(false);
+        if (this.isCustomer() && this.activeTab() === 'tables') {
+          this.activeTab.set('menu');
+        }
         this.loadReservations();
         if (this.activeTab() === 'users') {
           this.loadCommunityPosts(true);
@@ -804,9 +971,17 @@ export class ShopDetailsComponent implements OnInit {
   }
 
   onTabChange(tab: Tab): void {
+    if (this.isCustomer() && tab === 'tables') {
+      this.activeTab.set('menu');
+      return;
+    }
     this.activeTab.set(tab);
     if (tab === 'users') {
       this.loadCommunityPosts(true);
+    }
+    if (tab !== 'events') {
+      this.selectedEventForRequest.set(null);
+      this.cancelEventForm();
     }
   }
 
@@ -879,6 +1054,23 @@ export class ShopDetailsComponent implements OnInit {
   }
 
   private loadReservations(): void {
+    const profile = this.profileService.currentUser();
+    if (!this.canManageShop() && profile) {
+      this.reservationService.getAll().subscribe(all => {
+        this.allUserReservations.set(all.filter(r => r.user?.id === profile.id));
+        this.reservations.set(
+          all.filter(r => r.shop?.id === this.shopId && r.user?.id === profile.id),
+        );
+      });
+      this.requestService.getAll().subscribe(all => {
+        this.allUserRequests.set(all);
+        this.allShopRequests.set(
+          all.filter(r => r.shop?.id === this.shopId && r.user?.id === profile.id),
+        );
+      });
+      return;
+    }
+
     this.reservationService.getAll().subscribe(all => {
       this.reservations.set(all.filter(r => r.shop?.id === this.shopId));
     });
@@ -957,9 +1149,78 @@ export class ShopDetailsComponent implements OnInit {
   }
 
   eventAvailabilityLabel(event: EventResponseDto): string {
-    if (event.isFull === true || (event.freeTables ?? 1) <= 0) return 'Full';
-    if (typeof event.freeTables === 'number') return `${event.freeTables} left`;
-    return '—';
+    return formatEventAvailability(event);
+  }
+
+  isEventBlockedForCurrentUser(eventId: string): boolean {
+    return this.blockedEventIdsForCurrentUser().has(eventId);
+  }
+
+  canShowReserveButton(event: EventResponseDto): boolean {
+    return canReserveForEvent(event) && !this.isEventBlockedForCurrentUser(event.eventId);
+  }
+
+  reserveTooltip(event: EventResponseDto): string {
+    if (isEventFull(event)) return 'No tables left for this event';
+    if (this.isEventBlockedForCurrentUser(event.eventId)) {
+      return 'You already have a reservation request or reservation for this event';
+    }
+    return canReserveForEvent(event)
+      ? `Reserve for ${event.eventName}`
+      : 'This event has already passed';
+  }
+
+  onReserveEventClick(event: EventResponseDto): void {
+    if (!this.canShowReserveButton(event)) return;
+    this.selectedEventForRequest.set(event);
+    this.eventRequestForm.reset({ partySize: 1 });
+  }
+
+  cancelEventRequest(): void {
+    this.selectedEventForRequest.set(null);
+    this.eventRequestForm.reset({ partySize: 1 });
+  }
+
+  canSubmitEventRequest(): boolean {
+    const event = this.selectedEventForRequest();
+    if (!event) return false;
+    return this.canShowReserveButton(event);
+  }
+
+  onSubmitEventRequest(): void {
+    if (this.eventRequestForm.invalid || !this.canSubmitEventRequest() || this.submittingEventRequest()) {
+      return;
+    }
+    const profile = this.profileService.currentUser();
+    const event = this.selectedEventForRequest();
+    if (!profile || !event) return;
+
+    this.submittingEventRequest.set(true);
+    const partySize = this.eventRequestForm.controls.partySize.value;
+    this.requestService
+      .create({
+        userId: profile.id,
+        shopId: this.shopId,
+        eventId: event.eventId,
+        partySize,
+      })
+      .subscribe({
+        next: () => {
+          this.submittingEventRequest.set(false);
+          this.cancelEventRequest();
+          this.loadReservations();
+          this.reservationSubTab.set('pending');
+          void this.dialog.alert('Reservation request submitted.');
+        },
+        error: err => {
+          this.submittingEventRequest.set(false);
+          if (err instanceof HttpErrorResponse && err.status === 409) {
+            void this.dialog.alert(
+              'You already have a reservation for this event or there are no tables left.',
+            );
+          }
+        },
+      });
   }
 
   onCreateMenu(): void {
@@ -1015,7 +1276,7 @@ export class ShopDetailsComponent implements OnInit {
     op.subscribe(() => {
       this.showMenuForm.set(false);
       this.editingMenuItemId.set(null);
-      this.menuForm.reset({ name: '', description: '', price: 0, priceCurrency: 'USD', imageUrl: '', itemType: 'FOOD' });
+      this.menuForm.reset({ name: '', description: '', price: 0, priceCurrency: 'RSD', imageUrl: '', itemType: 'FOOD' });
       this.loadShop();
     });
   }
@@ -1042,6 +1303,18 @@ export class ShopDetailsComponent implements OnInit {
       });
   }
 
+  private nextTableNumber(): number {
+    const tables = this.shop()?.tables ?? [];
+    if (tables.length === 0) return 1;
+    return Math.max(...tables.map(t => t.number)) + 1;
+  }
+
+  openAddTableForm(): void {
+    this.editingTableId.set(null);
+    this.tableForm.reset({ number: this.nextTableNumber(), capacity: 2 });
+    this.showTableForm.set(true);
+  }
+
   onTableSubmit(): void {
     if (this.tableForm.invalid) return;
     const val = { ...this.tableForm.getRawValue(), shopId: this.shopId };
@@ -1053,7 +1326,7 @@ export class ShopDetailsComponent implements OnInit {
     op.subscribe(() => {
       this.showTableForm.set(false);
       this.editingTableId.set(null);
-      this.tableForm.reset({ number: 1, capacity: 2 });
+      this.tableForm.reset({ number: this.nextTableNumber(), capacity: 2 });
       this.loadShop();
     });
   }
@@ -1071,6 +1344,64 @@ export class ShopDetailsComponent implements OnInit {
         if (!ok) return;
         this.tableService.delete(t.id).subscribe(() => this.loadShop());
       });
+  }
+
+  openAddEventForm(): void {
+    this.editingEventId.set(null);
+    this.eventForm.reset({ eventName: '', eventDate: '', description: '' });
+    this.applyEventDateValidatorsForMode();
+    this.showEventForm.set(true);
+  }
+
+  onEditEvent(event: EventResponseDto): void {
+    this.editingEventId.set(event.eventId);
+    this.applyEventDateValidatorsForMode();
+    this.showEventForm.set(true);
+    this.eventForm.patchValue({
+      eventName: event.eventName,
+      eventDate: normalizeDateTimeLocal(event.eventDate),
+      description: event.description,
+    });
+  }
+
+  onEventSubmit(): void {
+    if (this.eventForm.invalid) return;
+    if (!this.editingEventId() && this.eventForm.controls.eventDate.hasError('pastDate')) return;
+
+    const val = { ...this.eventForm.getRawValue(), shopId: this.shopId };
+    const id = this.editingEventId();
+    const op = id ? this.eventService.update(id, val) : this.eventService.create(val);
+
+    op.subscribe(() => {
+      this.cancelEventForm();
+      this.loadShop();
+    });
+  }
+
+  onDeleteEvent(event: EventResponseDto): void {
+    void this.dialog
+      .confirm(`Delete "${event.eventName}"?`, { confirmLabel: 'Delete', confirmVariant: 'danger' })
+      .then(ok => {
+        if (!ok) return;
+        this.eventService.delete(event.eventId).subscribe(() => this.loadShop());
+      });
+  }
+
+  cancelEventForm(): void {
+    this.editingEventId.set(null);
+    this.showEventForm.set(false);
+    this.eventForm.reset({ eventName: '', eventDate: '', description: '' });
+    this.applyEventDateValidatorsForMode();
+  }
+
+  private applyEventDateValidatorsForMode(): void {
+    const dateControl = this.eventForm.controls.eventDate;
+    if (this.editingEventId()) {
+      dateControl.setValidators([Validators.required]);
+    } else {
+      dateControl.setValidators([Validators.required, futureDateValidator()]);
+    }
+    dateControl.updateValueAndValidity();
   }
 
   toggleReviewForm(): void {

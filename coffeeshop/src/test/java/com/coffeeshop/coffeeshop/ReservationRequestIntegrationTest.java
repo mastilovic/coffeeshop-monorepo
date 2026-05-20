@@ -372,6 +372,68 @@ class ReservationRequestIntegrationTest {
 
     @Test
     @SuppressWarnings("unchecked")
+    void ownerCreateRequest_forSelf_atShopNotOwned_returnsCreated() {
+        final HttpHeaders headers = authHeaders();
+
+        final UUID travelingOwnerId = createUser(headers, "Traveling Owner", "traveling-owner@example.com", "SHOP_OWNER");
+        linkKeycloakSubject(travelingOwnerId);
+        headers.setBearerAuth(travelingOwnerId.toString());
+
+        final UUID hostOwnerId = createUser(headers, "Host Owner", "host-owner@example.com", "SHOP_OWNER");
+        final UUID hostShopId = createShop(headers, "Host Shop", hostOwnerId);
+        final String eventId = createEventWithOwner(hostOwnerId, "Host Event", hostShopId);
+
+        final ResponseEntity<Map> requestResponse = restTemplate.postForEntity(
+                "/api/v1/reservation-request",
+                new HttpEntity<>(Map.of(
+                        "userId", travelingOwnerId,
+                        "shopId", hostShopId,
+                        "eventId", eventId,
+                        "partySize", 2), headers),
+                Map.class);
+        assertThat(requestResponse.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        assertThat(requestResponse.getBody().get("userId")).isEqualTo(travelingOwnerId.toString());
+        assertThat(requestResponse.getBody().get("shopId")).isEqualTo(hostShopId.toString());
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void ownerListRequests_includesOwnRequestAtOtherShop() {
+        final HttpHeaders headers = authHeaders();
+
+        final UUID travelingOwnerId = createUser(headers, "List Traveling Owner", "list-traveling-owner@example.com", "SHOP_OWNER");
+        linkKeycloakSubject(travelingOwnerId);
+        headers.setBearerAuth(travelingOwnerId.toString());
+
+        final UUID hostOwnerId = createUser(headers, "List Host Owner", "list-host-owner@example.com", "SHOP_OWNER");
+        final UUID hostShopId = createShop(headers, "List Host Shop", hostOwnerId);
+        final String eventId = createEventWithOwner(hostOwnerId, "List Host Event", hostShopId);
+
+        final ResponseEntity<Map> createResponse = restTemplate.postForEntity(
+                "/api/v1/reservation-request",
+                new HttpEntity<>(Map.of(
+                        "userId", travelingOwnerId,
+                        "shopId", hostShopId,
+                        "eventId", eventId,
+                        "partySize", 3), headers),
+                Map.class);
+        assertThat(createResponse.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        final String requestId = createResponse.getBody().get("id").toString();
+
+        final ResponseEntity<List> listResponse = restTemplate.exchange(
+                "/api/v1/reservation-request",
+                org.springframework.http.HttpMethod.GET,
+                new HttpEntity<>(headers),
+                List.class);
+        assertThat(listResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(listResponse.getBody()).isNotEmpty();
+        assertThat(listResponse.getBody().stream()
+                .map(item -> ((Map<?, ?>) item).get("id").toString())
+                .anyMatch(requestId::equals)).isTrue();
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
     void customerSecondRequestWhilePending_returnsConflict() {
         final HttpHeaders headers = authHeaders();
 

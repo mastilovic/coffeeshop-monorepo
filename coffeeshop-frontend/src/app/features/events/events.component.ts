@@ -1,19 +1,15 @@
 import { Component, computed, inject, Injector, OnInit, signal, ChangeDetectionStrategy } from '@angular/core';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
-import {
-  AbstractControl,
-  FormBuilder,
-  ReactiveFormsModule,
-  ValidationErrors,
-  ValidatorFn,
-  Validators,
-} from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { debounceTime, distinctUntilChanged, skip } from 'rxjs';
 import { EventService } from '../../services/event.service';
 import { ShopService } from '../../services/shop.service';
+import { ReservationService } from '../../services/reservation.service';
+import { ReservationRequestService } from '../../services/reservation-request.service';
 import { AuthService } from '../../services/auth.service';
 import { ProfileService } from '../../services/profile.service';
+import { ReservationResponseDto, ReservationRequestResponseDto } from '../../models/reservation.model';
 import { EventResponseDto } from '../../models/event.model';
 import { ShopResponseDto } from '../../models/shop.model';
 import { todayIso } from '../../shared/calendar/calendar-date.utils';
@@ -25,17 +21,16 @@ import { DateTimePickerComponent } from '../../shared/date-time-picker/date-time
 import { FormSelectComponent } from '../../shared/form-select/form-select.component';
 import { FormSelectOption } from '../../shared/form-select/form-select-option.model';
 import { DialogService } from '../../services/dialog.service';
-
-function futureDateValidator(): ValidatorFn {
-  return (control: AbstractControl): ValidationErrors | null => {
-    const value = control.value as string;
-    if (!value) return null;
-    const parsed = new Date(value);
-    if (Number.isNaN(parsed.getTime())) return { invalidDate: true };
-    if (parsed <= new Date()) return { pastDate: true };
-    return null;
-  };
-}
+import {
+  futureDateValidator,
+  normalizeDateTimeLocal,
+} from '../../utils/event-form.utils';
+import {
+  canReserveForEvent as isEventReservable,
+  eventAvailabilityLabel,
+  eventIdsBlockedForUser,
+  isEventFull,
+} from '../../utils/reservation-event.utils';
 
 @Component({
   selector: 'app-events',
@@ -147,10 +142,10 @@ function futureDateValidator(): ValidatorFn {
                         <button class="btn btn-sm btn-secondary" (click)="onEdit(event)">Edit</button>
                         <button class="btn btn-sm btn-danger" (click)="onDelete(event)">Delete</button>
                       }
+                      @if (canShowReserveButton(event)) {
                       <button
                         type="button"
                         class="btn btn-icon btn-reserve"
-                        [disabled]="!canReserveForEvent(event)"
                         [attr.aria-label]="reserveTooltip(event)"
                         [title]="reserveTooltip(event)"
                         (click)="onReserve(event)"
@@ -173,6 +168,7 @@ function futureDateValidator(): ValidatorFn {
                           <path d="M16 12v6" />
                         </svg>
                       </button>
+                      }
                     </div>
                   </td>
                 </tr>
@@ -209,6 +205,8 @@ export class EventsComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly eventService = inject(EventService);
   private readonly shopService = inject(ShopService);
+  private readonly reservationService = inject(ReservationService);
+  private readonly requestService = inject(ReservationRequestService);
   private readonly authService = inject(AuthService);
   private readonly profileService = inject(ProfileService);
   private readonly injector = inject(Injector);
@@ -240,6 +238,13 @@ export class EventsComponent implements OnInit {
   readonly totalPages = signal(1);
 
   private readonly ownedShopIds = signal<Set<string>>(new Set());
+  readonly allRequests = signal<ReservationRequestResponseDto[]>([]);
+  readonly allReservations = signal<ReservationResponseDto[]>([]);
+
+  readonly isShopOwnerUser = computed(() => {
+    const profile = this.profileService.currentUser();
+    return !!profile && profile.userType === 'SHOP_OWNER';
+  });
 
   readonly form = this.fb.nonNullable.group({
     eventName: ['', Validators.required],
@@ -262,6 +267,9 @@ export class EventsComponent implements OnInit {
       this.shops.set(shops);
       this.ownedShopIds.set(new Set(shops.map(s => s.id)));
     });
+
+    this.reservationService.getAll().subscribe(res => this.allReservations.set(res));
+    this.requestService.getAll().subscribe(req => this.allRequests.set(req));
 
     this.loadEvents();
   }
@@ -342,28 +350,48 @@ export class EventsComponent implements OnInit {
     return this.ownedShopIds().has(event.shopId);
   }
 
-  canReserveForEvent(event: EventResponseDto): boolean {
-    if (event.isFull === true || (event.freeTables ?? 1) <= 0) return false;
-    const parsed = new Date(event.eventDate);
-    if (Number.isNaN(parsed.getTime())) return true;
-    return parsed > new Date();
+  canShowReserveButton(event: EventResponseDto): boolean {
+    if (!isEventReservable(event)) return false;
+    if (this.isShopOwnerUser() && this.ownedShopIds().has(event.shopId)) return false;
+    const profile = this.profileService.currentUser();
+    if (!profile) return false;
+    const blocked = eventIdsBlockedForUser(
+      this.allRequests(),
+      this.allReservations(),
+      profile.id,
+    );
+    return !blocked.has(event.eventId);
   }
 
   reserveTooltip(event: EventResponseDto): string {
-    if (event.isFull === true || (event.freeTables ?? 1) <= 0) {
+    if (isEventFull(event)) {
       return 'No tables left for this event';
     }
-    return this.canReserveForEvent(event) ? `Reserve for ${event.eventName}` : 'This event has already passed';
+    if (this.isShopOwnerUser() && this.ownedShopIds().has(event.shopId)) {
+      return 'Use Reservations to request for a guest at your shop';
+    }
+    const profile = this.profileService.currentUser();
+    if (profile) {
+      const blocked = eventIdsBlockedForUser(
+        this.allRequests(),
+        this.allReservations(),
+        profile.id,
+      );
+      if (blocked.has(event.eventId)) {
+        return 'You already have a reservation request or reservation for this event';
+      }
+    }
+    return isEventReservable(event)
+      ? `Reserve for ${event.eventName}`
+      : 'This event has already passed';
   }
 
   availabilityLabel(event: EventResponseDto): string {
-    if (event.isFull === true || (event.freeTables ?? 1) <= 0) return 'Full';
-    if (typeof event.freeTables === 'number') return `${event.freeTables} left`;
-    return '—';
+    return eventAvailabilityLabel(event);
   }
 
   onReserve(event: EventResponseDto): void {
-    if (!this.canReserveForEvent(event)) return;
+    if (!this.canShowReserveButton(event)) return;
     void this.router.navigate(['/reservations'], {
       queryParams: { shopId: event.shopId, eventId: event.eventId },
     });
@@ -438,12 +466,4 @@ export class EventsComponent implements OnInit {
     }
     dateControl.updateValueAndValidity();
   }
-}
-
-function normalizeDateTimeLocal(value: string): string {
-  if (!value) return '';
-  if (value.includes('T')) {
-    return value.length >= 16 ? value.slice(0, 16) : value;
-  }
-  return `${value}T00:00`;
 }

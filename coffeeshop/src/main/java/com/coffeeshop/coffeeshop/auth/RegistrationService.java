@@ -1,5 +1,6 @@
 package com.coffeeshop.coffeeshop.auth;
 
+import com.coffeeshop.coffeeshop.exception.ResourceNotFoundException;
 import com.coffeeshop.coffeeshop.mapper.UserMapper;
 import com.coffeeshop.coffeeshop.model.User;
 import com.coffeeshop.coffeeshop.model.dto.response.UserResponseDto;
@@ -17,6 +18,8 @@ import java.util.UUID;
 
 @Service
 public class RegistrationService {
+
+    private static final String DUPLICATE_EMAIL_MESSAGE = "An account with this email already exists";
 
     private final KeycloakAdminClient keycloakAdminClient;
     private final UserRepository userRepository;
@@ -37,7 +40,7 @@ public class RegistrationService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "admin role is not allowed for self-registration");
         }
         if (userRepository.existsByEmailIgnoreCase(request.email())) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Email already registered");
+            throw new ResourceNotFoundException(DUPLICATE_EMAIL_MESSAGE);
         }
         final UserType userType = switch (request.role()) {
             case "customer" -> UserType.CUSTOMER;
@@ -53,7 +56,7 @@ public class RegistrationService {
                     request.role());
         } catch (final KeycloakAuthException ex) {
             if (ex.getMessage() != null && ex.getMessage().contains("already exists")) {
-                throw new ResponseStatusException(HttpStatus.CONFLICT, ex.getMessage(), ex);
+                throw new ResourceNotFoundException(DUPLICATE_EMAIL_MESSAGE);
             }
             throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Registration failed with identity provider", ex);
         }
