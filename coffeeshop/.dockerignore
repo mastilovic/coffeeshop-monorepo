@@ -1,0 +1,28 @@
+# Gradle / build outputs
+.gradle
+build
+out
+bin
+
+# VCS / editor
+.git
+.github
+.idea
+*.iml
+*.ipr
+*.iws
+.vscode
+.cursor
+
+# Docs (not needed for image build)
+*.md
+
+# Local env files
+.env
+.env.*
+
+# OS junk
+.DS_Store
+
+# Compose-only assets (not copied into Dockerfile)
+docker

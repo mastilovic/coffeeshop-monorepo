@@ -1,0 +1,30 @@
+# Dependencies / build outputs (installed or produced in image)
+node_modules
+dist
+.angular
+coverage
+
+# VCS / editor / IDE
+.git
+.github
+.idea
+*.iml
+*.ipr
+*.iws
+.vscode
+.cursor
+
+# Docs and local reference (not needed for image build)
+*.md
+api-docs.json
+frontend.md
+
+# Local env
+.env
+.env.*
+
+# OS junk
+.DS_Store
+
+# Test config (not used by build:docker)
+tsconfig.spec.json

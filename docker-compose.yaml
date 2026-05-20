@@ -1,0 +1,8 @@
+# Full stack: infrastructure, backend, and Angular SPA.
+# Run from repo root: docker compose up --build
+#
+# UI:  http://localhost:4200  (nginx proxies API/auth to backend)
+# API: http://localhost:18080  (direct backend access)
+
+include:
+  - path: ./coffeeshop/docker-compose.yaml

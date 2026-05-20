@@ -1,0 +1,60 @@
+{
+  "realm": "coffeeshop",
+  "enabled": true,
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": true,
+  "roles": {
+    "realm": [
+      { "name": "customer" },
+      { "name": "shop_owner" },
+      { "name": "admin" }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "coffeeshop-backend",
+      "name": "CoffeeShop Backend",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "secret": "local-backend-secret",
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": false,
+      "implicitFlowEnabled": false,
+      "redirectUris": [
+        "http://localhost:8000/auth/callback",
+        "http://localhost:18080/*",
+        "http://localhost:8080/*",
+        "http://app:8000/auth/callback"
+      ],
+      "webOrigins": [
+        "http://localhost:8000",
+        "http://localhost:18080",
+        "http://localhost:8080",
+        "http://app:8000"
+      ],
+      "attributes": {
+        "pkce.code.challenge.method": "S256"
+      },
+      "protocolMappers": [
+        {
+          "name": "realm roles",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-realm-role-mapper",
+          "consentRequired": false,
+          "config": {
+            "multivalued": "true",
+            "userinfo.token.claim": "true",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "realm_access.roles",
+            "jsonType.label": "String"
+          }
+        }
+      ]
+    }
+  ]
+}

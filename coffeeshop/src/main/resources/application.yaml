@@ -1,0 +1,29 @@
+server:
+  port: '8080'
+
+spring:
+  threads:
+    virtual:
+      enabled: true
+  profiles:
+    active: local # dev or local
+  application:
+    name: "coffeeshop"
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_JWT_ISSUER_URI:http://localhost:8080/realms/coffeeshop}
+
+coffeeshop:
+  keycloak:
+    server-url: ${KEYCLOAK_SERVER_URL:${KEYCLOAK_BASE_URL:http://localhost:8080}}
+    realm: ${KEYCLOAK_REALM:coffeeshop}
+    client-id: ${KEYCLOAK_CLIENT_ID:${KEYCLOAK_BACKEND_CLIENT_ID:coffeeshop-backend}}
+    client-secret: ${KEYCLOAK_CLIENT_SECRET:${KEYCLOAK_BACKEND_CLIENT_SECRET:local-backend-secret}}
+    admin-username: ${KEYCLOAK_ADMIN_USER:admin}
+    admin-password: ${KEYCLOAK_ADMIN_PASSWORD:admin}
+
+springdoc:
+  swagger-ui:
+    path: "/swagger/index.html"

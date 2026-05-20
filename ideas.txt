@@ -1,0 +1,1 @@
+when reserving tables, i should have how many tables are available. Tables can be reserved per event. So if shop has 10 tables, max it can be reserved is 10 per event.
