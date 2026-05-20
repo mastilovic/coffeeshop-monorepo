@@ -3,15 +3,21 @@ package com.coffeeshop.coffeeshop.controller;
 import com.coffeeshop.coffeeshop.mapper.UserMapper;
 import com.coffeeshop.coffeeshop.model.dto.request.UserCreateRequest;
 import com.coffeeshop.coffeeshop.model.dto.request.UserUpdateRequest;
+import com.coffeeshop.coffeeshop.model.dto.response.PageResponseDto;
+import com.coffeeshop.coffeeshop.model.dto.response.UserListItemDto;
 import com.coffeeshop.coffeeshop.model.dto.response.UserResponseDto;
 import com.coffeeshop.coffeeshop.service.UserService;
-import org.springframework.http.HttpStatus;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
-import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -29,10 +35,26 @@ public class UserController {
     }
 
     @GetMapping
-    public ResponseEntity<List<UserResponseDto>> getAll() {
-        return new ResponseEntity<>(
-                userService.findAll().stream().map(userMapper::toUserResponse).collect(Collectors.toList()),
-                HttpStatus.OK);
+    public ResponseEntity<?> getAll(
+            @RequestParam(required = false) final String q,
+            @RequestParam(required = false) final Integer page,
+            @RequestParam(defaultValue = "10") final int size) {
+        if (page == null) {
+            return new ResponseEntity<>(
+                    userService.findAll().stream().map(userMapper::toUserResponse).collect(Collectors.toList()),
+                    HttpStatus.OK);
+        }
+
+        final PageRequest pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "name"));
+        final Page<com.coffeeshop.coffeeshop.model.User> result =
+                userService.search(Optional.ofNullable(q), pageable);
+        final PageResponseDto<UserListItemDto> response = new PageResponseDto<>(
+                result.getContent().stream().map(userMapper::toUserListItem).collect(Collectors.toList()),
+                result.getNumber(),
+                result.getSize(),
+                result.getTotalElements(),
+                result.getTotalPages());
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @GetMapping("/{id}")

@@ -1,4 +1,14 @@
-import { Component, inject, signal, computed, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  inject,
+  Injector,
+  signal,
+  computed,
+  OnInit,
+  ChangeDetectionStrategy,
+} from '@angular/core';
+import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
+import { debounceTime, distinctUntilChanged, skip } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -22,6 +32,7 @@ import { ReservationResponseDto, ReservationRequestResponseDto } from '../../mod
 import { EventResponseDto } from '../../models/event.model';
 import { ReviewResponseDto } from '../../models/review.model';
 import { CommunityPostResponseDto } from '../../models/community.model';
+import { UserSummaryDto } from '../../models/user.model';
 import { CommunityService } from '../../services/community.service';
 import { StarRatingComponent } from '../../shared/star-rating/star-rating.component';
 import { getAcceptReservationErrorMessage } from '../../utils/api-error';
@@ -114,19 +125,54 @@ type ReservationSubTab = 'pending' | 'approved' | 'denied';
             </div>
           }
 
-          <h3 class="mb-2">Members ({{ shop()!.users.length }})</h3>
-          @if (shop()!.users.length === 0) {
-            <div class="empty-state mb-3"><p>No community members yet. Be the first to join!</p></div>
+          <h3 class="mb-2">Members ({{ membersTotalElements() }})</h3>
+
+          <div class="events-toolbar mb-3">
+            <input
+              class="form-input events-search"
+              type="search"
+              placeholder="Search by name or email..."
+              aria-label="Search community members"
+              [value]="membersSearchInput()"
+              (input)="onMembersSearchInput($event)"
+            />
+          </div>
+
+          @if (membersLoading()) {
+            <div class="loading mb-3">Loading members...</div>
+          } @else if (membersTotalElements() === 0) {
+            <div class="empty-state mb-3"><p>{{ membersEmptyStateMessage() }}</p></div>
           } @else {
             <div class="table-container mb-3">
               <table class="data-table">
                 <thead><tr><th>Name</th><th>Email</th></tr></thead>
                 <tbody>
-                  @for (u of shop()!.users; track u.id) {
+                  @for (u of members(); track u.id) {
                     <tr><td>{{ u.name }}</td><td>{{ u.email }}</td></tr>
                   }
                 </tbody>
               </table>
+            </div>
+
+            <div class="pagination-bar mb-3">
+              <span class="pagination-summary">{{ membersRangeLabel() }}</span>
+              <div class="pagination-controls">
+                <button
+                  class="btn btn-secondary btn-sm"
+                  [disabled]="membersPage() === 0"
+                  (click)="goToMembersPage(membersPage() - 1)"
+                >
+                  Previous
+                </button>
+                <span class="pagination-page">Page {{ membersPage() + 1 }} of {{ membersTotalPages() }}</span>
+                <button
+                  class="btn btn-secondary btn-sm"
+                  [disabled]="membersPage() >= membersTotalPages() - 1"
+                  (click)="goToMembersPage(membersPage() + 1)"
+                >
+                  Next
+                </button>
+              </div>
             </div>
           }
 
@@ -767,6 +813,7 @@ type ReservationSubTab = 'pending' | 'approved' | 'denied';
 })
 export class ShopDetailsComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
+  private readonly injector = inject(Injector);
   private readonly fb = inject(FormBuilder);
   private readonly shopService = inject(ShopService);
   private readonly menuItemService = inject(MenuItemService);
@@ -867,6 +914,14 @@ export class ShopDetailsComponent implements OnInit {
     () => this.communityPage() + 1 < this.communityTotalPages(),
   );
 
+  readonly members = signal<UserSummaryDto[]>([]);
+  readonly membersSearchInput = signal('');
+  readonly membersPage = signal(0);
+  readonly membersPageSize = 10;
+  readonly membersTotalElements = signal(0);
+  readonly membersTotalPages = signal(1);
+  readonly membersLoading = signal(false);
+
   readonly isFavourite = computed(() => {
     const shop = this.shop();
     const profile = this.profileService.currentUser();
@@ -927,6 +982,16 @@ export class ShopDetailsComponent implements OnInit {
 
   private shopId = '';
 
+  constructor() {
+    toObservable(this.membersSearchInput, { injector: this.injector })
+      .pipe(skip(1), debounceTime(300), distinctUntilChanged(), takeUntilDestroyed())
+      .subscribe(() => {
+        if (this.activeTab() === 'users') {
+          this.loadMembers(true);
+        }
+      });
+  }
+
   ngOnInit(): void {
     this.shopId = this.route.snapshot.paramMap.get('id') ?? '';
     this.loadShop();
@@ -942,6 +1007,7 @@ export class ShopDetailsComponent implements OnInit {
         }
         this.loadReservations();
         if (this.activeTab() === 'users') {
+          this.loadMembers(true);
           this.loadCommunityPosts(true);
         }
       },
@@ -963,6 +1029,7 @@ export class ShopDetailsComponent implements OnInit {
         this.shop.set(updated);
         this.togglingFavourite.set(false);
         if (this.activeTab() === 'users') {
+          this.loadMembers(true);
           this.loadCommunityPosts(true);
         }
       },
@@ -977,12 +1044,57 @@ export class ShopDetailsComponent implements OnInit {
     }
     this.activeTab.set(tab);
     if (tab === 'users') {
+      this.loadMembers(true);
       this.loadCommunityPosts(true);
     }
     if (tab !== 'events') {
       this.selectedEventForRequest.set(null);
       this.cancelEventForm();
     }
+  }
+
+  membersEmptyStateMessage(): string {
+    if (this.membersSearchInput().trim()) return 'No members match your search.';
+    return 'No community members yet. Be the first to join!';
+  }
+
+  onMembersSearchInput(inputEvent: Event): void {
+    const value = (inputEvent.target as HTMLInputElement).value;
+    this.membersSearchInput.set(value);
+  }
+
+  loadMembers(resetPage = false): void {
+    if (!this.shopId) return;
+    if (resetPage) {
+      this.membersPage.set(0);
+    }
+    this.membersLoading.set(true);
+    const q = this.membersSearchInput().trim();
+    this.communityService
+      .getMembers(this.shopId, this.membersPage(), this.membersPageSize, q || undefined)
+      .subscribe({
+        next: page => {
+          this.members.set(page.content);
+          this.membersTotalElements.set(page.totalElements);
+          this.membersTotalPages.set(Math.max(1, page.totalPages));
+          this.membersLoading.set(false);
+        },
+        error: () => this.membersLoading.set(false),
+      });
+  }
+
+  goToMembersPage(page: number): void {
+    if (page < 0 || page >= this.membersTotalPages()) return;
+    this.membersPage.set(page);
+    this.loadMembers();
+  }
+
+  membersRangeLabel(): string {
+    const total = this.membersTotalElements();
+    if (total === 0) return '';
+    const start = this.membersPage() * this.membersPageSize + 1;
+    const end = Math.min((this.membersPage() + 1) * this.membersPageSize, total);
+    return `Showing ${start}–${end} of ${total}`;
   }
 
   loadCommunityPosts(reset = false): void {

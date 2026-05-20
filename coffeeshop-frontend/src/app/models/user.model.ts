@@ -2,6 +2,17 @@ import { RoleResponseDto } from './role.model';
 import { ShopSummaryDto } from './shop.model';
 import { ReviewResponseDto } from './review.model';
 import { ReservationResponseDto } from './reservation.model';
+import { PageResponseDto } from './event.model';
+
+export interface UserListItemDto {
+  id: string;
+  name: string;
+  email: string;
+  userType: 'CUSTOMER' | 'SHOP_OWNER' | 'ADMIN';
+  roles: RoleResponseDto[];
+}
+
+export type UserListPage = PageResponseDto<UserListItemDto>;
 
 export interface UserResponseDto {
   id: string;

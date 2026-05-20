@@ -5,7 +5,10 @@ import com.coffeeshop.coffeeshop.model.User;
 import com.coffeeshop.coffeeshop.model.UserShop;
 import com.coffeeshop.coffeeshop.model.enums.UserShopRelationshipType;
 import com.coffeeshop.coffeeshop.repository.UserShopRepository;
+import com.coffeeshop.coffeeshop.repository.UserShopSpecifications;
 import com.coffeeshop.coffeeshop.service.UserShopService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,6 +16,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -120,6 +124,19 @@ public class UserShopServiceImpl implements UserShopService {
             return List.of();
         }
         return userShopRepository.findUsersByShopIdAndRelationshipType(shop.getId(), UserShopRelationshipType.FAVOURITE);
+    }
+
+    @Override
+    public Page<User> findFavouriteUsers(
+            final UUID shopId,
+            final Optional<String> query,
+            final Pageable pageable) {
+        if (shopId == null) {
+            return Page.empty(pageable);
+        }
+        return userShopRepository
+                .findAll(UserShopSpecifications.forFavouriteMembers(shopId, query), pageable)
+                .map(UserShop::getUser);
     }
 
     @Override

@@ -5,6 +5,7 @@ import com.coffeeshop.coffeeshop.model.User;
 import com.coffeeshop.coffeeshop.model.dto.request.UserCreateRequest;
 import com.coffeeshop.coffeeshop.model.dto.request.UserUpdateRequest;
 import com.coffeeshop.coffeeshop.model.dto.response.RoleResponseDto;
+import com.coffeeshop.coffeeshop.model.dto.response.UserListItemDto;
 import com.coffeeshop.coffeeshop.model.dto.response.UserResponseDto;
 import com.coffeeshop.coffeeshop.model.dto.response.UserSummaryDto;
 import com.coffeeshop.coffeeshop.service.UserShopService;
@@ -42,6 +43,19 @@ public class UserMapper {
             return null;
         }
         final UserSummaryDto dto = new UserSummaryDto();
+        dto.setId(user.getId());
+        dto.setName(user.getName());
+        dto.setEmail(user.getEmail());
+        dto.setUserType(user.getUserType());
+        dto.setRoles(mapRoles(user.getRole()));
+        return dto;
+    }
+
+    public UserListItemDto toUserListItem(final User user) {
+        if (user == null) {
+            return null;
+        }
+        final UserListItemDto dto = new UserListItemDto();
         dto.setId(user.getId());
         dto.setName(user.getName());
         dto.setEmail(user.getEmail());

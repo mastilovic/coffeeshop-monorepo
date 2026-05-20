@@ -13,6 +13,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.ResponseEntity;
 
 import java.util.List;
@@ -168,6 +169,44 @@ class ShopCommunityIntegrationTest {
         assertThat(content).hasSizeGreaterThanOrEqualTo(2);
         assertThat(content.get(0).get("type")).isEqualTo("ANNOUNCEMENT");
         assertThat(content.get(0).get("pinned")).isEqualTo(true);
+    }
+
+    @Test
+    void members_searchByName_returnsMatchingPage() {
+        final HttpHeaders adminHeaders = authHeaders();
+        final UUID ownerId = createUser(adminHeaders, "Members Owner", "members-owner@example.com", "SHOP_OWNER");
+        linkKeycloakSubject(ownerId);
+
+        final UUID aliceId = createUser(adminHeaders, "Alice Member", "alice-member@example.com", "CUSTOMER");
+        linkKeycloakSubject(aliceId);
+        final UUID bobId = createUser(adminHeaders, "Bob Member", "bob-member@example.com", "CUSTOMER");
+        linkKeycloakSubject(bobId);
+
+        final UUID shopId = createShopWithOwner(ownerId, "Members Search Shop");
+
+        restTemplate.postForEntity(
+                "/api/v1/shop/" + shopId + "/favourite",
+                new HttpEntity<>(userHeaders(aliceId)),
+                Map.class);
+        restTemplate.postForEntity(
+                "/api/v1/shop/" + shopId + "/favourite",
+                new HttpEntity<>(userHeaders(bobId)),
+                Map.class);
+
+        final ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
+                "/api/v1/shop/" + shopId + "/community/members?q=alice&page=0&size=10",
+                HttpMethod.GET,
+                new HttpEntity<>(authHeaders()),
+                new ParameterizedTypeReference<>() {
+                });
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().get("totalElements")).isEqualTo(1);
+        @SuppressWarnings("unchecked")
+        final List<Map<String, Object>> content = (List<Map<String, Object>>) response.getBody().get("content");
+        assertThat(content).hasSize(1);
+        assertThat(content.get(0).get("name")).isEqualTo("Alice Member");
     }
 
     @Test

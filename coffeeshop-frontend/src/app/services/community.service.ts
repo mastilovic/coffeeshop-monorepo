@@ -7,6 +7,10 @@ import {
   CommunityPostPage,
   CommunityPostResponseDto,
 } from '../models/community.model';
+import { PageResponseDto } from '../models/event.model';
+import { UserSummaryDto } from '../models/user.model';
+
+export type CommunityMembersPage = PageResponseDto<UserSummaryDto>;
 
 @Injectable({ providedIn: 'root' })
 export class CommunityService {
@@ -19,6 +23,14 @@ export class CommunityService {
   getPosts(shopId: string, page = 0, size = 20): Observable<CommunityPostPage> {
     const params = new HttpParams().set('page', page).set('size', size);
     return this.http.get<CommunityPostPage>(`${this.base(shopId)}/posts`, { params });
+  }
+
+  getMembers(shopId: string, page = 0, size = 10, q?: string): Observable<CommunityMembersPage> {
+    let params = new HttpParams().set('page', page).set('size', size);
+    if (q) {
+      params = params.set('q', q);
+    }
+    return this.http.get<CommunityMembersPage>(`${this.base(shopId)}/members`, { params });
   }
 
   createAnnouncement(shopId: string, body: CommunityPostCreateRequest): Observable<CommunityPostResponseDto> {

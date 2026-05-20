@@ -7,13 +7,17 @@ import com.coffeeshop.coffeeshop.model.User;
 import com.coffeeshop.coffeeshop.repository.RoleRepository;
 import com.coffeeshop.coffeeshop.repository.ShopRepository;
 import com.coffeeshop.coffeeshop.repository.UserRepository;
+import com.coffeeshop.coffeeshop.repository.UserSpecifications;
 import com.coffeeshop.coffeeshop.service.UserService;
 import com.coffeeshop.coffeeshop.service.UserShopService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -39,6 +43,11 @@ public class UserServiceImpl implements UserService {
     @Override
     public List<User> findAll() {
         return userRepository.findAll();
+    }
+
+    @Override
+    public Page<User> search(final Optional<String> query, final Pageable pageable) {
+        return userRepository.findAll(UserSpecifications.search(query), pageable);
     }
 
     @Override

@@ -1,11 +1,20 @@
-import { Component, inject, signal, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  inject,
+  Injector,
+  signal,
+  OnInit,
+  ChangeDetectionStrategy,
+} from '@angular/core';
+import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { debounceTime, distinctUntilChanged, skip } from 'rxjs';
 import { FormSelectComponent } from '../../shared/form-select/form-select.component';
 import { FormSelectOption } from '../../shared/form-select/form-select-option.model';
 import { UserService } from '../../services/user.service';
 import { AuthService } from '../../services/auth.service';
 import { ProfileService } from '../../services/profile.service';
-import { UserResponseDto } from '../../models/user.model';
+import { UserListItemDto } from '../../models/user.model';
 import { DialogService } from '../../services/dialog.service';
 
 const USER_TYPE_SELECT_OPTIONS: FormSelectOption[] = [
@@ -55,10 +64,21 @@ const USER_TYPE_SELECT_OPTIONS: FormSelectOption[] = [
         </div>
       }
 
+      <div class="events-toolbar mb-3">
+        <input
+          class="form-input events-search"
+          type="search"
+          placeholder="Search by name or email..."
+          aria-label="Search users"
+          [value]="searchInput()"
+          (input)="onSearchInput($event)"
+        />
+      </div>
+
       @if (loading()) {
         <div class="loading">Loading users...</div>
-      } @else if (users().length === 0) {
-        <div class="empty-state"><p>No users found.</p></div>
+      } @else if (totalElements() === 0) {
+        <div class="empty-state"><p>{{ emptyStateMessage() }}</p></div>
       } @else {
         <div class="table-container">
           <table class="data-table">
@@ -97,6 +117,27 @@ const USER_TYPE_SELECT_OPTIONS: FormSelectOption[] = [
             </tbody>
           </table>
         </div>
+
+        <div class="pagination-bar">
+          <span class="pagination-summary">{{ rangeLabel() }}</span>
+          <div class="pagination-controls">
+            <button
+              class="btn btn-secondary btn-sm"
+              [disabled]="currentPage() === 0"
+              (click)="goToPage(currentPage() - 1)"
+            >
+              Previous
+            </button>
+            <span class="pagination-page">Page {{ currentPage() + 1 }} of {{ totalPages() }}</span>
+            <button
+              class="btn btn-secondary btn-sm"
+              [disabled]="currentPage() >= totalPages() - 1"
+              (click)="goToPage(currentPage() + 1)"
+            >
+              Next
+            </button>
+          </div>
+        </div>
       }
     </div>
   `,
@@ -105,15 +146,21 @@ export class UsersComponent implements OnInit {
   readonly userTypeSelectOptions = USER_TYPE_SELECT_OPTIONS;
 
   private readonly fb = inject(FormBuilder);
+  private readonly injector = inject(Injector);
   private readonly userService = inject(UserService);
   private readonly authService = inject(AuthService);
   private readonly profileService = inject(ProfileService);
   private readonly dialog = inject(DialogService);
 
-  readonly users = signal<UserResponseDto[]>([]);
+  readonly users = signal<UserListItemDto[]>([]);
   readonly loading = signal(true);
   readonly showForm = signal(false);
   readonly editingId = signal<string | null>(null);
+  readonly searchInput = signal('');
+  readonly currentPage = signal(0);
+  readonly pageSize = 10;
+  readonly totalElements = signal(0);
+  readonly totalPages = signal(1);
 
   readonly form = this.fb.nonNullable.group({
     name: ['', Validators.required],
@@ -122,23 +169,73 @@ export class UsersComponent implements OnInit {
     roleIds: [[] as string[]],
   });
 
+  constructor() {
+    toObservable(this.searchInput, { injector: this.injector })
+      .pipe(skip(1), debounceTime(300), distinctUntilChanged(), takeUntilDestroyed())
+      .subscribe(() => {
+        this.currentPage.set(0);
+        this.loadUsers();
+      });
+  }
+
   ngOnInit(): void {
-    this.userService.getAll().subscribe(users => {
-      this.users.set(users);
-      this.loading.set(false);
-    });
+    this.loadUsers();
+  }
+
+  emptyStateMessage(): string {
+    if (this.searchInput().trim()) return 'No users match your search.';
+    return 'No users found.';
+  }
+
+  onSearchInput(inputEvent: Event): void {
+    const value = (inputEvent.target as HTMLInputElement).value;
+    this.searchInput.set(value);
+  }
+
+  loadUsers(): void {
+    this.loading.set(true);
+    const q = this.searchInput().trim();
+    this.userService
+      .list({
+        q: q || undefined,
+        page: this.currentPage(),
+        size: this.pageSize,
+      })
+      .subscribe({
+        next: page => {
+          this.users.set(page.content);
+          this.totalElements.set(page.totalElements);
+          this.totalPages.set(Math.max(1, page.totalPages));
+          this.loading.set(false);
+        },
+        error: () => this.loading.set(false),
+      });
+  }
+
+  goToPage(page: number): void {
+    if (page < 0 || page >= this.totalPages()) return;
+    this.currentPage.set(page);
+    this.loadUsers();
+  }
+
+  rangeLabel(): string {
+    const total = this.totalElements();
+    if (total === 0) return '';
+    const start = this.currentPage() * this.pageSize + 1;
+    const end = Math.min((this.currentPage() + 1) * this.pageSize, total);
+    return `Showing ${start}–${end} of ${total}`;
   }
 
   isAdmin(): boolean {
     return this.authService.isAdmin();
   }
 
-  canEdit(user: UserResponseDto): boolean {
+  canEdit(user: UserListItemDto): boolean {
     const profile = this.profileService.currentUser();
     return this.authService.isAdmin() || (!!profile && profile.id === user.id);
   }
 
-  onEdit(user: UserResponseDto): void {
+  onEdit(user: UserListItemDto): void {
     this.editingId.set(user.id);
     this.showForm.set(true);
     this.form.patchValue({
@@ -156,18 +253,16 @@ export class UsersComponent implements OnInit {
     const val = this.form.getRawValue();
     this.userService.update(id, val).subscribe(() => {
       this.cancelEdit();
-      this.userService.getAll().subscribe(users => this.users.set(users));
+      this.loadUsers();
     });
   }
 
-  onDelete(user: UserResponseDto): void {
+  onDelete(user: UserListItemDto): void {
     void this.dialog
       .confirm(`Delete user "${user.name}"?`, { confirmLabel: 'Delete', confirmVariant: 'danger' })
       .then(ok => {
         if (!ok) return;
-        this.userService.delete(user.id).subscribe(() => {
-          this.users.update(list => list.filter(u => u.id !== user.id));
-        });
+        this.userService.delete(user.id).subscribe(() => this.loadUsers());
       });
   }
 

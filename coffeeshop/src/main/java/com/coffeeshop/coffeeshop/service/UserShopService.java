@@ -2,8 +2,11 @@ package com.coffeeshop.coffeeshop.service;
 
 import com.coffeeshop.coffeeshop.model.Shop;
 import com.coffeeshop.coffeeshop.model.User;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 public interface UserShopService {
@@ -21,6 +24,8 @@ public interface UserShopService {
     User resolveOwner(Shop shop);
 
     List<User> findFavouriteUsers(Shop shop);
+
+    Page<User> findFavouriteUsers(UUID shopId, Optional<String> query, Pageable pageable);
 
     List<Shop> findFavouriteShops(User user);
 
