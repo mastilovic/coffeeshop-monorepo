@@ -81,7 +81,7 @@ const USER_TYPE_SELECT_OPTIONS: FormSelectOption[] = [
         <div class="empty-state"><p>{{ emptyStateMessage() }}</p></div>
       } @else {
         <div class="table-container">
-          <table class="data-table">
+          <table class="data-table data-table--responsive">
             <thead>
               <tr>
                 <th>Name</th>
@@ -94,15 +94,15 @@ const USER_TYPE_SELECT_OPTIONS: FormSelectOption[] = [
             <tbody>
               @for (user of users(); track user.id) {
                 <tr>
-                  <td>{{ user.name }}</td>
-                  <td>{{ user.username }}</td>
-                  <td><span class="badge badge-role">{{ user.userType }}</span></td>
-                  <td>
+                  <td data-label="Name">{{ user.name }}</td>
+                  <td data-label="Username">{{ user.username }}</td>
+                  <td data-label="Type"><span class="badge badge-role">{{ user.userType }}</span></td>
+                  <td data-label="Roles">
                     @for (role of user.roles; track role.id) {
                       <span class="badge badge-role" style="margin-right:0.25rem">{{ role.name }}</span>
                     }
                   </td>
-                  <td>
+                  <td class="data-table__actions" data-label="">
                     <div style="display:flex;gap:0.5rem">
                       @if (canEdit(user)) {
                         <button class="btn btn-sm btn-secondary" (click)="onEdit(user)">Edit</button>

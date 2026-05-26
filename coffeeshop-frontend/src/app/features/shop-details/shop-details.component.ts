@@ -144,11 +144,11 @@ type ReservationSubTab = 'pending' | 'approved' | 'denied';
             <div class="empty-state mb-3"><p>{{ membersEmptyStateMessage() }}</p></div>
           } @else {
             <div class="table-container mb-3">
-              <table class="data-table">
+              <table class="data-table data-table--responsive">
                 <thead><tr><th>Name</th><th>Username</th></tr></thead>
                 <tbody>
                   @for (u of members(); track u.id) {
-                    <tr><td>{{ u.name }}</td><td>{{ u.username }}</td></tr>
+                    <tr><td data-label="Name">{{ u.name }}</td><td data-label="Username">{{ u.username }}</td></tr>
                   }
                 </tbody>
               </table>
@@ -310,7 +310,7 @@ type ReservationSubTab = 'pending' | 'approved' | 'denied';
               <div class="empty-state"><p>No menu items.</p></div>
             } @else {
             <div class="table-container">
-              <table class="data-table">
+              <table class="data-table data-table--responsive">
                 <thead>
                   <tr>
                     <th>Name</th><th>Type</th><th>Description</th><th>Price</th>
@@ -320,12 +320,12 @@ type ReservationSubTab = 'pending' | 'approved' | 'denied';
                 <tbody>
                     @for (item of shop()!.currentMenu!.items; track item.id) {
                     <tr>
-                      <td>{{ item.name }}</td>
-                      <td>{{ formatMenuItemType(item.itemType) }}</td>
-                      <td>{{ item.description }}</td>
-                      <td>{{ item.price }} {{ item.priceCurrency }}</td>
+                      <td data-label="Name">{{ item.name }}</td>
+                      <td data-label="Type">{{ formatMenuItemType(item.itemType) }}</td>
+                      <td data-label="Description">{{ item.description }}</td>
+                      <td data-label="Price">{{ item.price }} {{ item.priceCurrency }}</td>
                       @if (canManageShop()) {
-                        <td>
+                        <td class="data-table__actions" data-label="">
                           <div style="display:flex;gap:0.5rem">
                             <button class="btn btn-sm btn-secondary" (click)="onEditMenuItem(item)">Edit</button>
                             <button class="btn btn-sm btn-danger" (click)="onDeleteMenuItem(item)">Delete</button>
@@ -354,17 +354,17 @@ type ReservationSubTab = 'pending' | 'approved' | 'denied';
                   <p class="text-muted mt-2">No items.</p>
                 } @else {
                   <div class="table-container mt-2">
-                    <table class="data-table">
+                    <table class="data-table data-table--responsive">
                       <thead>
                         <tr><th>Name</th><th>Type</th><th>Description</th><th>Price</th></tr>
                       </thead>
                       <tbody>
                         @for (item of historical.items; track item.id) {
                           <tr>
-                            <td>{{ item.name }}</td>
-                            <td>{{ formatMenuItemType(item.itemType) }}</td>
-                            <td>{{ item.description }}</td>
-                            <td>{{ item.price }} {{ item.priceCurrency }}</td>
+                            <td data-label="Name">{{ item.name }}</td>
+                            <td data-label="Type">{{ formatMenuItemType(item.itemType) }}</td>
+                            <td data-label="Description">{{ item.description }}</td>
+                            <td data-label="Price">{{ item.price }} {{ item.priceCurrency }}</td>
                           </tr>
                         }
                       </tbody>
@@ -409,7 +409,7 @@ type ReservationSubTab = 'pending' | 'approved' | 'denied';
             <div class="empty-state"><p>No tables.</p></div>
           } @else {
             <div class="table-container">
-              <table class="data-table">
+              <table class="data-table data-table--responsive">
                 <thead>
                   <tr>
                     <th>#</th><th>Capacity</th>
@@ -419,10 +419,10 @@ type ReservationSubTab = 'pending' | 'approved' | 'denied';
                 <tbody>
                   @for (t of shop()!.tables; track t.id) {
                     <tr>
-                      <td>{{ t.number }}</td>
-                      <td>{{ t.capacity }}</td>
+                      <td data-label="#">{{ t.number }}</td>
+                      <td data-label="Capacity">{{ t.capacity }}</td>
                       @if (canManageShop()) {
-                        <td>
+                        <td class="data-table__actions" data-label="">
                           <div style="display:flex;gap:0.5rem">
                             <button class="btn btn-sm btn-secondary" (click)="onEditTable(t)">Edit</button>
                             <button class="btn btn-sm btn-danger" (click)="onDeleteTable(t)">Delete</button>
@@ -465,18 +465,18 @@ type ReservationSubTab = 'pending' | 'approved' | 'denied';
               <div class="empty-state"><p>No pending reservation requests.</p></div>
             } @else if (canManageShop()) {
               <div class="table-container table-container--dropdown-safe">
-                <table class="data-table">
+                <table class="data-table data-table--responsive">
                   <thead>
                     <tr><th>Guest</th><th>Event</th><th>Party Size</th><th>Status</th><th>Actions</th></tr>
                   </thead>
                   <tbody>
                     @for (req of pendingRequests(); track req.id) {
                       <tr>
-                        <td>{{ req.user?.name ?? '—' }}</td>
-                        <td>{{ eventLabel(req) }}</td>
-                        <td>{{ req.partySize }}</td>
-                        <td><span class="badge badge-pending">{{ req.status }}</span></td>
-                        <td>
+                        <td data-label="Guest">{{ req.user?.name ?? '—' }}</td>
+                        <td data-label="Event">{{ eventLabel(req) }}</td>
+                        <td data-label="Party Size">{{ req.partySize }}</td>
+                        <td data-label="Status"><span class="badge badge-pending">{{ req.status }}</span></td>
+                        <td class="data-table__actions" data-label="">
                           <div class="reservation-actions">
                             <app-form-select
                               [compact]="true"
@@ -503,14 +503,14 @@ type ReservationSubTab = 'pending' | 'approved' | 'denied';
               </div>
             } @else if (canSelfReserveAtShop()) {
               <div class="table-container">
-                <table class="data-table">
+                <table class="data-table data-table--responsive">
                   <thead><tr><th>Event</th><th>Party Size</th><th>Status</th></tr></thead>
                   <tbody>
                     @for (req of pendingRequests(); track req.id) {
                       <tr>
-                        <td>{{ eventLabel(req) }}</td>
-                        <td>{{ req.partySize }}</td>
-                        <td><span class="badge badge-pending">{{ req.status }}</span></td>
+                        <td data-label="Event">{{ eventLabel(req) }}</td>
+                        <td data-label="Party Size">{{ req.partySize }}</td>
+                        <td data-label="Status"><span class="badge badge-pending">{{ req.status }}</span></td>
                       </tr>
                     }
                   </tbody>
@@ -524,7 +524,7 @@ type ReservationSubTab = 'pending' | 'approved' | 'denied';
               <div class="empty-state"><p>{{ canSelfReserveAtShop() ? 'No confirmed reservations for this shop.' : 'No approved reservations for this shop.' }}</p></div>
             } @else {
               <div class="table-container">
-                <table class="data-table">
+                <table class="data-table data-table--responsive">
                   <thead>
                     <tr>
                       @if (canManageShop()) { <th>Guest</th> }
@@ -534,10 +534,10 @@ type ReservationSubTab = 'pending' | 'approved' | 'denied';
                   <tbody>
                     @for (r of reservations(); track r.id) {
                       <tr>
-                        @if (canManageShop()) { <td>{{ r.user.name }}</td> }
-                        <td>{{ eventLabel(r) }}</td>
-                        <td>{{ r.table ? 'Table ' + r.table.number : 'N/A' }}</td>
-                        <td>{{ r.partySize }}</td>
+                        @if (canManageShop()) { <td data-label="Guest">{{ r.user.name }}</td> }
+                        <td data-label="Event">{{ eventLabel(r) }}</td>
+                        <td data-label="Table">{{ r.table ? 'Table ' + r.table.number : 'N/A' }}</td>
+                        <td data-label="Party Size">{{ r.partySize }}</td>
                       </tr>
                     }
                   </tbody>
@@ -551,7 +551,7 @@ type ReservationSubTab = 'pending' | 'approved' | 'denied';
               <div class="empty-state"><p>No denied reservation requests.</p></div>
             } @else {
               <div class="table-container">
-                <table class="data-table">
+                <table class="data-table data-table--responsive">
                   <thead>
                     <tr>
                       @if (canManageShop()) { <th>Guest</th> }
@@ -561,10 +561,10 @@ type ReservationSubTab = 'pending' | 'approved' | 'denied';
                   <tbody>
                     @for (req of deniedRequests(); track req.id) {
                       <tr>
-                        @if (canManageShop()) { <td>{{ req.user?.name ?? '—' }}</td> }
-                        <td>{{ eventLabel(req) }}</td>
-                        <td>{{ req.partySize }}</td>
-                        <td><span class="badge badge-denied">{{ req.status }}</span></td>
+                        @if (canManageShop()) { <td data-label="Guest">{{ req.user?.name ?? '—' }}</td> }
+                        <td data-label="Event">{{ eventLabel(req) }}</td>
+                        <td data-label="Party Size">{{ req.partySize }}</td>
+                        <td data-label="Status"><span class="badge badge-denied">{{ req.status }}</span></td>
                       </tr>
                     }
                   </tbody>
@@ -622,7 +622,7 @@ type ReservationSubTab = 'pending' | 'approved' | 'denied';
             </div>
           } @else {
             <div class="table-container">
-              <table class="data-table">
+              <table class="data-table data-table--responsive">
                 <thead>
                   <tr>
                     <th>Name</th><th>Date</th><th>Description</th><th>Availability</th>
@@ -632,12 +632,12 @@ type ReservationSubTab = 'pending' | 'approved' | 'denied';
                 <tbody>
                   @for (e of shop()!.events; track e.eventId) {
                     <tr>
-                      <td>{{ e.eventName }}</td>
-                      <td>{{ e.eventDate }}</td>
-                      <td>{{ e.description }}</td>
-                      <td>{{ eventAvailabilityLabel(e) }}</td>
+                      <td data-label="Name">{{ e.eventName }}</td>
+                      <td data-label="Date">{{ e.eventDate }}</td>
+                      <td data-label="Description">{{ e.description }}</td>
+                      <td data-label="Availability">{{ eventAvailabilityLabel(e) }}</td>
                       @if (canSelfReserveAtShop() || canManageShop()) {
-                        <td>
+                        <td class="data-table__actions" data-label="">
                           @if (canSelfReserveAtShop()) {
                             <button
                               type="button"

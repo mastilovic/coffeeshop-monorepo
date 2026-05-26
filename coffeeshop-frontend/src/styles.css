@@ -5,6 +5,12 @@
   padding: 0;
 }
 
+:root {
+  --bp-sm: 640px;
+  --bp-md: 768px;
+  --bp-lg: 1024px;
+}
+
 html {
   color-scheme: dark;
 }
@@ -53,10 +59,6 @@ a:hover {
   border-radius: 12px;
   padding: 1.5rem;
   transition: transform 0.2s, box-shadow 0.2s;
-}
-.card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
 }
 
 .card-grid {
@@ -1231,4 +1233,267 @@ input[type="time"].form-input {
   color: #ccc;
   min-width: 7rem;
   text-align: center;
+}
+
+/* ── Responsive (mobile & tablet) ── */
+@media (max-width: 768px) {
+  .page {
+    padding: 1rem;
+  }
+
+  .page-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+
+  .page-header .btn {
+    width: 100%;
+  }
+
+  .page-header > div {
+    width: 100%;
+  }
+
+  .page-header > div[style*="flex"] {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .page-title {
+    font-size: 1.375rem;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .form-card,
+  .card,
+  .auth-card {
+    padding: 1.25rem;
+  }
+
+  .form-actions {
+    flex-direction: column;
+  }
+
+  .form-actions .btn {
+    width: 100%;
+  }
+
+  .events-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .events-search,
+  .date-range-picker {
+    flex: 1 1 auto;
+    width: 100%;
+  }
+
+  .date-range-trigger {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .pagination-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+
+  .pagination-controls {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .reservation-actions {
+    min-width: 0;
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+  }
+
+  .reservation-actions__buttons {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .reservation-actions__buttons .btn {
+    width: 100%;
+  }
+
+  .reservation-actions .form-select-trigger--compact {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .date-time-picker {
+    flex-wrap: wrap;
+  }
+
+  .date-time-picker-time {
+    flex: 1 1 100%;
+    min-width: 0;
+  }
+
+  .date-range-popover {
+    left: 0;
+    right: auto;
+    width: min(18.5rem, calc(100vw - 2rem));
+    max-width: calc(100vw - 2rem);
+  }
+
+  .form-select-dropdown,
+  .form-multi-select-dropdown {
+    max-width: calc(100vw - 2rem);
+  }
+
+  .table-container {
+    overflow-x: visible;
+  }
+
+  .data-table--responsive thead {
+    display: none;
+  }
+
+  .data-table--responsive tbody tr {
+    display: block;
+    border-bottom: 1px solid #2a2a3e;
+    padding: 1rem;
+  }
+
+  .data-table--responsive tbody tr:last-child {
+    border-bottom: none;
+  }
+
+  .data-table--responsive tbody tr:hover td {
+    background: transparent;
+  }
+
+  .data-table--responsive td {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 0.375rem 0;
+    border: none;
+    text-align: right;
+  }
+
+  .data-table--responsive td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    font-size: 0.75rem;
+    color: #aaa;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    flex-shrink: 0;
+    text-align: left;
+    padding-top: 0.125rem;
+  }
+
+  .data-table--responsive td[data-label=""]::before {
+    display: none;
+  }
+
+  .data-table--responsive td[data-label=""] {
+    display: block;
+    padding-top: 0.75rem;
+  }
+
+  .data-table__actions .event-row-actions__inner,
+  .data-table__actions > div[style*="flex"] {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .tabs {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .tabs .tab {
+    flex-shrink: 0;
+    padding: 0.625rem 0.875rem;
+  }
+
+  .tabs-nav__shell > .tabs--primary {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .tabs-nav__shell > .tabs--primary::-webkit-scrollbar {
+    display: none;
+  }
+
+  .tabs-nav__shell > .tabs--primary .tab {
+    flex-shrink: 0;
+    padding: 0.625rem 0.875rem;
+  }
+
+  .tabs-nav__shell .tabs-nav__panel-header .tabs--sub,
+  .tabs-nav__panel-header .tabs--sub {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .tabs-nav__shell .tabs-nav__panel-header .tabs--sub::-webkit-scrollbar,
+  .tabs-nav__panel-header .tabs--sub::-webkit-scrollbar {
+    display: none;
+  }
+
+  .tabs-nav__shell .tabs-nav__panel-header .tabs--sub .tab,
+  .tabs-nav__panel-header .tabs--sub .tab {
+    flex-shrink: 0;
+    padding: 0.625rem 0.875rem;
+  }
+
+  .confirm-dialog-actions {
+    flex-direction: column;
+  }
+
+  .confirm-dialog-actions .btn {
+    width: 100%;
+  }
+}
+
+@media (max-width: 640px) {
+  .card-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .stat-card .stat-value {
+    font-size: 2rem;
+  }
+}
+
+@media (hover: hover) {
+  .card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  }
+}
+
+@media (hover: none) {
+  .card:hover {
+    transform: none;
+    box-shadow: none;
+  }
 }

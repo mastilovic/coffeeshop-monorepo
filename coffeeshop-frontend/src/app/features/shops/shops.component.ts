@@ -19,128 +19,129 @@ import { DialogService } from '../../services/dialog.service';
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="page shops-page">
-      <div class="shops-page__content">
-      <div class="page-header">
-        <h1 class="page-title">Shops</h1>
-        @if (canCreateShop()) {
-          <button class="btn btn-primary" (click)="showForm.set(!showForm())">
-            {{ showForm() ? 'Cancel' : '+ New Shop' }}
-          </button>
-        }
-      </div>
-
       @if (showForm() && canShowForm()) {
-        <div class="form-card mb-3">
-          <form [formGroup]="form" (ngSubmit)="onSubmit()">
-            <div class="form-row">
-              <div class="form-group">
-                <label>Name</label>
-                <input class="form-input" formControlName="name" placeholder="Shop name" />
-              </div>
-              @if (editingId()) {
-                <div class="form-group">
-                  <label>Email</label>
-                  <input class="form-input" type="email" formControlName="email" placeholder="shop@example.com" />
+        <div class="shops-page__content">
+          <div class="page-header">
+            <h1 class="page-title">{{ editingId() ? 'Edit Shop' : 'Create Shop' }}</h1>
+            <button type="button" class="btn btn-secondary" (click)="cancelEdit()">Cancel</button>
+          </div>
+
+          <div class="shops-form-wrapper">
+            <div class="form-card">
+              <form [formGroup]="form" (ngSubmit)="onSubmit()">
+                <div class="form-group shop-form-group--name">
+                  <label>Name</label>
+                  <input class="form-input" formControlName="name" placeholder="Shop name" />
                 </div>
-              }
-            </div>
-            <div class="form-row">
-              <div class="form-group">
-                <label>Address</label>
-                <input class="form-input" formControlName="address" placeholder="Street address" />
-              </div>
-              <div class="form-group">
-                <label>City</label>
-                <app-city-search-select formControlName="city" />
-              </div>
-            </div>
-            <div class="form-row">
-              <div class="form-group">
-                <label>Phone</label>
-                <input class="form-input" formControlName="phoneNumber" placeholder="+1 234 567 890" />
-              </div>
-            </div>
-            <div class="form-actions">
-              <button type="submit" class="btn btn-primary" [disabled]="form.invalid">
-                {{ editingId() ? 'Update' : 'Create' }}
-              </button>
-              @if (editingId()) {
-                <button type="button" class="btn btn-secondary" (click)="cancelEdit()">Cancel</button>
-              }
-            </div>
-          </form>
-        </div>
-      }
-
-      <div class="events-toolbar mb-3">
-        <input
-          class="form-input events-search"
-          type="search"
-          placeholder="Search by name, city, or address..."
-          aria-label="Search shops"
-          [value]="searchInput()"
-          (input)="onSearchInput($event)"
-        />
-      </div>
-
-      @if (loading()) {
-        <div class="loading">Loading shops...</div>
-      } @else if (totalElements() === 0) {
-        <div class="empty-state"><p>{{ emptyStateMessage() }}</p></div>
-      } @else {
-        @if (favouriteShopsList().length > 0) {
-          <h2 class="shops-section-title">Your communities</h2>
-          <div class="shop-card-grid">
-            @for (shop of favouriteShopsList(); track shop.id) {
-              <ng-container *ngTemplateOutlet="shopCard; context: { $implicit: shop }" />
-            }
-          </div>
-        }
-        @if (otherShopsList().length > 0) {
-          <h2 class="shops-section-title">{{ favouriteShopsList().length > 0 ? 'All shops' : 'Shops' }}</h2>
-          <div class="shop-card-grid">
-            @for (shop of otherShopsList(); track shop.id) {
-              <ng-container *ngTemplateOutlet="shopCard; context: { $implicit: shop }" />
-            }
-          </div>
-        }
-      }
-      </div>
-
-      @if (!loading()) {
-        <div class="pagination-bar shops-page__footer">
-          <span class="pagination-summary">{{ rangeLabel() }}</span>
-          <div class="pagination-controls">
-            <label class="pagination-page-size">
-              <span class="pagination-page-size__label">Per page</span>
-              <select
-                class="form-input pagination-page-size__select"
-                aria-label="Items per page"
-                [value]="pageSize()"
-                (change)="onPageSizeChange($event)"
-              >
-                @for (option of pageSizeOptions; track option) {
-                  <option [value]="option">{{ option }}</option>
+                @if (editingId()) {
+                  <div class="form-group shop-form-group--email">
+                    <label>Email</label>
+                    <input class="form-input" type="email" formControlName="email" placeholder="shop@example.com" />
+                  </div>
                 }
-              </select>
-            </label>
-            <button
-              class="btn btn-secondary btn-sm"
-              [disabled]="currentPage() === 0"
-              (click)="goToPage(currentPage() - 1)"
-            >
-              Previous
-            </button>
-            <span class="pagination-page">Page {{ currentPage() + 1 }} of {{ totalPages() }}</span>
-            <button
-              class="btn btn-secondary btn-sm"
-              [disabled]="currentPage() >= totalPages() - 1"
-              (click)="goToPage(currentPage() + 1)"
-            >
-              Next
-            </button>
+                <div class="form-row shop-form-row--address-city">
+                  <div class="form-group">
+                    <label>Address</label>
+                    <input class="form-input" formControlName="address" placeholder="Street address" />
+                  </div>
+                  <div class="form-group">
+                    <label>City</label>
+                    <app-city-search-select formControlName="city" />
+                  </div>
+                </div>
+                <div class="form-group shop-form-group--phone">
+                  <label>Phone</label>
+                  <input class="form-input" formControlName="phoneNumber" placeholder="+1 234 567 890" />
+                </div>
+                <div class="form-actions shops-form-actions">
+                  <button type="submit" class="btn btn-primary" [disabled]="form.invalid">
+                    {{ editingId() ? 'Update' : 'Create' }}
+                  </button>
+                  <button type="button" class="btn btn-secondary" (click)="cancelEdit()">Cancel</button>
+                </div>
+              </form>
+            </div>
           </div>
         </div>
+      } @else {
+        <div class="shops-page__content">
+          <div class="page-header">
+            <h1 class="page-title">Shops</h1>
+            @if (canCreateShop()) {
+              <button type="button" class="btn btn-primary" (click)="showForm.set(true)">+ New Shop</button>
+            }
+          </div>
+
+          <div class="events-toolbar mb-3">
+            <input
+              class="form-input events-search"
+              type="search"
+              placeholder="Search by name, city, or address..."
+              aria-label="Search shops"
+              [value]="searchInput()"
+              (input)="onSearchInput($event)"
+            />
+          </div>
+
+          @if (loading()) {
+            <div class="loading">Loading shops...</div>
+          } @else if (totalElements() === 0) {
+            <div class="empty-state"><p>{{ emptyStateMessage() }}</p></div>
+          } @else {
+            @if (favouriteShopsList().length > 0) {
+              <h2 class="shops-section-title">Your communities</h2>
+              <div class="shop-card-grid">
+                @for (shop of favouriteShopsList(); track shop.id) {
+                  <ng-container *ngTemplateOutlet="shopCard; context: { $implicit: shop }" />
+                }
+              </div>
+            }
+            @if (otherShopsList().length > 0) {
+              <h2 class="shops-section-title">{{ favouriteShopsList().length > 0 ? 'All shops' : 'Shops' }}</h2>
+              <div class="shop-card-grid">
+                @for (shop of otherShopsList(); track shop.id) {
+                  <ng-container *ngTemplateOutlet="shopCard; context: { $implicit: shop }" />
+                }
+              </div>
+            }
+          }
+        </div>
+
+        @if (!loading()) {
+          <div class="pagination-bar shops-page__footer">
+            <span class="pagination-summary">{{ rangeLabel() }}</span>
+            <div class="pagination-controls">
+              <label class="pagination-page-size">
+                <span class="pagination-page-size__label">Per page</span>
+                <select
+                  class="form-input pagination-page-size__select"
+                  aria-label="Items per page"
+                  [value]="pageSize()"
+                  (change)="onPageSizeChange($event)"
+                >
+                  @for (option of pageSizeOptions; track option) {
+                    <option [value]="option">{{ option }}</option>
+                  }
+                </select>
+              </label>
+              <button
+                class="btn btn-secondary btn-sm"
+                [disabled]="currentPage() === 0"
+                (click)="goToPage(currentPage() - 1)"
+              >
+                Previous
+              </button>
+              <span class="pagination-page">Page {{ currentPage() + 1 }} of {{ totalPages() }}</span>
+              <button
+                class="btn btn-secondary btn-sm"
+                [disabled]="currentPage() >= totalPages() - 1"
+                (click)="goToPage(currentPage() + 1)"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        }
       }
     </div>
 
@@ -151,6 +152,7 @@ import { DialogService } from '../../services/dialog.service';
             type="button"
             class="btn btn-icon btn-favourite"
             [class.btn-favourite--active]="isFavourite(shop)"
+            [disabled]="togglingFavouriteId() === shop.id"
             [attr.aria-label]="isFavourite(shop) ? 'Leave ' + shop.name : 'Join ' + shop.name"
             [title]="isFavourite(shop) ? 'Leave ' + shop.name : 'Join ' + shop.name"
             (click)="toggleFavourite(shop, $event)"
@@ -353,6 +355,40 @@ import { DialogService } from '../../services/dialog.service';
       margin-top: auto;
       padding-top: 0.75rem;
     }
+
+    .shops-form-wrapper {
+      display: flex;
+      justify-content: center;
+    }
+
+    .shops-form-wrapper .form-card {
+      width: 100%;
+      max-width: 560px;
+      padding: 1.75rem;
+    }
+
+    .shop-form-group--name,
+    .shop-form-group--email,
+    .shop-form-group--phone {
+      margin-bottom: 1.1rem;
+    }
+
+    .shop-form-row--address-city {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 1rem;
+      margin-bottom: 1.1rem;
+    }
+
+    @media (max-width: 640px) {
+      .shop-form-row--address-city {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .shops-form-actions {
+      margin-top: 1.25rem;
+    }
   `,
 })
 export class ShopsComponent implements OnInit {
@@ -426,8 +462,11 @@ export class ShopsComponent implements OnInit {
     this.loadShops();
   }
 
-  loadShops(): void {
-    this.loading.set(true);
+  loadShops(options?: { silent?: boolean }): void {
+    const silent = options?.silent ?? false;
+    if (!silent) {
+      this.loading.set(true);
+    }
     const q = this.searchInput().trim();
     this.shopService
       .search({
@@ -440,9 +479,15 @@ export class ShopsComponent implements OnInit {
           this.shops.set(page.content);
           this.totalElements.set(page.totalElements);
           this.totalPages.set(Math.max(1, page.totalPages));
-          this.loading.set(false);
+          if (!silent) {
+            this.loading.set(false);
+          }
         },
-        error: () => this.loading.set(false),
+        error: () => {
+          if (!silent) {
+            this.loading.set(false);
+          }
+        },
       });
   }
 
@@ -512,7 +557,7 @@ export class ShopsComponent implements OnInit {
     op.subscribe({
       next: () => {
         this.togglingFavouriteId.set(null);
-        this.loadShops();
+        this.loadShops({ silent: true });
       },
       error: () => this.togglingFavouriteId.set(null),
     });
