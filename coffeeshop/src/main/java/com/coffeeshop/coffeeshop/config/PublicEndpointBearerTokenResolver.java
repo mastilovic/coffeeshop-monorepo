@@ -26,10 +26,16 @@ public class PublicEndpointBearerTokenResolver implements BearerTokenResolver {
             return true;
         }
 
+        if (HttpMethod.GET.matches(method) && path.equals("/api/v1/shop")) {
+            final String page = request.getParameter("page");
+            return page == null || page.isBlank();
+        }
+
         if (HttpMethod.GET.matches(method) && path.startsWith("/api/v1/")) {
             return !path.equals("/api/v1/reservation-request")
                     && !path.startsWith("/api/v1/reservation-request/")
-                    && !path.equals("/api/v1/shop/mine");
+                    && !path.equals("/api/v1/shop/mine")
+                    && !path.equals("/api/v1/shop");
         }
 
         if (HttpMethod.POST.matches(method)) {
