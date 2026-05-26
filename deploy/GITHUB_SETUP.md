@@ -30,7 +30,7 @@ This is not fixed by workflow YAML — check repository settings:
 
 | File | Source |
 |------|--------|
-| `deploy/k8s/overlays/staging/config.env` | Variables `STAGING_APP_HOST`, `STAGING_AUTH_HOST` + fixed keys |
+| `deploy/k8s/overlays/staging/config.env` | Variables `STAGING_APP_HOST`, `STAGING_AUTH_HOST`, `STAGING_PUBLIC_SCHEME` + fixed keys |
 | `deploy/k8s/overlays/staging/secrets.env` | Secrets `STAGING_*` |
 | `deploy/k8s/overlays/staging/realm-coffeeshop.json` | Template + `envsubst` (see below) |
 
@@ -38,10 +38,39 @@ Realm template: `realm-coffeeshop.json.template` uses `${STAGING_APP_HOST}` and 
 
 ## Variables (Actions → Variables)
 
-| Name | Used for | Example value |
-|------|----------|---------------|
-| `STAGING_APP_HOST` | Ingress host, CORS, Keycloak redirect URIs in rendered realm | `staging.app.coffeeshop.com` |
-| `STAGING_AUTH_HOST` | Ingress host, `KEYCLOAK_JWT_ISSUER_URI` | `staging.auth.coffeeshop.com` |
+| Name | Used for | Example (`kafenerija.online`) |
+|------|----------|-------------------------------|
+| `STAGING_APP_HOST` | Ingress app host, CORS, Keycloak client redirect/web origins | `app.kafenerija.online` |
+| `STAGING_AUTH_HOST` | Ingress auth host, Keycloak `KC_HOSTNAME`, JWT issuer host | `auth.kafenerija.online` |
+| `STAGING_PUBLIC_SCHEME` | Prefix for `KEYCLOAK_JWT_ISSUER_URI` and `CORS_ALLOWED_ORIGINS` (`http` or `https`; defaults to `http` if unset) | `http` |
+
+Hostnames only — **no** `http://` prefix in `STAGING_APP_HOST` / `STAGING_AUTH_HOST`.
+
+Changing variables does **not** update the cluster until the next deploy (push to `main` or **Deploy Staging (DOKS)**).
+
+### DNS (Namecheap or any registrar)
+
+Point two **A** records at your ingress load balancer IP:
+
+```bash
+kubectl get svc -n ingress-nginx ingress-nginx-controller -o jsonpath='{.status.loadBalancer.ingress[0].ip}{"\n"}'
+```
+
+| Type | Host | Example FQDN |
+|------|------|----------------|
+| A | `app` | `app.kafenerija.online` |
+| A | `auth` | `auth.kafenerija.online` |
+
+Verify: `dig +short app.kafenerija.online` returns the LB IP.
+
+### Verify Ingress matches GitHub variables
+
+```bash
+kubectl get ingress coffeeshop -n coffeeshop-staging \
+  -o custom-columns='APP:.spec.rules[0].host,AUTH:.spec.rules[1].host'
+```
+
+Both columns must match `STAGING_APP_HOST` and `STAGING_AUTH_HOST`. If they show old hosts, redeploy after updating variables.
 
 ## Secrets (Actions → Secrets)
 
@@ -63,12 +92,35 @@ kubectl --kubeconfig ~/.kube/config-coffeeshop-staging cluster-info
 
 Paste the entire file into secret `KUBE_CONFIG`.
 
+## Keycloak realm re-import
+
+Keycloak starts with `--import-realm`. If realm `coffeeshop` **already exists** in Postgres, a redeploy may **not** update client redirect URIs.
+
+After changing `STAGING_APP_HOST` or the realm template:
+
+1. **Keycloak Admin** at `http://<STAGING_AUTH_HOST>/` (or `https://` when TLS is enabled) → **Clients** → `coffeeshop-backend` → add `http://<STAGING_APP_HOST>/*` and `https://<STAGING_APP_HOST>/*` to **Valid redirect URIs** and **Web origins**, or  
+2. Staging-only: delete the Keycloak deployment and Keycloak Postgres PVC to force a clean import (loses Keycloak users).
+
+## Post-deploy verification
+
+```bash
+kubectl exec -n coffeeshop-staging deploy/backend -- env | grep KEYCLOAK_JWT_ISSUER_URI
+# e.g. http://auth.kafenerija.online/realms/coffeeshop
+
+curl -sS -o /dev/null -w "%{http_code}\n" "http://app.kafenerija.online/"
+curl -sS -o /dev/null -w "%{http_code}\n" "http://auth.kafenerija.online/health/ready"
+```
+
+Browser: `http://<STAGING_APP_HOST>/` — register/login. If **401 after login**, decode the JWT `iss` claim; it must exactly match `KEYCLOAK_JWT_ISSUER_URI` on the backend (same scheme and host).
+
+When you add TLS later, set `STAGING_PUBLIC_SCHEME=https`, redeploy, and use `https://` URLs in the browser.
+
 ## Local deploy (same substitution model)
 
 ```bash
 cd deploy/k8s/overlays/staging
-cp config.env.example config.env    # set APP_HOST / AUTH_HOST
-cp secrets.env.example secrets.env  # set passwords; KEYCLOAK_BACKEND_CLIENT_SECRET must match intent for realm
+cp config.env.example config.env    # set APP_HOST / AUTH_HOST / PUBLIC_SCHEME
+cp secrets.env.example secrets.env  # set passwords; KEYCLOAK_BACKEND_CLIENT_SECRET must match realm
 chmod +x render-local.sh
 ./render-local.sh
 kubectl apply -k .

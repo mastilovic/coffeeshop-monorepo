@@ -120,10 +120,11 @@ Use when you need to redeploy an existing image without rebuilding (e.g. pin `im
 
 ### Repository variables (`Settings` → `Secrets and variables` → `Actions` → **Variables**)
 
-| Name | Pipeline writes to | Example |
-|------|-------------------|---------|
-| `STAGING_APP_HOST` | `config.env` → `APP_HOST`, realm template → redirect URIs | `staging.app.coffeeshop.com` |
-| `STAGING_AUTH_HOST` | `config.env` → `AUTH_HOST`, `KEYCLOAK_JWT_ISSUER_URI` | `staging.auth.coffeeshop.com` |
+| Name | Pipeline writes to | Example (`kafenerija.online`) |
+|------|-------------------|-------------------------------|
+| `STAGING_APP_HOST` | `config.env` → `APP_HOST`, realm template → redirect URIs | `app.kafenerija.online` |
+| `STAGING_AUTH_HOST` | `config.env` → `AUTH_HOST`, Keycloak `KC_HOSTNAME` | `auth.kafenerija.online` |
+| `STAGING_PUBLIC_SCHEME` | `KEYCLOAK_JWT_ISSUER_URI`, `CORS_ALLOWED_ORIGINS` scheme (`http` or `https`; default `http`) | `http` |
 
 ### Repository secrets
 
@@ -175,13 +176,22 @@ Checklist for the secret:
 
 ## DNS
 
-After the first apply:
+After the first apply, get the load balancer IP:
 
 ```bash
-kubectl get ingress -n coffeeshop-staging
+kubectl get svc -n ingress-nginx ingress-nginx-controller -o jsonpath='{.status.loadBalancer.ingress[0].ip}{"\n"}'
+kubectl get ingress coffeeshop -n coffeeshop-staging \
+  -o custom-columns='APP:.spec.rules[0].host,AUTH:.spec.rules[1].host'
 ```
 
-Point `APP_HOST` and `AUTH_HOST` A records at the Ingress external IP.
+At your registrar (e.g. Namecheap **Advanced DNS** for `kafenerija.online`), add two **A** records to that IP:
+
+| Host | FQDN (must match GitHub `STAGING_*_HOST`) |
+|------|------------------------------------------|
+| `app` | `app.kafenerija.online` |
+| `auth` | `auth.kafenerija.online` |
+
+Users open **`http://app.kafenerija.online/`** (or `https://` after TLS). Ingress hosts must match GitHub variables; redeploy after changing variables.
 
 ## Verification checklist
 
@@ -199,7 +209,7 @@ kubectl rollout status deployment/backend -n coffeeshop-staging
 
 ### Common issues
 
-- **401 after login**: `KEYCLOAK_JWT_ISSUER_URI` must be the **public** issuer (`https://<AUTH_HOST>/realms/coffeeshop`), not `http://keycloak:8080/...`.
+- **401 after login**: JWT `iss` must match `KEYCLOAK_JWT_ISSUER_URI` on the backend (e.g. `http://<AUTH_HOST>/realms/coffeeshop` when `STAGING_PUBLIC_SCHEME=http`), not `http://keycloak:8080/...`.
 - **Keycloak redirect errors**: set `STAGING_APP_HOST` variable to the hostname users open in the browser.
 - **Image pull errors**: Add `ghcr-pull` secret or make GHCR packages public.
 - **Postgres pending**: Check PVC provisioning (`kubectl get pvc -n coffeeshop-staging`); DO default StorageClass is usually `do-block-storage`.

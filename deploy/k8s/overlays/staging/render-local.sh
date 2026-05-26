@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Generate config.env, secrets.env (from examples), and realm-coffeeshop.json for local kubectl apply.
+# Generate realm-coffeeshop.json for local kubectl apply (config.env / secrets.env must exist).
 set -euo pipefail
 cd "$(dirname "$0")"
 
@@ -19,10 +19,21 @@ source ./config.env
 source ./secrets.env
 set +a
 
+PUBLIC_SCHEME="${PUBLIC_SCHEME:-http}"
+if [[ "$PUBLIC_SCHEME" != "http" && "$PUBLIC_SCHEME" != "https" ]]; then
+  echo "PUBLIC_SCHEME must be http or https (got: ${PUBLIC_SCHEME})" >&2
+  exit 1
+fi
+if [[ -z "${APP_HOST:-}" || -z "${AUTH_HOST:-}" ]]; then
+  echo "Set APP_HOST and AUTH_HOST in config.env" >&2
+  exit 1
+fi
+
 export STAGING_APP_HOST="${APP_HOST}"
 export STAGING_KEYCLOAK_BACKEND_CLIENT_SECRET="${KEYCLOAK_BACKEND_CLIENT_SECRET}"
 
 envsubst '${STAGING_APP_HOST} ${STAGING_KEYCLOAK_BACKEND_CLIENT_SECRET}' \
   < realm-coffeeshop.json.template > realm-coffeeshop.json
 
-echo "Wrote realm-coffeeshop.json (APP_HOST=${STAGING_APP_HOST})"
+echo "Wrote realm-coffeeshop.json (APP_HOST=${STAGING_APP_HOST}, AUTH_HOST=${AUTH_HOST}, scheme=${PUBLIC_SCHEME})"
+echo "Ensure config.env has KEYCLOAK_JWT_ISSUER_URI=${PUBLIC_SCHEME}://${AUTH_HOST}/realms/coffeeshop"
