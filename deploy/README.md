@@ -65,15 +65,19 @@ spec:
 
 HTTP-only works for initial checks. For HTTPS, install [cert-manager](https://cert-manager.io/) and add a `Certificate` + TLS block on the Ingress.
 
+## GitHub configuration
+
+The deploy pipeline generates `config.env`, `secrets.env`, and `realm-coffeeshop.json` from GitHub **Variables**, **Secrets**, and `realm-coffeeshop.json.template`. You do not commit those generated files.
+
+See **[GITHUB_SETUP.md](GITHUB_SETUP.md)** for the full list of Variables and Secrets.
+
 ## Local deploy (manual)
 
 ```bash
 cd deploy/k8s/overlays/staging
-cp config.env.example config.env    # edit APP_HOST / AUTH_HOST
-cp secrets.env.example secrets.env  # set strong passwords
-
-# Match realm client secret with KEYCLOAK_BACKEND_CLIENT_SECRET in secrets.env
-# Update redirectUris/webOrigins in realm-coffeeshop.json if hosts differ from the example.
+cp config.env.example config.env    # set APP_HOST / AUTH_HOST
+cp secrets.env.example secrets.env
+chmod +x render-local.sh && ./render-local.sh
 
 kustomize edit set image \
   ghcr.io/mastilovic/coffeeshop-backend=ghcr.io/mastilovic/coffeeshop-backend:sha-<tag> \
@@ -102,21 +106,23 @@ Use when you need to redeploy an existing image without rebuilding (e.g. pin `im
 
 ### Repository variables (`Settings` → `Secrets and variables` → `Actions` → **Variables**)
 
-| Name | Example |
-|------|---------|
-| `STAGING_APP_HOST` | `staging.app.example.com` |
-| `STAGING_AUTH_HOST` | `staging.auth.example.com` |
+| Name | Pipeline writes to | Example |
+|------|-------------------|---------|
+| `STAGING_APP_HOST` | `config.env` → `APP_HOST`, realm template → redirect URIs | `staging.app.coffeeshop.com` |
+| `STAGING_AUTH_HOST` | `config.env` → `AUTH_HOST`, `KEYCLOAK_JWT_ISSUER_URI` | `staging.auth.coffeeshop.com` |
 
 ### Repository secrets
 
-| Name | Purpose |
-|------|---------|
-| `KUBE_CONFIG` | Full kubeconfig for **one** DOKS cluster (see below) |
-| `STAGING_POSTGRES_PASSWORD` | App database password |
-| `STAGING_KEYCLOAK_POSTGRES_PASSWORD` | Keycloak database password |
-| `STAGING_KEYCLOAK_ADMIN` | Keycloak admin username (e.g. `admin`) |
-| `STAGING_KEYCLOAK_ADMIN_PASSWORD` | Keycloak admin password |
-| `STAGING_KEYCLOAK_BACKEND_CLIENT_SECRET` | Must match `coffeeshop-backend` client secret in `realm-coffeeshop.json` |
+| Name | Pipeline writes to |
+|------|-------------------|
+| `KUBE_CONFIG` | `~/.kube/config` in the deploy job |
+| `STAGING_POSTGRES_PASSWORD` | `secrets.env` |
+| `STAGING_KEYCLOAK_POSTGRES_PASSWORD` | `secrets.env` |
+| `STAGING_KEYCLOAK_ADMIN` | `secrets.env` |
+| `STAGING_KEYCLOAK_ADMIN_PASSWORD` | `secrets.env` |
+| `STAGING_KEYCLOAK_BACKEND_CLIENT_SECRET` | `secrets.env` + rendered realm `secret` |
+
+Details: **[GITHUB_SETUP.md](GITHUB_SETUP.md)**
 
 ### `KUBE_CONFIG` secret (required)
 
@@ -124,18 +130,17 @@ Use when you need to redeploy an existing image without rebuilding (e.g. pin `im
 
 `Get "http://localhost:8080/openapi/v2": connection refused` — that means CI is **not** using your DOKS API; fix the secret, do not use `--validate=false`.
 
-**Create a dedicated staging kubeconfig** (do not paste a merged `~/.kube/config` with the wrong `current-context`):
+**Create a dedicated staging kubeconfig** (`doctl save` does not support `--kubeconfig`; use `show`):
 
 ```bash
-doctl kubernetes cluster kubeconfig save <your-staging-cluster-name> \
-  --kubeconfig ~/.kube/config-coffeeshop-staging \
-  --expiry 0
+doctl kubernetes cluster kubeconfig show <your-cluster-id> > ~/.kube/config-coffeeshop-staging
+chmod 600 ~/.kube/config-coffeeshop-staging
 
 kubectl --kubeconfig ~/.kube/config-coffeeshop-staging config current-context
 kubectl --kubeconfig ~/.kube/config-coffeeshop-staging cluster-info
 ```
 
-Copy the **entire file** into GitHub → Settings → Secrets and variables → Actions → **New repository secret** → name `KUBE_CONFIG`, paste contents of `~/.kube/config-coffeeshop-staging`.
+Copy the **entire file** into GitHub → **Secrets** → `KUBE_CONFIG`.
 
 Checklist for the secret:
 
@@ -181,7 +186,7 @@ kubectl rollout status deployment/backend -n coffeeshop-staging
 ### Common issues
 
 - **401 after login**: `KEYCLOAK_JWT_ISSUER_URI` must be the **public** issuer (`https://<AUTH_HOST>/realms/coffeeshop`), not `http://keycloak:8080/...`.
-- **Keycloak redirect errors**: `realm-coffeeshop.json` `redirectUris` / `webOrigins` must include `https://<APP_HOST>`.
+- **Keycloak redirect errors**: set `STAGING_APP_HOST` variable to the hostname users open in the browser.
 - **Image pull errors**: Add `ghcr-pull` secret or make GHCR packages public.
 - **Postgres pending**: Check PVC provisioning (`kubectl get pvc -n coffeeshop-staging`); DO default StorageClass is usually `do-block-storage`.
 - **`localhost:8080` / openapi connection refused on deploy**: `KUBE_CONFIG` is empty, truncated, or not a valid DOKS kubeconfig. Recreate the secret from a single-cluster file (see **`KUBE_CONFIG` secret** above). The deploy workflow logs `Context:` and `API server:` before `kubectl apply`.

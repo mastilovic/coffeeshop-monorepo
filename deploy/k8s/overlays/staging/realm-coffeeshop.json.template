@@ -24,7 +24,7 @@
       "enabled": true,
       "protocol": "openid-connect",
       "publicClient": false,
-      "secret": "CHANGE_ME_BACKEND_CLIENT_SECRET",
+      "secret": "${STAGING_KEYCLOAK_BACKEND_CLIENT_SECRET}",
       "standardFlowEnabled": true,
       "directAccessGrantsEnabled": true,
       "serviceAccountsEnabled": false,
@@ -34,14 +34,14 @@
         "http://localhost:18080/*",
         "http://localhost:8080/*",
         "http://app:8000/auth/callback",
-        "https://staging.app.example.com/*"
+        "https://${STAGING_APP_HOST}/*"
       ],
       "webOrigins": [
         "http://localhost:8000",
         "http://localhost:18080",
         "http://localhost:8080",
         "http://app:8000",
-        "https://staging.app.example.com"
+        "https://${STAGING_APP_HOST}"
       ],
       "attributes": {
         "pkce.code.challenge.method": "S256"

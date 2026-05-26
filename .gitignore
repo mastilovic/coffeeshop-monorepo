@@ -1,3 +1,4 @@
-# Staging deploy secrets (copy from *.example)
+# Staging deploy — generated at CI or via render-local.sh (copy from *.example)
 deploy/k8s/overlays/staging/secrets.env
 deploy/k8s/overlays/staging/config.env
+deploy/k8s/overlays/staging/realm-coffeeshop.json

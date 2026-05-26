@@ -1,3 +1,4 @@
+# Requires GitHub Variables (STAGING_APP_HOST, STAGING_AUTH_HOST) and Secrets — see deploy/GITHUB_SETUP.md
 name: Deploy Staging (reusable)
 
 on:
@@ -42,6 +43,23 @@ jobs:
             echo "KEYCLOAK_ADMIN_PASSWORD=${{ secrets.STAGING_KEYCLOAK_ADMIN_PASSWORD }}"
             echo "KEYCLOAK_BACKEND_CLIENT_SECRET=${{ secrets.STAGING_KEYCLOAK_BACKEND_CLIENT_SECRET }}"
           } > deploy/k8s/overlays/staging/secrets.env
+
+      - name: Render Keycloak realm from template
+        env:
+          STAGING_APP_HOST: ${{ vars.STAGING_APP_HOST }}
+          STAGING_KEYCLOAK_BACKEND_CLIENT_SECRET: ${{ secrets.STAGING_KEYCLOAK_BACKEND_CLIENT_SECRET }}
+        run: |
+          if [ -z "$STAGING_APP_HOST" ]; then
+            echo "::error::Set repository variable STAGING_APP_HOST"
+            exit 1
+          fi
+          if [ -z "$STAGING_KEYCLOAK_BACKEND_CLIENT_SECRET" ]; then
+            echo "::error::Set repository secret STAGING_KEYCLOAK_BACKEND_CLIENT_SECRET"
+            exit 1
+          fi
+          envsubst '${STAGING_APP_HOST} ${STAGING_KEYCLOAK_BACKEND_CLIENT_SECRET}' \
+            < deploy/k8s/overlays/staging/realm-coffeeshop.json.template \
+            > deploy/k8s/overlays/staging/realm-coffeeshop.json
 
       - name: Setup kubectl
         uses: azure/setup-kubectl@v4
