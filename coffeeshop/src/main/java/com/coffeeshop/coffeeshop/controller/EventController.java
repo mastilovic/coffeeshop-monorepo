@@ -7,13 +7,13 @@ import com.coffeeshop.coffeeshop.model.dto.request.EventUpdateRequest;
 import com.coffeeshop.coffeeshop.model.dto.response.EventResponseDto;
 import com.coffeeshop.coffeeshop.model.dto.response.PageResponseDto;
 import com.coffeeshop.coffeeshop.service.EventService;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -34,6 +34,17 @@ public class EventController {
     public EventController(final EventService eventService, final EventMapper eventMapper) {
         this.eventService = eventService;
         this.eventMapper = eventMapper;
+    }
+
+    private static Optional<LocalDate> parseDateParam(final String value, final String paramName) {
+        if (value == null || value.isBlank()) {
+            return Optional.empty();
+        }
+        try {
+            return Optional.of(LocalDate.parse(value.trim()));
+        } catch (final DateTimeParseException ex) {
+            throw new IllegalArgumentException("Invalid " + paramName + " format, expected yyyy-MM-dd");
+        }
     }
 
     @GetMapping
@@ -98,16 +109,5 @@ public class EventController {
     public ResponseEntity<Void> delete(@PathVariable final String eventId) {
         eventService.deleteById(eventId);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-    }
-
-    private static Optional<LocalDate> parseDateParam(final String value, final String paramName) {
-        if (value == null || value.isBlank()) {
-            return Optional.empty();
-        }
-        try {
-            return Optional.of(LocalDate.parse(value.trim()));
-        } catch (final DateTimeParseException ex) {
-            throw new IllegalArgumentException("Invalid " + paramName + " format, expected yyyy-MM-dd");
-        }
     }
 }

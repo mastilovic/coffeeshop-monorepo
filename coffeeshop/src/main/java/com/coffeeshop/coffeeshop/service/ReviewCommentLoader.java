@@ -5,7 +5,6 @@ import com.coffeeshop.coffeeshop.model.ReviewComment;
 import com.coffeeshop.coffeeshop.repository.ReviewCommentRepository;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;

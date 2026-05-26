@@ -5,10 +5,10 @@ import com.coffeeshop.coffeeshop.model.dto.request.RoleCreateRequest;
 import com.coffeeshop.coffeeshop.model.dto.request.RoleUpdateRequest;
 import com.coffeeshop.coffeeshop.model.dto.response.RoleResponseDto;
 import com.coffeeshop.coffeeshop.service.RoleService;
-import org.springframework.http.HttpStatus;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
-import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;

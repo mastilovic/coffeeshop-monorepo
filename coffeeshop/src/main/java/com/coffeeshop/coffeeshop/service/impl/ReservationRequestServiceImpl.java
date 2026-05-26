@@ -2,22 +2,11 @@ package com.coffeeshop.coffeeshop.service.impl;
 
 import com.coffeeshop.coffeeshop.auth.CurrentUserService;
 import com.coffeeshop.coffeeshop.exception.ResourceNotFoundException;
-import com.coffeeshop.coffeeshop.model.Event;
-import com.coffeeshop.coffeeshop.model.Reservation;
-import com.coffeeshop.coffeeshop.model.ReservationRequest;
-import com.coffeeshop.coffeeshop.model.Shop;
-import com.coffeeshop.coffeeshop.model.Table;
-import com.coffeeshop.coffeeshop.model.User;
+import com.coffeeshop.coffeeshop.model.*;
 import com.coffeeshop.coffeeshop.model.enums.ReservationStatus;
 import com.coffeeshop.coffeeshop.model.enums.UserShopRelationshipType;
 import com.coffeeshop.coffeeshop.model.enums.UserType;
-import com.coffeeshop.coffeeshop.repository.EventRepository;
-import com.coffeeshop.coffeeshop.repository.ReservationRepository;
-import com.coffeeshop.coffeeshop.repository.ReservationRequestRepository;
-import com.coffeeshop.coffeeshop.repository.ShopRepository;
-import com.coffeeshop.coffeeshop.repository.TableRepository;
-import com.coffeeshop.coffeeshop.repository.UserRepository;
-import com.coffeeshop.coffeeshop.repository.UserShopRepository;
+import com.coffeeshop.coffeeshop.repository.*;
 import com.coffeeshop.coffeeshop.service.EventTableAvailabilityService;
 import com.coffeeshop.coffeeshop.service.ReservationRequestService;
 import com.coffeeshop.coffeeshop.service.UserShopService;
@@ -28,13 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 @Transactional
@@ -291,9 +274,9 @@ public class ReservationRequestServiceImpl implements ReservationRequestService 
                 ReservationStatus.PENDING, ReservationStatus.ACCEPTED);
         final boolean hasBlockingRequest = excludeRequestId == null
                 ? reservationRequestRepository.existsByUser_IdAndEvent_EventIdAndStatusIn(
-                        userId, eventId, blockingStatuses)
+                userId, eventId, blockingStatuses)
                 : reservationRequestRepository.existsByUser_IdAndEvent_EventIdAndStatusInAndIdNot(
-                        userId, eventId, blockingStatuses, excludeRequestId);
+                userId, eventId, blockingStatuses, excludeRequestId);
         return hasBlockingRequest
                 || reservationRepository.existsByUser_IdAndEvent_EventId(userId, eventId);
     }

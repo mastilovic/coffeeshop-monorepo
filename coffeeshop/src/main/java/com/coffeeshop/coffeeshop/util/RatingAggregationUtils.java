@@ -11,9 +11,6 @@ public final class RatingAggregationUtils {
     private RatingAggregationUtils() {
     }
 
-    public record RatingSummary(int reviewCount, Double averageRating) {
-    }
-
     public static RatingSummary fromReviews(final List<Review> reviews) {
         if (reviews == null || reviews.isEmpty()) {
             return new RatingSummary(0, null);
@@ -37,5 +34,8 @@ public final class RatingAggregationUtils {
         final BigDecimal average = BigDecimal.valueOf(sum)
                 .divide(BigDecimal.valueOf(count), 1, RoundingMode.HALF_UP);
         return new RatingSummary(count, average.doubleValue());
+    }
+
+    public record RatingSummary(int reviewCount, Double averageRating) {
     }
 }

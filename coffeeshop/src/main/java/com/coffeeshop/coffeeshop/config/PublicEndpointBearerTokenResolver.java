@@ -11,14 +11,6 @@ public class PublicEndpointBearerTokenResolver implements BearerTokenResolver {
 
     private final BearerTokenResolver delegate = new DefaultBearerTokenResolver();
 
-    @Override
-    public String resolve(final HttpServletRequest request) {
-        if (isPublicEndpoint(request)) {
-            return null;
-        }
-        return delegate.resolve(request);
-    }
-
     /**
      * Skip JWT parsing only for endpoints that are {@code permitAll} in {@link SecurityConfiguration}.
      * Do not skip for authenticated GET routes such as {@code /profile}.
@@ -35,13 +27,10 @@ public class PublicEndpointBearerTokenResolver implements BearerTokenResolver {
         }
 
         if (HttpMethod.GET.matches(method) && path.startsWith("/api/v1/")) {
-            if (path.equals("/api/v1/reservation-request")
-                    || path.startsWith("/api/v1/reservation-request/")
-                    || path.equals("/api/v1/shop/mine")
-                    || path.equals("/api/v1/shop")) {
-                return false;
-            }
-            return true;
+            return !path.equals("/api/v1/reservation-request")
+                    && !path.startsWith("/api/v1/reservation-request/")
+                    && !path.equals("/api/v1/shop/mine")
+                    && !path.equals("/api/v1/shop");
         }
 
         if (HttpMethod.POST.matches(method)) {
@@ -67,5 +56,13 @@ public class PublicEndpointBearerTokenResolver implements BearerTokenResolver {
             return path.substring(0, path.length() - 1);
         }
         return path;
+    }
+
+    @Override
+    public String resolve(final HttpServletRequest request) {
+        if (isPublicEndpoint(request)) {
+            return null;
+        }
+        return delegate.resolve(request);
     }
 }

@@ -20,6 +20,22 @@ public class UsernameBackfillRunner implements ApplicationRunner {
         this.userRepository = userRepository;
     }
 
+    private static String deriveBase(final String email) {
+        if (email == null || email.isBlank()) {
+            return "user";
+        }
+        final int at = email.indexOf('@');
+        String local = at > 0 ? email.substring(0, at) : email;
+        local = local.replaceAll("[^a-zA-Z0-9_]", "_");
+        if (local.length() < 3) {
+            local = local + "_user";
+        }
+        if (local.length() > 30) {
+            local = local.substring(0, 30);
+        }
+        return local;
+    }
+
     @Override
     @Transactional
     public void run(final ApplicationArguments args) {
@@ -50,21 +66,5 @@ public class UsernameBackfillRunner implements ApplicationRunner {
         if (changed) {
             userRepository.saveAll(users);
         }
-    }
-
-    private static String deriveBase(final String email) {
-        if (email == null || email.isBlank()) {
-            return "user";
-        }
-        final int at = email.indexOf('@');
-        String local = at > 0 ? email.substring(0, at) : email;
-        local = local.replaceAll("[^a-zA-Z0-9_]", "_");
-        if (local.length() < 3) {
-            local = local + "_user";
-        }
-        if (local.length() > 30) {
-            local = local.substring(0, 30);
-        }
-        return local;
     }
 }

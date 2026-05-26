@@ -19,9 +19,14 @@ public class SerbiaCityCatalog {
     public SerbiaCityCatalog() throws IOException {
         final ObjectMapper objectMapper = new ObjectMapper();
         try (var input = new ClassPathResource(RESOURCE_PATH).getInputStream()) {
-            final List<String> loaded = objectMapper.readValue(input, new TypeReference<>() {});
+            final List<String> loaded = objectMapper.readValue(input, new TypeReference<>() {
+            });
             this.cities = List.copyOf(loaded);
         }
+    }
+
+    static String normalizeForSearch(final String value) {
+        return SearchTextNormalizer.normalizeForSearch(value);
     }
 
     public List<String> getAll() {
@@ -44,9 +49,5 @@ public class SerbiaCityCatalog {
         return cities.stream()
                 .filter(c -> normalizeForSearch(c).contains(normalizedQuery))
                 .toList();
-    }
-
-    static String normalizeForSearch(final String value) {
-        return SearchTextNormalizer.normalizeForSearch(value);
     }
 }

@@ -6,9 +6,9 @@ import com.coffeeshop.coffeeshop.model.Shop;
 import com.coffeeshop.coffeeshop.model.dto.request.ReviewCreateRequest;
 import com.coffeeshop.coffeeshop.model.dto.request.ReviewUpdateRequest;
 import com.coffeeshop.coffeeshop.model.dto.response.ReviewResponseDto;
-import java.util.List;
-
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 public class ReviewMapper {

@@ -43,6 +43,10 @@ public class MenuServiceImpl implements MenuService {
         this.currentUserService = currentUserService;
     }
 
+    private static String defaultLabel(final Instant createdAt) {
+        return "Menu – " + LABEL_FORMAT.format(createdAt);
+    }
+
     @Override
     public List<Menu> findAll() {
         return menuRepository.findAll();
@@ -135,9 +139,5 @@ public class MenuServiceImpl implements MenuService {
     private Shop getShop(final UUID shopId) {
         return shopRepository.findById(shopId)
                 .orElseThrow(() -> new ResourceNotFoundException("Shop not found with id: " + shopId));
-    }
-
-    private static String defaultLabel(final Instant createdAt) {
-        return "Menu – " + LABEL_FORMAT.format(createdAt);
     }
 }

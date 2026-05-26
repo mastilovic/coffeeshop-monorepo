@@ -9,12 +9,9 @@ import com.coffeeshop.coffeeshop.repository.UserRepository;
 import com.coffeeshop.coffeeshop.util.UsernameValidator;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.CannotCreateTransactionException;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.net.UnknownHostException;
-import java.sql.SQLException;
 import java.util.UUID;
 
 @Service

@@ -2,10 +2,10 @@ package com.coffeeshop.coffeeshop.mapper;
 
 import com.coffeeshop.coffeeshop.model.Menu;
 import com.coffeeshop.coffeeshop.model.MenuItem;
-import com.coffeeshop.coffeeshop.model.enums.MenuItemType;
 import com.coffeeshop.coffeeshop.model.dto.request.MenuItemCreateRequest;
 import com.coffeeshop.coffeeshop.model.dto.request.MenuItemUpdateRequest;
 import com.coffeeshop.coffeeshop.model.dto.response.MenuItemResponseDto;
+import com.coffeeshop.coffeeshop.model.enums.MenuItemType;
 import org.springframework.stereotype.Service;
 
 @Service

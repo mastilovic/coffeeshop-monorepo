@@ -5,10 +5,10 @@ import com.coffeeshop.coffeeshop.model.dto.request.ReservationCreateRequest;
 import com.coffeeshop.coffeeshop.model.dto.request.ReservationUpdateRequest;
 import com.coffeeshop.coffeeshop.model.dto.response.ReservationResponseDto;
 import com.coffeeshop.coffeeshop.service.ReservationService;
-import org.springframework.http.HttpStatus;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
-import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;

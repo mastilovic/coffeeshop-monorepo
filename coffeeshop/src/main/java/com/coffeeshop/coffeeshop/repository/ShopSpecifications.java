@@ -4,12 +4,7 @@ import com.coffeeshop.coffeeshop.model.Shop;
 import com.coffeeshop.coffeeshop.model.UserShop;
 import com.coffeeshop.coffeeshop.model.enums.UserShopRelationshipType;
 import com.coffeeshop.coffeeshop.util.SearchTextNormalizer;
-import jakarta.persistence.criteria.CriteriaBuilder;
-import jakarta.persistence.criteria.CriteriaQuery;
-import jakarta.persistence.criteria.Expression;
-import jakarta.persistence.criteria.Predicate;
-import jakarta.persistence.criteria.Root;
-import jakarta.persistence.criteria.Subquery;
+import jakarta.persistence.criteria.*;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.util.ArrayList;

@@ -3,11 +3,7 @@ package com.coffeeshop.coffeeshop.repository;
 import com.coffeeshop.coffeeshop.model.Event;
 import com.coffeeshop.coffeeshop.model.Shop;
 import com.coffeeshop.coffeeshop.util.SearchTextNormalizer;
-import jakarta.persistence.criteria.CriteriaBuilder;
-import jakarta.persistence.criteria.Expression;
-import jakarta.persistence.criteria.Join;
-import jakarta.persistence.criteria.JoinType;
-import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.*;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.time.LocalDate;

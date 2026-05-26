@@ -2,18 +2,10 @@ package com.coffeeshop.coffeeshop.service.impl;
 
 import com.coffeeshop.coffeeshop.auth.CurrentUserService;
 import com.coffeeshop.coffeeshop.exception.ResourceNotFoundException;
-import com.coffeeshop.coffeeshop.model.Event;
-import com.coffeeshop.coffeeshop.model.Reservation;
-import com.coffeeshop.coffeeshop.model.Shop;
-import com.coffeeshop.coffeeshop.model.Table;
-import com.coffeeshop.coffeeshop.model.User;
+import com.coffeeshop.coffeeshop.model.*;
 import com.coffeeshop.coffeeshop.model.enums.ReservationStatus;
 import com.coffeeshop.coffeeshop.model.enums.UserType;
-import com.coffeeshop.coffeeshop.repository.EventRepository;
-import com.coffeeshop.coffeeshop.repository.ReservationRepository;
-import com.coffeeshop.coffeeshop.repository.ReservationRequestRepository;
-import com.coffeeshop.coffeeshop.repository.TableRepository;
-import com.coffeeshop.coffeeshop.repository.UserRepository;
+import com.coffeeshop.coffeeshop.repository.*;
 import com.coffeeshop.coffeeshop.service.EventTableAvailabilityService;
 import com.coffeeshop.coffeeshop.service.ReservationService;
 import com.coffeeshop.coffeeshop.service.UserShopService;
@@ -134,7 +126,7 @@ public class ReservationServiceImpl implements ReservationService {
 
     private void assertNoActiveEventBooking(final UUID userId, final String eventId) {
         if (reservationRequestRepository.existsByUser_IdAndEvent_EventIdAndStatusIn(
-                        userId, eventId, List.of(ReservationStatus.PENDING, ReservationStatus.ACCEPTED))
+                userId, eventId, List.of(ReservationStatus.PENDING, ReservationStatus.ACCEPTED))
                 || reservationRepository.existsByUser_IdAndEvent_EventId(userId, eventId)) {
             throw new ResponseStatusException(
                     HttpStatus.CONFLICT,
