@@ -29,124 +29,128 @@ const USER_TYPE_SELECT_OPTIONS: FormSelectOption[] = [
   imports: [ReactiveFormsModule, FormSelectComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="page">
-      <div class="page-header">
-        <h1 class="page-title">Users</h1>
-      </div>
-
-      @if (showForm()) {
-        <div class="form-card mb-3">
-          <h3 style="color:#fff;margin-bottom:1rem">Edit User</h3>
-          <form [formGroup]="form" (ngSubmit)="onSubmit()">
-            <div class="form-row">
-              <div class="form-group">
-                <label>Name</label>
-                <input class="form-input" formControlName="name" />
-              </div>
-              <div class="form-group">
-                <label>Username</label>
-                <input class="form-input" formControlName="username" />
-              </div>
-            </div>
-            <div class="form-group">
-              <label>User Type</label>
-              <app-form-select
-                formControlName="userType"
-                placeholder="User type"
-                [options]="userTypeSelectOptions"
-              />
-            </div>
-            <div class="form-actions">
-              <button type="submit" class="btn btn-primary" [disabled]="form.invalid">Update</button>
-              <button type="button" class="btn btn-secondary" (click)="cancelEdit()">Cancel</button>
-            </div>
-          </form>
+    <div class="page page--with-footer">
+      <div class="page__content">
+        <div class="page-header">
+          <h1 class="page-title">Users</h1>
         </div>
-      }
 
-      <div class="events-toolbar mb-3">
-        <input
-          class="form-input events-search"
-          type="search"
-          placeholder="Search by name or username..."
-          aria-label="Search users"
-          [value]="searchInput()"
-          (input)="onSearchInput($event)"
-        />
-      </div>
+        @if (showForm()) {
+          <div class="form-card mb-3">
+            <h3 style="color:#fff;margin-bottom:1rem">Edit User</h3>
+            <form [formGroup]="form" (ngSubmit)="onSubmit()">
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Name</label>
+                  <input class="form-input" formControlName="name" />
+                </div>
+                <div class="form-group">
+                  <label>Username</label>
+                  <input class="form-input" formControlName="username" />
+                </div>
+              </div>
+              <div class="form-group">
+                <label>User Type</label>
+                <app-form-select
+                  formControlName="userType"
+                  placeholder="User type"
+                  [options]="userTypeSelectOptions"
+                />
+              </div>
+              <div class="form-actions">
+                <button type="submit" class="btn btn-primary" [disabled]="form.invalid">Update</button>
+                <button type="button" class="btn btn-secondary" (click)="cancelEdit()">Cancel</button>
+              </div>
+            </form>
+          </div>
+        }
 
-      @if (loading()) {
-        <div class="loading">Loading users...</div>
-      } @else if (totalElements() === 0) {
-        <div class="empty-state"><p>{{ emptyStateMessage() }}</p></div>
-      } @else {
-        <div class="view-mobile-only list-card-grid mb-3">
-          @for (user of users(); track user.id) {
-            <article class="list-card">
-              <div class="list-card__primary">
-                <span class="list-card__title">{{ user.name }}</span>
-                <span class="list-card__subtitle">{{ user.username }}</span>
-              </div>
-              <div class="list-card__meta">
-                <span class="badge badge-role">{{ user.userType }}</span>
-                @for (role of user.roles; track role.id) {
-                  <span class="badge badge-role">{{ role.name }}</span>
-                }
-              </div>
-              @if (canEdit(user) || isAdmin()) {
-                <div class="list-card__actions">
-                  @if (canEdit(user)) {
-                    <button class="btn btn-sm btn-secondary" (click)="onEdit(user)">Edit</button>
-                  }
-                  @if (isAdmin()) {
-                    <button class="btn btn-sm btn-danger" (click)="onDelete(user)">Delete</button>
+        <div class="events-toolbar mb-3">
+          <input
+            class="form-input events-search"
+            type="search"
+            placeholder="Search by name or username..."
+            aria-label="Search users"
+            [value]="searchInput()"
+            (input)="onSearchInput($event)"
+          />
+        </div>
+
+        @if (loading()) {
+          <div class="loading">Loading users...</div>
+        } @else if (totalElements() === 0) {
+          <div class="empty-state"><p>{{ emptyStateMessage() }}</p></div>
+        } @else {
+          <div class="view-mobile-only list-card-grid mb-3">
+            @for (user of users(); track user.id) {
+              <article class="list-card">
+                <div class="list-card__primary">
+                  <span class="list-card__title">{{ user.name }}</span>
+                  <span class="list-card__subtitle">{{ user.username }}</span>
+                </div>
+                <div class="list-card__meta">
+                  <span class="badge badge-role">{{ user.userType }}</span>
+                  @for (role of user.roles; track role.id) {
+                    <span class="badge badge-role">{{ role.name }}</span>
                   }
                 </div>
-              }
-            </article>
-          }
-        </div>
-        <div class="view-desktop-only">
-          <div class="table-container">
-            <table class="data-table">
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Username</th>
-                  <th>Type</th>
-                  <th>Roles</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (user of users(); track user.id) {
-                  <tr>
-                    <td>{{ user.name }}</td>
-                    <td>{{ user.username }}</td>
-                    <td><span class="badge badge-role">{{ user.userType }}</span></td>
-                    <td>
-                      @for (role of user.roles; track role.id) {
-                        <span class="badge badge-role" style="margin-right:0.25rem">{{ role.name }}</span>
-                      }
-                    </td>
-                    <td class="data-table__actions">
-                      <div style="display:flex;gap:0.5rem">
-                        @if (canEdit(user)) {
-                          <button class="btn btn-sm btn-secondary" (click)="onEdit(user)">Edit</button>
-                        }
-                        @if (isAdmin()) {
-                          <button class="btn btn-sm btn-danger" (click)="onDelete(user)">Delete</button>
-                        }
-                      </div>
-                    </td>
-                  </tr>
+                @if (canEdit(user) || isAdmin()) {
+                  <div class="list-card__actions">
+                    @if (canEdit(user)) {
+                      <button class="btn btn-sm btn-secondary" (click)="onEdit(user)">Edit</button>
+                    }
+                    @if (isAdmin()) {
+                      <button class="btn btn-sm btn-danger" (click)="onDelete(user)">Delete</button>
+                    }
+                  </div>
                 }
-              </tbody>
-            </table>
+              </article>
+            }
           </div>
-        </div>
+          <div class="view-desktop-only">
+            <div class="table-container">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Username</th>
+                    <th>Type</th>
+                    <th>Roles</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (user of users(); track user.id) {
+                    <tr>
+                      <td>{{ user.name }}</td>
+                      <td>{{ user.username }}</td>
+                      <td><span class="badge badge-role">{{ user.userType }}</span></td>
+                      <td>
+                        @for (role of user.roles; track role.id) {
+                          <span class="badge badge-role" style="margin-right:0.25rem">{{ role.name }}</span>
+                        }
+                      </td>
+                      <td class="data-table__actions">
+                        <div style="display:flex;gap:0.5rem">
+                          @if (canEdit(user)) {
+                            <button class="btn btn-sm btn-secondary" (click)="onEdit(user)">Edit</button>
+                          }
+                          @if (isAdmin()) {
+                            <button class="btn btn-sm btn-danger" (click)="onDelete(user)">Delete</button>
+                          }
+                        </div>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </div>
+        }
+      </div>
 
-        <div class="pagination-bar">
+      @if (!loading()) {
+        <div class="pagination-bar page__footer">
           <span class="pagination-summary">{{ rangeLabel() }}</span>
           <div class="pagination-controls">
             <button
@@ -169,6 +173,12 @@ const USER_TYPE_SELECT_OPTIONS: FormSelectOption[] = [
       }
     </div>
   `,
+  styles: [`
+    :host {
+      display: block;
+      min-height: 100%;
+    }
+  `],
 })
 export class UsersComponent implements OnInit {
   readonly userTypeSelectOptions = USER_TYPE_SELECT_OPTIONS;
