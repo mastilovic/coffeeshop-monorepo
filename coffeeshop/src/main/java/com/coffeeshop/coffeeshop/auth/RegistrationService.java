@@ -42,11 +42,11 @@ public class RegistrationService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "admin role is not allowed for self-registration");
         }
         UsernameValidator.requireValid(request.username());
-        if (userRepository.existsByUsernameIgnoreCase(request.username())) {
-            throw new ResourceNotFoundException(DUPLICATE_USERNAME_MESSAGE);
-        }
         if (userRepository.existsByEmailIgnoreCase(request.email())) {
             throw new ResourceNotFoundException(DUPLICATE_EMAIL_MESSAGE);
+        }
+        if (userRepository.existsByUsernameIgnoreCase(request.username())) {
+            throw new ResourceNotFoundException(DUPLICATE_USERNAME_MESSAGE);
         }
         final UserType userType = switch (request.role()) {
             case "customer" -> UserType.CUSTOMER;

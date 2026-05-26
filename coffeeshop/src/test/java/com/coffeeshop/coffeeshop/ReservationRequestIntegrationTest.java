@@ -393,8 +393,12 @@ class ReservationRequestIntegrationTest {
                         "partySize", 2), headers),
                 Map.class);
         assertThat(requestResponse.getStatusCode()).isEqualTo(HttpStatus.CREATED);
-        assertThat(requestResponse.getBody().get("userId")).isEqualTo(travelingOwnerId.toString());
-        assertThat(requestResponse.getBody().get("shopId")).isEqualTo(hostShopId.toString());
+        @SuppressWarnings("unchecked")
+        final Map<String, Object> user = (Map<String, Object>) requestResponse.getBody().get("user");
+        @SuppressWarnings("unchecked")
+        final Map<String, Object> shop = (Map<String, Object>) requestResponse.getBody().get("shop");
+        assertThat(user.get("id")).isEqualTo(travelingOwnerId.toString());
+        assertThat(shop.get("id")).isEqualTo(hostShopId.toString());
     }
 
     @Test

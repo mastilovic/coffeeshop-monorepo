@@ -28,7 +28,7 @@ public class CurrentUserService {
                         return new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Bearer token required");
                     }
                     return new ResponseStatusException(
-                            HttpStatus.FORBIDDEN,
+                            HttpStatus.NOT_FOUND,
                             "No local profile linked to this account; complete registration first");
                 });
     }

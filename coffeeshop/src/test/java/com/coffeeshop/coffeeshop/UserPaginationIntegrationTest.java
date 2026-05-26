@@ -37,7 +37,7 @@ class UserPaginationIntegrationTest {
         createUser(headers, "Bob Paginated", "bob-paginated@example.com", "CUSTOMER");
 
         final ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
-                "/api/v1/user?q=alice-paginated&page=0&size=10",
+                "/api/v1/user?q=Alice Paginated&page=0&size=10",
                 HttpMethod.GET,
                 new HttpEntity<>(headers),
                 new ParameterizedTypeReference<>() {
