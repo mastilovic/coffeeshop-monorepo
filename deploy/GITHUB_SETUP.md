@@ -2,6 +2,8 @@
 
 The deploy pipeline **writes all runtime config** before `kubectl apply`. You only configure GitHub **Variables** and **Secrets**; do not edit generated files in the repo.
 
+Deploy workflows install pinned `kubectl` and `kustomize` from official release URLs (no `azure/setup-kubectl` or other marketplace install actions).
+
 **Branches:** Every push or merge to **`main`** runs the full **CI/CD Staging** pipeline (tests, both images, DOKS deploy) automatically — including empty commits. Pushes to **`dev`** run path-filtered tests/builds and push `dev-sha-*` only (no deploy). Rollback redeploy only: manual [Deploy Staging (DOKS)](../.github/workflows/deploy-staging.yml) with an existing `image_tag`.
 
 ## When workflows run
