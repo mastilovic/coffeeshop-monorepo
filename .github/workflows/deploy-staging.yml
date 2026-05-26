@@ -1,0 +1,75 @@
+name: Deploy Staging (DOKS)
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: 'Image tag (e.g. sha-abc1234 from CI, or latest)'
+        required: true
+        default: latest
+        type: string
+
+concurrency:
+  group: deploy-staging
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Write staging config
+        run: |
+          {
+            echo "APP_HOST=${{ vars.STAGING_APP_HOST }}"
+            echo "AUTH_HOST=${{ vars.STAGING_AUTH_HOST }}"
+            echo "POSTGRES_DB=coffeeshop"
+            echo "POSTGRES_USER=coffeeshop"
+            echo "KEYCLOAK_POSTGRES_DB=keycloak"
+            echo "KEYCLOAK_POSTGRES_USER=keycloak"
+            echo "KC_DB_URL=jdbc:postgresql://postgres-keycloak:5432/keycloak"
+            echo "SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/coffeeshop"
+            echo "KEYCLOAK_REALM=coffeeshop"
+            echo "KEYCLOAK_BACKEND_CLIENT_ID=coffeeshop-backend"
+            echo "KEYCLOAK_JWT_ISSUER_URI=https://${{ vars.STAGING_AUTH_HOST }}/realms/coffeeshop"
+            echo "CORS_ALLOWED_ORIGINS=https://${{ vars.STAGING_APP_HOST }}"
+          } > deploy/k8s/overlays/staging/config.env
+
+      - name: Write staging secrets
+        run: |
+          {
+            echo "POSTGRES_PASSWORD=${{ secrets.STAGING_POSTGRES_PASSWORD }}"
+            echo "KEYCLOAK_POSTGRES_PASSWORD=${{ secrets.STAGING_KEYCLOAK_POSTGRES_PASSWORD }}"
+            echo "KEYCLOAK_ADMIN=${{ secrets.STAGING_KEYCLOAK_ADMIN }}"
+            echo "KEYCLOAK_ADMIN_PASSWORD=${{ secrets.STAGING_KEYCLOAK_ADMIN_PASSWORD }}"
+            echo "KEYCLOAK_BACKEND_CLIENT_SECRET=${{ secrets.STAGING_KEYCLOAK_BACKEND_CLIENT_SECRET }}"
+          } > deploy/k8s/overlays/staging/secrets.env
+
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v4
+
+      - name: Setup Kustomize
+        uses: imranismail/setup-kustomize@v2
+
+      - name: Configure kubeconfig
+        run: |
+          mkdir -p "$HOME/.kube"
+          echo "${{ secrets.KUBE_CONFIG }}" > "$HOME/.kube/config"
+          chmod 600 "$HOME/.kube/config"
+
+      - name: Set image tags
+        working-directory: deploy/k8s/overlays/staging
+        run: |
+          kustomize edit set image \
+            ghcr.io/mastilovic/coffeeshop-backend=ghcr.io/mastilovic/coffeeshop-backend:${{ inputs.image_tag }} \
+            ghcr.io/mastilovic/coffeeshop-frontend=ghcr.io/mastilovic/coffeeshop-frontend:${{ inputs.image_tag }}
+
+      - name: Deploy to cluster
+        run: |
+          kubectl apply -k deploy/k8s/overlays/staging
+          kubectl rollout status deployment/backend -n coffeeshop-staging --timeout=300s
+          kubectl rollout status deployment/frontend -n coffeeshop-staging --timeout=180s
+          kubectl rollout status deployment/keycloak -n coffeeshop-staging --timeout=600s

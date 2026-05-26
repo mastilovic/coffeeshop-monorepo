@@ -1,0 +1,53 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: coffeeshop-staging
+
+resources:
+  - ../../base
+
+secretGenerator:
+  - name: coffeeshop-secrets
+    envs:
+      - secrets.env
+
+configMapGenerator:
+  - name: coffeeshop-config
+    envs:
+      - config.env
+  - name: keycloak-realm
+    files:
+      - realm-coffeeshop.json
+
+generatorOptions:
+  disableNameSuffixHash: true
+
+images:
+  - name: ghcr.io/mastilovic/coffeeshop-backend
+    newName: ghcr.io/mastilovic/coffeeshop-backend
+    newTag: latest
+  - name: ghcr.io/mastilovic/coffeeshop-frontend
+    newName: ghcr.io/mastilovic/coffeeshop-frontend
+    newTag: latest
+
+replacements:
+  - source:
+      kind: ConfigMap
+      name: coffeeshop-config
+      fieldPath: data.APP_HOST
+    targets:
+      - select:
+          kind: Ingress
+          name: coffeeshop
+        fieldPaths:
+          - spec.rules.0.host
+  - source:
+      kind: ConfigMap
+      name: coffeeshop-config
+      fieldPath: data.AUTH_HOST
+    targets:
+      - select:
+          kind: Ingress
+          name: coffeeshop
+        fieldPaths:
+          - spec.rules.1.host
