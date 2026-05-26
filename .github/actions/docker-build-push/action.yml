@@ -1,0 +1,71 @@
+name: Docker build and push
+description: Setup buildx, optionally login to GHCR, and build/push with GHA cache (no marketplace actions)
+
+inputs:
+  context:
+    description: Build context directory
+    required: true
+  tags:
+    description: Image tags (one per line)
+    required: true
+  push:
+    description: Push images to registry (true/false)
+    required: false
+    default: 'false'
+  cache_scope:
+    description: Optional GHA cache scope for isolation between jobs
+    required: false
+    default: ''
+
+runs:
+  using: composite
+  steps:
+    - name: Setup Docker Buildx
+      shell: bash
+      run: |
+        set -euo pipefail
+        if docker buildx inspect coffeeshop-builder >/dev/null 2>&1; then
+          docker buildx use coffeeshop-builder
+        else
+          docker buildx create --name coffeeshop-builder --use
+        fi
+
+    - name: Login to GHCR
+      if: inputs.push == 'true'
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
+      run: |
+        set -euo pipefail
+        echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+
+    - name: Build and push
+      shell: bash
+      env:
+        CONTEXT: ${{ inputs.context }}
+        TAGS: ${{ inputs.tags }}
+        PUSH: ${{ inputs.push }}
+        CACHE_SCOPE: ${{ inputs.cache_scope }}
+      run: |
+        set -euo pipefail
+
+        CACHE_FROM=type=gha
+        CACHE_TO='type=gha,mode=max'
+        if [ -n "$CACHE_SCOPE" ]; then
+          CACHE_FROM="type=gha,scope=${CACHE_SCOPE}"
+          CACHE_TO="type=gha,mode=max,scope=${CACHE_SCOPE}"
+        fi
+
+        TAG_ARGS=()
+        while IFS= read -r tag || [ -n "$tag" ]; do
+          [ -z "$tag" ] && continue
+          TAG_ARGS+=(-t "$tag")
+        done <<< "$TAGS"
+
+        BUILD_ARGS=("${TAG_ARGS[@]}" --cache-from "$CACHE_FROM" --cache-to "$CACHE_TO")
+        if [ "$PUSH" = "true" ]; then
+          BUILD_ARGS+=(--push)
+        fi
+        BUILD_ARGS+=("$CONTEXT")
+
+        docker buildx build "${BUILD_ARGS[@]}"
