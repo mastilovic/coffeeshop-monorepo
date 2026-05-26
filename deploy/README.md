@@ -86,15 +86,25 @@ kustomize edit set image \
 kubectl apply -k .
 ```
 
-## GitHub Actions deploy
+## GitHub Actions — branch workflow
+
+| Branch | Workflow | Tests + Docker | GHCR tags | DOKS deploy |
+|--------|----------|----------------|-----------|-------------|
+| **`dev`** | [ci-cd-staging.yml](../.github/workflows/ci-cd-staging.yml) | Yes | `dev-sha-<7>` | No |
+| **`main`** (staging) | Same | Yes | `sha-<7>`, `latest` | Yes |
+| **PR** | [backend-ci.yml](../.github/workflows/backend-ci.yml), [frontend-ci.yml](../.github/workflows/frontend-ci.yml) | Yes | None (`push: false`) | No |
+
+Recommended flow: feature branch → PR into **`dev`** → PR **`dev` → `main`** when ready for staging.
 
 ### Automatic deploy (primary)
 
-On every push to **`main`** that touches app, deploy, or workflow paths, [.github/workflows/ci-cd-staging.yml](../.github/workflows/ci-cd-staging.yml) runs:
+On every push to **`main`** that touches app, deploy, or workflow paths, **CI/CD Staging** runs:
 
 1. Path-filtered tests (backend and/or frontend; both run when only `deploy/**` changes).
-2. **Always** builds and pushes **both** images to GHCR as `sha-<7>` (same commit SHA).
-3. Deploys to `coffeeshop-staging` with that tag.
+2. Builds and pushes **both** images as `sha-<7>` and `latest`.
+3. Deploys to `coffeeshop-staging` with `sha-<7>`.
+
+Pushes to **`dev`** run the same pipeline but publish **`dev-sha-<7>`** only and **skip** the deploy job.
 
 Both images are rebuilt on every `main` deploy so the cluster never pulls a missing tag for one app.
 
@@ -204,7 +214,7 @@ deploy/k8s/
 - [.github/workflows/backend-ci.yml](../.github/workflows/backend-ci.yml) — backend tests + Docker build (no push).
 - [.github/workflows/frontend-ci.yml](../.github/workflows/frontend-ci.yml) — frontend tests + Docker build (no push).
 
-`main` branch builds and deploys are handled only by **CI/CD Staging**.
+Push builds for **`dev`** and staging deploys for **`main`** are handled by **CI/CD Staging**.
 
 ## Follow-ups (not in v1)
 

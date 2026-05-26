@@ -2,6 +2,8 @@
 
 The deploy pipeline **writes all runtime config** before `kubectl apply`. You only configure GitHub **Variables** and **Secrets**; do not edit generated files in the repo.
 
+**Branches:** Pushes to **`dev`** build/test and push `dev-sha-*` images to GHCR (no cluster deploy). Pushes to **`main`** publish `sha-*` / `latest` and **deploy to DOKS**. Manual [Deploy Staging (DOKS)](../.github/workflows/deploy-staging.yml) uses `sha-<7>` from a **main** build unless you specify another tag.
+
 ## Generated during deploy (do not commit)
 
 | File | Source |
