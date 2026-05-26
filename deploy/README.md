@@ -111,16 +111,41 @@ Use when you need to redeploy an existing image without rebuilding (e.g. pin `im
 
 | Name | Purpose |
 |------|---------|
-| `KUBE_CONFIG` | Full kubeconfig file from `doctl kubernetes cluster kubeconfig save` |
+| `KUBE_CONFIG` | Full kubeconfig for **one** DOKS cluster (see below) |
 | `STAGING_POSTGRES_PASSWORD` | App database password |
 | `STAGING_KEYCLOAK_POSTGRES_PASSWORD` | Keycloak database password |
 | `STAGING_KEYCLOAK_ADMIN` | Keycloak admin username (e.g. `admin`) |
 | `STAGING_KEYCLOAK_ADMIN_PASSWORD` | Keycloak admin password |
 | `STAGING_KEYCLOAK_BACKEND_CLIENT_SECRET` | Must match `coffeeshop-backend` client secret in `realm-coffeeshop.json` |
 
+### `KUBE_CONFIG` secret (required)
+
+`kubectl` talks to whatever cluster is in this file. If the secret is missing or malformed, you will see:
+
+`Get "http://localhost:8080/openapi/v2": connection refused` — that means CI is **not** using your DOKS API; fix the secret, do not use `--validate=false`.
+
+**Create a dedicated staging kubeconfig** (do not paste a merged `~/.kube/config` with the wrong `current-context`):
+
+```bash
+doctl kubernetes cluster kubeconfig save <your-staging-cluster-name> \
+  --kubeconfig ~/.kube/config-coffeeshop-staging \
+  --expiry 0
+
+kubectl --kubeconfig ~/.kube/config-coffeeshop-staging config current-context
+kubectl --kubeconfig ~/.kube/config-coffeeshop-staging cluster-info
+```
+
+Copy the **entire file** into GitHub → Settings → Secrets and variables → Actions → **New repository secret** → name `KUBE_CONFIG`, paste contents of `~/.kube/config-coffeeshop-staging`.
+
+Checklist for the secret:
+
+- Includes `apiVersion`, `clusters`, `contexts`, `users`, and `current-context`
+- `server:` under `clusters` is `https://...` (DigitalOcean), not `http://localhost:8080`
+- `current-context` matches your staging cluster name
+
 ### First-time setup
 
-1. Configure variables and secrets below.
+1. Configure variables and secrets below (especially `KUBE_CONFIG`).
 2. Install NGINX Ingress on the cluster (see above).
 3. Push to `main` — **CI/CD Staging** should build, push, and deploy automatically.
 
@@ -159,6 +184,7 @@ kubectl rollout status deployment/backend -n coffeeshop-staging
 - **Keycloak redirect errors**: `realm-coffeeshop.json` `redirectUris` / `webOrigins` must include `https://<APP_HOST>`.
 - **Image pull errors**: Add `ghcr-pull` secret or make GHCR packages public.
 - **Postgres pending**: Check PVC provisioning (`kubectl get pvc -n coffeeshop-staging`); DO default StorageClass is usually `do-block-storage`.
+- **`localhost:8080` / openapi connection refused on deploy**: `KUBE_CONFIG` is empty, truncated, or not a valid DOKS kubeconfig. Recreate the secret from a single-cluster file (see **`KUBE_CONFIG` secret** above). The deploy workflow logs `Context:` and `API server:` before `kubectl apply`.
 
 ## Layout
 

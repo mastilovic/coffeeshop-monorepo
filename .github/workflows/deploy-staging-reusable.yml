@@ -50,10 +50,28 @@ jobs:
         uses: imranismail/setup-kustomize@v2
 
       - name: Configure kubeconfig
+        env:
+          KUBE_CONFIG: ${{ secrets.KUBE_CONFIG }}
         run: |
           mkdir -p "$HOME/.kube"
-          echo "${{ secrets.KUBE_CONFIG }}" > "$HOME/.kube/config"
+          if [ -z "$KUBE_CONFIG" ]; then
+            echo "::error::KUBE_CONFIG secret is empty. Add a kubeconfig for your DOKS cluster (see deploy/README.md)."
+            exit 1
+          fi
+          # Write via env var so multiline YAML is preserved (echo "${{ secrets.* }}" can break newlines).
+          printf '%s' "$KUBE_CONFIG" > "$HOME/.kube/config"
           chmod 600 "$HOME/.kube/config"
+
+      - name: Verify cluster connection
+        run: |
+          if ! grep -qE '^\s*server:\s*https://' "$HOME/.kube/config"; then
+            echo "::error::kubeconfig has no https:// API server. Regenerate with: doctl kubernetes cluster kubeconfig save <cluster-name>"
+            kubectl config view --minify 2>/dev/null || true
+            exit 1
+          fi
+          echo "Context: $(kubectl config current-context)"
+          echo "API server: $(kubectl config view --minify -o jsonpath='{.clusters[0].cluster.server}')"
+          kubectl cluster-info
 
       - name: Set image tags
         working-directory: deploy/k8s/overlays/staging
