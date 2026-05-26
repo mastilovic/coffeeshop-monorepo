@@ -221,3 +221,4 @@ Push builds for **`dev`** and staging deploys for **`main`** are handled by **CI
 - cert-manager + Let's Encrypt on Ingress
 - Managed Postgres instead of in-cluster StatefulSets
 - Production overlay and sealed secrets
+# trigger 2026-05-26T11:02:51Z
