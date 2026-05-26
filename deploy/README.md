@@ -84,7 +84,21 @@ kubectl apply -k .
 
 ## GitHub Actions deploy
 
+### Automatic deploy (primary)
+
+On every push to **`main`** that touches app, deploy, or workflow paths, [.github/workflows/ci-cd-staging.yml](../.github/workflows/ci-cd-staging.yml) runs:
+
+1. Path-filtered tests (backend and/or frontend; both run when only `deploy/**` changes).
+2. **Always** builds and pushes **both** images to GHCR as `sha-<7>` (same commit SHA).
+3. Deploys to `coffeeshop-staging` with that tag.
+
+Both images are rebuilt on every `main` deploy so the cluster never pulls a missing tag for one app.
+
+### Manual deploy (rollback / hotfix)
+
 Workflow: [.github/workflows/deploy-staging.yml](../.github/workflows/deploy-staging.yml) (`workflow_dispatch`).
+
+Use when you need to redeploy an existing image without rebuilding (e.g. pin `image_tag` to an older `sha-abc1234` or `latest`).
 
 ### Repository variables (`Settings` → `Secrets and variables` → `Actions` → **Variables**)
 
@@ -104,11 +118,16 @@ Workflow: [.github/workflows/deploy-staging.yml](../.github/workflows/deploy-sta
 | `STAGING_KEYCLOAK_ADMIN_PASSWORD` | Keycloak admin password |
 | `STAGING_KEYCLOAK_BACKEND_CLIENT_SECRET` | Must match `coffeeshop-backend` client secret in `realm-coffeeshop.json` |
 
-### Run deploy
+### First-time setup
 
-1. Push to `main` so CI builds and pushes images (`sha-<7>` tags).
-2. Actions → **Deploy Staging (DOKS)** → **Run workflow**.
-3. Set `image_tag` to the CI tag (e.g. `sha-abc1234`) for both backend and frontend.
+1. Configure variables and secrets below.
+2. Install NGINX Ingress on the cluster (see above).
+3. Push to `main` — **CI/CD Staging** should build, push, and deploy automatically.
+
+### Manual deploy only
+
+1. Actions → **Deploy Staging (DOKS)** → **Run workflow**.
+2. Set `image_tag` (e.g. `sha-abc1234` from a prior **CI/CD Staging** run, or `latest`).
 
 ## DNS
 
@@ -149,9 +168,15 @@ deploy/k8s/
   overlays/staging/     # Secrets, config, realm, image tags
 ```
 
+## Pull request CI
+
+- [.github/workflows/backend-ci.yml](../.github/workflows/backend-ci.yml) — backend tests + Docker build (no push).
+- [.github/workflows/frontend-ci.yml](../.github/workflows/frontend-ci.yml) — frontend tests + Docker build (no push).
+
+`main` branch builds and deploys are handled only by **CI/CD Staging**.
+
 ## Follow-ups (not in v1)
 
 - cert-manager + Let's Encrypt on Ingress
-- Auto-deploy after CI via `workflow_run` (run only after **both** images exist)
 - Managed Postgres instead of in-cluster StatefulSets
 - Production overlay and sealed secrets
