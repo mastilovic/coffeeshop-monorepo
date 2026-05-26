@@ -1,6 +1,6 @@
 import { inject, Injectable, signal } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Observable, tap } from 'rxjs';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { Observable, catchError, tap, throwError } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { UserProfileResponseDto } from '../models/user.model';
 
@@ -12,8 +12,15 @@ export class ProfileService {
 
   getProfile(): Observable<UserProfileResponseDto> {
     const url = environment.profileUrl ?? `${environment.apiUrl}/profile`;
-    return this.http.get<UserProfileResponseDto>(url)
-      .pipe(tap(user => this.currentUser.set(user)));
+    return this.http.get<UserProfileResponseDto>(url).pipe(
+      tap(user => this.currentUser.set(user)),
+      catchError((error: HttpErrorResponse) => {
+        if (error.status === 401) {
+          this.currentUser.set(null);
+        }
+        return throwError(() => error);
+      }),
+    );
   }
 
   clearProfile(): void {

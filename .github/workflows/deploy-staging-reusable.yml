@@ -48,6 +48,7 @@ jobs:
             echo "SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/coffeeshop"
             echo "KEYCLOAK_REALM=coffeeshop"
             echo "KEYCLOAK_BACKEND_CLIENT_ID=coffeeshop-backend"
+            echo "KEYCLOAK_PUBLIC_URL=${SCHEME}://${STAGING_AUTH_HOST}"
             echo "KEYCLOAK_JWT_ISSUER_URI=${SCHEME}://${STAGING_AUTH_HOST}/realms/coffeeshop"
             echo "CORS_ALLOWED_ORIGINS=${SCHEME}://${STAGING_APP_HOST}"
           } > deploy/k8s/overlays/staging/config.env
