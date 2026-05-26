@@ -61,11 +61,18 @@ jobs:
             < deploy/k8s/overlays/staging/realm-coffeeshop.json.template \
             > deploy/k8s/overlays/staging/realm-coffeeshop.json
 
-      - name: Setup kubectl
-        uses: azure/setup-kubectl@v4
-
-      - name: Setup Kustomize
-        uses: imranismail/setup-kustomize@v2
+      - name: Install kubectl and kustomize
+        run: |
+          set -euo pipefail
+          KUBECTL_VERSION="v1.32.0"
+          KUSTOMIZE_VERSION="5.6.0"
+          curl -fsSL "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl" -o kubectl
+          chmod +x kubectl
+          sudo mv kubectl /usr/local/bin/kubectl
+          kubectl version --client
+          curl -fsSL "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv${KUSTOMIZE_VERSION}/kustomize_v${KUSTOMIZE_VERSION}_linux_amd64.tar.gz" | tar xz
+          sudo mv kustomize /usr/local/bin/kustomize
+          kustomize version
 
       - name: Configure kubeconfig
         env:
