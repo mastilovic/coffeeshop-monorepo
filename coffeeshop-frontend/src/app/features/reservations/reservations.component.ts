@@ -168,7 +168,7 @@ import { DialogService } from '../../services/dialog.service';
                     <div class="empty-state"><p>No reservation requests.</p></div>
                   } @else {
                     <div class="table-container">
-                      <table class="data-table">
+                      <table class="data-table data-table--responsive">
                         <thead>
                           <tr>
                             <th>Shop</th>
@@ -180,10 +180,10 @@ import { DialogService } from '../../services/dialog.service';
                         <tbody>
                           @for (req of myPersonalRequests(); track req.id) {
                             <tr>
-                              <td>{{ req.shop.name }}</td>
-                              <td>{{ eventLabel(req) }}</td>
-                              <td>{{ req.partySize }}</td>
-                              <td>
+                              <td data-label="Shop">{{ req.shop.name }}</td>
+                              <td data-label="Event">{{ eventLabel(req) }}</td>
+                              <td data-label="Party Size">{{ req.partySize }}</td>
+                              <td data-label="Status">
                                 <span class="badge"
                                   [class.badge-pending]="req.status === 'PENDING'"
                                   [class.badge-accepted]="req.status === 'ACCEPTED'"
@@ -204,7 +204,7 @@ import { DialogService } from '../../services/dialog.service';
                     <div class="empty-state"><p>No confirmed reservations.</p></div>
                   } @else {
                     <div class="table-container">
-                      <table class="data-table">
+                      <table class="data-table data-table--responsive">
                         <thead>
                           <tr>
                             <th>Shop</th>
@@ -216,10 +216,10 @@ import { DialogService } from '../../services/dialog.service';
                         <tbody>
                           @for (r of myPersonalReservations(); track r.id) {
                             <tr>
-                              <td>{{ r.shop.name }}</td>
-                              <td>{{ eventLabel(r) }}</td>
-                              <td>{{ r.table ? 'Table ' + r.table.number : 'N/A' }}</td>
-                              <td>{{ r.partySize }}</td>
+                              <td data-label="Shop">{{ r.shop.name }}</td>
+                              <td data-label="Event">{{ eventLabel(r) }}</td>
+                              <td data-label="Table">{{ r.table ? 'Table ' + r.table.number : 'N/A' }}</td>
+                              <td data-label="Party Size">{{ r.partySize }}</td>
                             </tr>
                           }
                         </tbody>
@@ -275,7 +275,7 @@ import { DialogService } from '../../services/dialog.service';
                     <div class="empty-state"><p>No pending reservation requests.</p></div>
                   } @else {
                     <div class="table-container table-container--dropdown-safe">
-                      <table class="data-table">
+                      <table class="data-table data-table--responsive">
                         <thead>
                           <tr>
                             <th>Guest</th>
@@ -289,12 +289,12 @@ import { DialogService } from '../../services/dialog.service';
                         <tbody>
                           @for (req of managedPendingRequests(); track req.id) {
                             <tr>
-                              <td>{{ req.user?.name ?? '—' }}</td>
-                              <td>{{ req.shop.name }}</td>
-                              <td>{{ eventLabel(req) }}</td>
-                              <td>{{ req.partySize }}</td>
-                              <td><span class="badge badge-pending">{{ req.status }}</span></td>
-                              <td>
+                              <td data-label="Guest">{{ req.user?.name ?? '—' }}</td>
+                              <td data-label="Shop">{{ req.shop.name }}</td>
+                              <td data-label="Event">{{ eventLabel(req) }}</td>
+                              <td data-label="Party Size">{{ req.partySize }}</td>
+                              <td data-label="Status"><span class="badge badge-pending">{{ req.status }}</span></td>
+                              <td class="data-table__actions" data-label="">
                                 <div class="reservation-actions">
                                   <app-form-select
                                     [compact]="true"
@@ -327,7 +327,7 @@ import { DialogService } from '../../services/dialog.service';
                     <div class="empty-state"><p>No confirmed reservations.</p></div>
                   } @else {
                     <div class="table-container">
-                      <table class="data-table">
+                      <table class="data-table data-table--responsive">
                         <thead>
                           <tr>
                             <th>Guest</th>
@@ -340,11 +340,11 @@ import { DialogService } from '../../services/dialog.service';
                         <tbody>
                           @for (r of managedReservations(); track r.id) {
                             <tr>
-                              <td>{{ r.user?.name ?? '—' }}</td>
-                              <td>{{ r.shop.name }}</td>
-                              <td>{{ eventLabel(r) }}</td>
-                              <td>{{ r.table ? 'Table ' + r.table.number : 'N/A' }}</td>
-                              <td>{{ r.partySize }}</td>
+                              <td data-label="Guest">{{ r.user?.name ?? '—' }}</td>
+                              <td data-label="Shop">{{ r.shop.name }}</td>
+                              <td data-label="Event">{{ eventLabel(r) }}</td>
+                              <td data-label="Table">{{ r.table ? 'Table ' + r.table.number : 'N/A' }}</td>
+                              <td data-label="Party Size">{{ r.partySize }}</td>
                             </tr>
                           }
                         </tbody>
@@ -360,7 +360,7 @@ import { DialogService } from '../../services/dialog.service';
                     <div class="empty-state"><p>No denied reservation requests.</p></div>
                   } @else {
                     <div class="table-container">
-                      <table class="data-table">
+                      <table class="data-table data-table--responsive">
                         <thead>
                           <tr>
                             <th>Guest</th>
@@ -373,11 +373,11 @@ import { DialogService } from '../../services/dialog.service';
                         <tbody>
                           @for (req of managedDeniedRequests(); track req.id) {
                             <tr>
-                              <td>{{ req.user?.name ?? '—' }}</td>
-                              <td>{{ req.shop.name }}</td>
-                              <td>{{ eventLabel(req) }}</td>
-                              <td>{{ req.partySize }}</td>
-                              <td><span class="badge badge-denied">{{ req.status }}</span></td>
+                              <td data-label="Guest">{{ req.user?.name ?? '—' }}</td>
+                              <td data-label="Shop">{{ req.shop.name }}</td>
+                              <td data-label="Event">{{ eventLabel(req) }}</td>
+                              <td data-label="Party Size">{{ req.partySize }}</td>
+                              <td data-label="Status"><span class="badge badge-denied">{{ req.status }}</span></td>
                             </tr>
                           }
                         </tbody>
@@ -407,7 +407,7 @@ import { DialogService } from '../../services/dialog.service';
             <div class="empty-state"><p>No reservation requests.</p></div>
           } @else {
             <div class="table-container">
-              <table class="data-table">
+              <table class="data-table data-table--responsive">
                 <thead>
                   <tr>
                     <th>Shop</th>
@@ -419,10 +419,10 @@ import { DialogService } from '../../services/dialog.service';
                 <tbody>
                   @for (req of allRequests(); track req.id) {
                     <tr>
-                      <td>{{ req.shop.name }}</td>
-                      <td>{{ eventLabel(req) }}</td>
-                      <td>{{ req.partySize }}</td>
-                      <td>
+                      <td data-label="Shop">{{ req.shop.name }}</td>
+                      <td data-label="Event">{{ eventLabel(req) }}</td>
+                      <td data-label="Party Size">{{ req.partySize }}</td>
+                      <td data-label="Status">
                         <span class="badge"
                           [class.badge-pending]="req.status === 'PENDING'"
                           [class.badge-accepted]="req.status === 'ACCEPTED'"
@@ -443,7 +443,7 @@ import { DialogService } from '../../services/dialog.service';
             <div class="empty-state"><p>No confirmed reservations.</p></div>
           } @else {
             <div class="table-container">
-              <table class="data-table">
+              <table class="data-table data-table--responsive">
                 <thead>
                   <tr>
                     <th>Shop</th>
@@ -455,10 +455,10 @@ import { DialogService } from '../../services/dialog.service';
                 <tbody>
                   @for (r of myReservations(); track r.id) {
                     <tr>
-                      <td>{{ r.shop.name }}</td>
-                      <td>{{ eventLabel(r) }}</td>
-                      <td>{{ r.table ? 'Table ' + r.table.number : 'N/A' }}</td>
-                      <td>{{ r.partySize }}</td>
+                      <td data-label="Shop">{{ r.shop.name }}</td>
+                      <td data-label="Event">{{ eventLabel(r) }}</td>
+                      <td data-label="Table">{{ r.table ? 'Table ' + r.table.number : 'N/A' }}</td>
+                      <td data-label="Party Size">{{ r.partySize }}</td>
                     </tr>
                   }
                 </tbody>

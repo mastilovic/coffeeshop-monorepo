@@ -115,7 +115,7 @@ import {
         </div>
       } @else {
         <div class="table-container">
-          <table class="data-table">
+          <table class="data-table data-table--responsive">
             <thead>
               <tr>
                 <th>Name</th>
@@ -130,13 +130,13 @@ import {
             <tbody>
               @for (event of events(); track event.eventId) {
                 <tr>
-                  <td>{{ event.eventName }}</td>
-                  <td>{{ displayShopName(event) }}</td>
-                  <td>{{ event.shopCity ?? '—' }}</td>
-                  <td>{{ event.eventDate }}</td>
-                  <td>{{ event.description }}</td>
-                  <td>{{ availabilityLabel(event) }}</td>
-                  <td class="event-row-actions">
+                  <td data-label="Name">{{ event.eventName }}</td>
+                  <td data-label="Shop">{{ displayShopName(event) }}</td>
+                  <td data-label="City">{{ event.shopCity ?? '—' }}</td>
+                  <td data-label="Date">{{ event.eventDate }}</td>
+                  <td data-label="Description">{{ event.description }}</td>
+                  <td data-label="Availability">{{ availabilityLabel(event) }}</td>
+                  <td class="event-row-actions data-table__actions" data-label="">
                     <div class="event-row-actions__inner">
                       @if (canManageEvent(event)) {
                         <button class="btn btn-sm btn-secondary" (click)="onEdit(event)">Edit</button>
