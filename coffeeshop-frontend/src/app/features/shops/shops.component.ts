@@ -18,9 +18,9 @@ import { DialogService } from '../../services/dialog.service';
   imports: [ReactiveFormsModule, StarRatingComponent, CitySearchSelectComponent, NgTemplateOutlet],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="page shops-page">
+    <div class="page page--with-footer shops-page">
       @if (showForm() && canShowForm()) {
-        <div class="shops-page__content">
+        <div class="page__content shops-page__content">
           <div class="page-header">
             <h1 class="page-title">{{ editingId() ? 'Edit Shop' : 'Create Shop' }}</h1>
             <button type="button" class="btn btn-secondary" (click)="cancelEdit()">Cancel</button>
@@ -64,7 +64,7 @@ import { DialogService } from '../../services/dialog.service';
           </div>
         </div>
       } @else {
-        <div class="shops-page__content">
+        <div class="page__content shops-page__content">
           <div class="page-header">
             <h1 class="page-title">Shops</h1>
             @if (canCreateShop()) {
@@ -108,7 +108,7 @@ import { DialogService } from '../../services/dialog.service';
         </div>
 
         @if (!loading()) {
-          <div class="pagination-bar shops-page__footer">
+          <div class="pagination-bar page__footer shops-page__footer">
             <span class="pagination-summary">{{ rangeLabel() }}</span>
             <div class="pagination-controls">
               <label class="pagination-page-size">
@@ -223,6 +223,7 @@ import { DialogService } from '../../services/dialog.service';
   styles: `
     :host {
       display: block;
+      min-height: 100%;
     }
 
     .shops-page {
@@ -237,7 +238,7 @@ import { DialogService } from '../../services/dialog.service';
 
     .shops-page__footer {
       flex-shrink: 0;
-      margin-top: 1rem;
+      margin-top: auto;
     }
 
     .shops-page .shop-card-grid {
@@ -553,9 +554,11 @@ export class ShopsComponent implements OnInit {
       : this.shopService.addFavourite(shop.id);
 
     op.subscribe({
-      next: () => {
+      next: updatedShop => {
         this.togglingFavouriteId.set(null);
-        this.loadShops({ silent: true });
+        this.shops.update(current =>
+          current.map(s => (s.id === updatedShop.id ? { ...s, ...updatedShop } : s)),
+        );
       },
       error: () => this.togglingFavouriteId.set(null),
     });
