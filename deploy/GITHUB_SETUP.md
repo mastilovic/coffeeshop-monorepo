@@ -4,6 +4,20 @@ The deploy pipeline **writes all runtime config** before `kubectl apply`. You on
 
 **Branches:** Pushes to **`dev`** build/test and push `dev-sha-*` images to GHCR (no cluster deploy). Pushes to **`main`** publish `sha-*` / `latest` and **deploy to DOKS**. Manual [Deploy Staging (DOKS)](../.github/workflows/deploy-staging.yml) uses `sha-<7>` from a **main** build unless you specify another tag.
 
+## When workflows run
+
+| Trigger | What you see |
+|---------|----------------|
+| Push to **`dev`** or **`main`** | **CI/CD Staging** always starts (every push creates a run). Tests and image builds still follow path filters inside the workflow. |
+| Push with **no** changes under watched paths | Run appears; `backend-test` / `frontend-test` and builds may be **skipped** if `dorny/paths-filter` reports no matches. |
+| **Empty commit** (`git commit --allow-empty`) | Run is created on push, but builds/tests often **skip** — do not use empty commits to force a full pipeline. |
+| **PR** | **Backend CI** and **Frontend CI** only — not **CI/CD Staging**. |
+| **Actions → CI/CD Staging → Run workflow** | Manual full pipeline on the selected branch without a new commit. Use branch **`main`** to build `sha-*` / `latest` and deploy to DOKS. |
+
+**Emergency:** On manual run, enable **Skip unit tests** only when you must deploy without running tests (tests are skipped; builds and deploy still follow normal job rules).
+
+**Redeploy without rebuild:** Use **Deploy Staging (DOKS)** with an existing `image_tag` (`latest` or `sha-<7>`).
+
 ## Generated during deploy (do not commit)
 
 | File | Source |

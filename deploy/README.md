@@ -96,9 +96,17 @@ kubectl apply -k .
 
 Recommended flow: feature branch → PR into **`dev`** → PR **`dev` → `main`** when ready for staging.
 
+### How to trigger CI/CD Staging
+
+- **Push** to `dev` or `main` — a workflow run is always created; tests/builds run only when `coffeeshop/**`, `coffeeshop-frontend/**`, `deploy/**`, or relevant workflow files changed (path filter inside the job).
+- **Merge to `main`** — same pipeline; deploy runs only on `main` when both image builds succeed.
+- **Manual:** Actions → **CI/CD Staging** → **Run workflow** → branch **`main`** (staging deploy). Optional **Skip unit tests** for emergency deploys only.
+- **Empty commits** do not reliably produce builds — prefer a real change under watched paths or a manual workflow run.
+- **PRs** use Backend CI / Frontend CI, not CI/CD Staging on push.
+
 ### Automatic deploy (primary)
 
-On every push to **`main`** that touches app, deploy, or workflow paths, **CI/CD Staging** runs:
+On every push to **`main`** or **`dev`**, **CI/CD Staging** starts; tests and builds are path-filtered inside the workflow:
 
 1. Path-filtered tests (backend and/or frontend; both run when only `deploy/**` changes).
 2. Builds and pushes **both** images as `sha-<7>` and `latest`.
