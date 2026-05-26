@@ -41,12 +41,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: docker/setup-buildx-action@v3
-
-      - uses: docker/build-push-action@v6
+      - uses: ./.github/actions/docker-build-push
         with:
           context: coffeeshop-frontend
-          push: false
+          push: 'false'
+          cache_scope: frontend-pr
           tags: ghcr.io/mastilovic/coffeeshop-frontend:pr-${{ github.event.pull_request.number }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max

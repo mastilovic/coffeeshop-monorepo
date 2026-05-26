@@ -4,6 +4,8 @@ The deploy pipeline **writes all runtime config** before `kubectl apply`. You on
 
 Deploy workflows install pinned `kubectl` and `kustomize` from official release URLs (no `azure/setup-kubectl` or other marketplace install actions).
 
+CI workflows avoid third-party marketplace actions that download from `codeload.github.com` (for example `dorny/paths-filter`, `docker/*`, `gradle/actions`). Path filtering uses `git diff` in shell; Docker build/push uses the local composite [`.github/actions/docker-build-push`](../.github/actions/docker-build-push); Gradle runs via `./gradlew` after `actions/setup-java` only. If logs still show `Failed to download archive` from `codeload.github.com`, check **Settings → Actions** allowlists — the shell/local approach does not depend on those downloads.
+
 **Branches:** Every push or merge to **`main`** runs the full **CI/CD Staging** pipeline (tests, both images, DOKS deploy) automatically — including empty commits. Pushes to **`dev`** run path-filtered tests/builds and push `dev-sha-*` only (no deploy). Rollback redeploy only: manual [Deploy Staging (DOKS)](../.github/workflows/deploy-staging.yml) with an existing `image_tag`.
 
 ## When workflows run
