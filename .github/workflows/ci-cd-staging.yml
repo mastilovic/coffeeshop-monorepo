@@ -2,21 +2,16 @@ name: CI/CD Staging
 
 on:
   push:
-    branches: [dev, main]
-  workflow_dispatch:
-    inputs:
-      skip_tests:
-        description: 'Skip unit tests (emergency deploy only)'
-        type: boolean
-        default: false
+    branches: [main]
+    paths:
+      - 'coffeeshop/**'
+      - 'coffeeshop-frontend/**'
+      - 'deploy/**'
+      - '.github/workflows/**'
 
 concurrency:
-  group: ci-cd-${{ github.ref }}
+  group: ci-cd-staging
   cancel-in-progress: true
-
-permissions:
-  contents: read
-  packages: write
 
 jobs:
   meta:
@@ -27,23 +22,18 @@ jobs:
       - id: tag
         run: |
           short=$(echo "${GITHUB_SHA}" | cut -c1-7)
-          if [ "${{ github.ref }}" = "refs/heads/main" ]; then
-            echo "image_tag=sha-${short}" >> "$GITHUB_OUTPUT"
-          else
-            echo "image_tag=dev-sha-${short}" >> "$GITHUB_OUTPUT"
-          fi
+          echo "image_tag=sha-${short}" >> "$GITHUB_OUTPUT"
 
   changes:
     runs-on: ubuntu-latest
     outputs:
-      backend: ${{ steps.final.outputs.backend }}
-      frontend: ${{ steps.final.outputs.frontend }}
-      deploy: ${{ steps.final.outputs.deploy }}
+      backend: ${{ steps.filter.outputs.backend }}
+      frontend: ${{ steps.filter.outputs.frontend }}
+      deploy: ${{ steps.filter.outputs.deploy }}
     steps:
       - uses: actions/checkout@v4
       - uses: dorny/paths-filter@v3
         id: filter
-        if: github.ref != 'refs/heads/main'
         with:
           filters: |
             backend:
@@ -59,24 +49,11 @@ jobs:
               - '.github/workflows/deploy-staging.yml'
               - '.github/workflows/deploy-staging-reusable.yml'
               - '.github/workflows/ci-cd-staging.yml'
-      - id: final
-        run: |
-          if [ "${{ github.ref }}" = "refs/heads/main" ]; then
-            echo "backend=true" >> "$GITHUB_OUTPUT"
-            echo "frontend=true" >> "$GITHUB_OUTPUT"
-            echo "deploy=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "backend=${{ steps.filter.outputs.backend }}" >> "$GITHUB_OUTPUT"
-            echo "frontend=${{ steps.filter.outputs.frontend }}" >> "$GITHUB_OUTPUT"
-            echo "deploy=${{ steps.filter.outputs.deploy }}" >> "$GITHUB_OUTPUT"
-          fi
 
   backend-test:
     runs-on: ubuntu-latest
     needs: changes
-    if: |
-      (needs.changes.outputs.backend == 'true' || needs.changes.outputs.deploy == 'true') &&
-      !(github.event_name == 'workflow_dispatch' && inputs.skip_tests == true)
+    if: needs.changes.outputs.backend == 'true' || needs.changes.outputs.deploy == 'true'
     defaults:
       run:
         working-directory: coffeeshop
@@ -96,9 +73,7 @@ jobs:
   frontend-test:
     runs-on: ubuntu-latest
     needs: changes
-    if: |
-      (needs.changes.outputs.frontend == 'true' || needs.changes.outputs.deploy == 'true') &&
-      !(github.event_name == 'workflow_dispatch' && inputs.skip_tests == true)
+    if: needs.changes.outputs.frontend == 'true' || needs.changes.outputs.deploy == 'true'
     defaults:
       run:
         working-directory: coffeeshop-frontend
@@ -120,28 +95,12 @@ jobs:
   build-backend:
     runs-on: ubuntu-latest
     needs: [meta, changes, backend-test]
-    if: |
-      always() &&
-      (needs.backend-test.result == 'success' || needs.backend-test.result == 'skipped') &&
-      (needs.changes.outputs.backend == 'true' || needs.changes.outputs.deploy == 'true')
+    if: always() && (needs.backend-test.result == 'success' || needs.backend-test.result == 'skipped')
     permissions:
       contents: read
       packages: write
     steps:
       - uses: actions/checkout@v4
-
-      - name: Prepare image tags
-        id: prep
-        run: |
-          {
-            echo "ghcr.io/mastilovic/coffeeshop-backend:${{ needs.meta.outputs.image_tag }}"
-            if [ "${{ github.ref }}" = "refs/heads/main" ]; then
-              echo "ghcr.io/mastilovic/coffeeshop-backend:latest"
-            fi
-          } > "${RUNNER_TEMP}/tags.txt"
-          echo "tags<<EOF" >> "$GITHUB_OUTPUT"
-          cat "${RUNNER_TEMP}/tags.txt" >> "$GITHUB_OUTPUT"
-          echo "EOF" >> "$GITHUB_OUTPUT"
 
       - uses: docker/setup-buildx-action@v3
 
@@ -155,35 +114,21 @@ jobs:
         with:
           context: coffeeshop
           push: true
-          tags: ${{ steps.prep.outputs.tags }}
+          tags: |
+            ghcr.io/mastilovic/coffeeshop-backend:${{ needs.meta.outputs.image_tag }}
+            ghcr.io/mastilovic/coffeeshop-backend:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
   build-frontend:
     runs-on: ubuntu-latest
     needs: [meta, changes, frontend-test]
-    if: |
-      always() &&
-      (needs.frontend-test.result == 'success' || needs.frontend-test.result == 'skipped') &&
-      (needs.changes.outputs.frontend == 'true' || needs.changes.outputs.deploy == 'true')
+    if: always() && (needs.frontend-test.result == 'success' || needs.frontend-test.result == 'skipped')
     permissions:
       contents: read
       packages: write
     steps:
       - uses: actions/checkout@v4
-
-      - name: Prepare image tags
-        id: prep
-        run: |
-          {
-            echo "ghcr.io/mastilovic/coffeeshop-frontend:${{ needs.meta.outputs.image_tag }}"
-            if [ "${{ github.ref }}" = "refs/heads/main" ]; then
-              echo "ghcr.io/mastilovic/coffeeshop-frontend:latest"
-            fi
-          } > "${RUNNER_TEMP}/tags.txt"
-          echo "tags<<EOF" >> "$GITHUB_OUTPUT"
-          cat "${RUNNER_TEMP}/tags.txt" >> "$GITHUB_OUTPUT"
-          echo "EOF" >> "$GITHUB_OUTPUT"
 
       - uses: docker/setup-buildx-action@v3
 
@@ -197,16 +142,15 @@ jobs:
         with:
           context: coffeeshop-frontend
           push: true
-          tags: ${{ steps.prep.outputs.tags }}
+          tags: |
+            ghcr.io/mastilovic/coffeeshop-frontend:${{ needs.meta.outputs.image_tag }}
+            ghcr.io/mastilovic/coffeeshop-frontend:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
   deploy:
     needs: [meta, build-backend, build-frontend]
-    if: |
-      github.ref == 'refs/heads/main' &&
-      needs.build-backend.result == 'success' &&
-      needs.build-frontend.result == 'success'
+    if: needs.build-backend.result == 'success' && needs.build-frontend.result == 'success'
     concurrency:
       group: deploy-staging
       cancel-in-progress: false
