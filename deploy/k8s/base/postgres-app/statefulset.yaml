@@ -60,10 +60,10 @@ spec:
             periodSeconds: 20
           resources:
             requests:
-              cpu: 100m
-              memory: 256Mi
+              cpu: 50m
+              memory: 192Mi
             limits:
-              memory: 512Mi
+              memory: 384Mi
   volumeClaimTemplates:
     - metadata:
         name: data

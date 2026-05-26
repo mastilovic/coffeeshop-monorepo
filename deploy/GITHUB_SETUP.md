@@ -115,6 +115,8 @@ Browser: `http://<STAGING_APP_HOST>/` — register/login. If **401 after login**
 
 When you add TLS later, set `STAGING_PUBLIC_SCHEME=https`, redeploy, and use `https://` URLs in the browser.
 
+If pods stay **Pending** with `Insufficient cpu` or `Insufficient memory`, see [deploy/README.md — Resource sizing](README.md#resource-sizing).
+
 ## Local deploy (same substitution model)
 
 ```bash

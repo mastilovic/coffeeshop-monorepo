@@ -6,6 +6,11 @@ metadata:
     app.kubernetes.io/name: keycloak
 spec:
   replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 1
   selector:
     matchLabels:
       app.kubernetes.io/name: keycloak
@@ -86,10 +91,10 @@ spec:
             periodSeconds: 20
           resources:
             requests:
-              cpu: 250m
-              memory: 512Mi
+              cpu: 150m
+              memory: 384Mi
             limits:
-              memory: 1Gi
+              memory: 768Mi
       volumes:
         - name: realm-import
           configMap:

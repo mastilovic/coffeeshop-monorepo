@@ -214,6 +214,30 @@ kubectl rollout status deployment/backend -n coffeeshop-staging
 - **Image pull errors**: Add `ghcr-pull` secret or make GHCR packages public.
 - **Postgres pending**: Check PVC provisioning (`kubectl get pvc -n coffeeshop-staging`); DO default StorageClass is usually `do-block-storage`.
 - **`localhost:8080` / openapi connection refused on deploy**: `KUBE_CONFIG` is empty, truncated, or not a valid DOKS kubeconfig. Recreate the secret from a single-cluster file (see **`KUBE_CONFIG` secret** above). The deploy workflow logs `Context:` and `API server:` before `kubectl apply`.
+- **`Insufficient cpu` / pods Pending**: See **Resource sizing** below; resize the DOKS node pool or apply reduced requests from the repo.
+
+## Resource sizing
+
+Staging manifests in [`deploy/k8s/base`](k8s/base) use reduced CPU/memory **requests** so the stack fits a small DOKS node. App Deployments use `maxSurge: 0` so rollouts do not temporarily run two backend/frontend/Keycloak pods (avoids a deploy-time CPU spike; brief unavailability during image updates).
+
+| Workload | CPU request | Memory request | Memory limit |
+|----------|-------------|----------------|--------------|
+| backend | 150m | 384Mi | 768Mi |
+| keycloak | 150m | 384Mi | 768Mi |
+| postgres (×2) | 50m each | 192Mi each | 384Mi each |
+| frontend | 25m | 64Mi | 128Mi |
+
+**Steady-state total (namespace only):** ~425m CPU, ~1216Mi memory requests. Add headroom for `ingress-nginx` and system pods.
+
+For comfort on a single node, use **≥2 vCPU / 4 GB** droplets. If pods are **OOMKilled**, bump memory limits slightly (e.g. backend 384Mi → 512Mi request).
+
+Verify after deploy:
+
+```bash
+kubectl describe node | grep -A5 "Allocated resources"
+kubectl get rs -n coffeeshop-staging
+kubectl top pods -n coffeeshop-staging   # requires metrics-server
+```
 
 ## Layout
 
