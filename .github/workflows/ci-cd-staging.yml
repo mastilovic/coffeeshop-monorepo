@@ -2,7 +2,7 @@ name: CI/CD Staging
 
 on:
   push:
-    branches: [main]
+    branches: [dev, main]
     paths:
       - 'coffeeshop/**'
       - 'coffeeshop-frontend/**'
@@ -10,7 +10,7 @@ on:
       - '.github/workflows/**'
 
 concurrency:
-  group: ci-cd-staging
+  group: ci-cd-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -22,7 +22,11 @@ jobs:
       - id: tag
         run: |
           short=$(echo "${GITHUB_SHA}" | cut -c1-7)
-          echo "image_tag=sha-${short}" >> "$GITHUB_OUTPUT"
+          if [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            echo "image_tag=sha-${short}" >> "$GITHUB_OUTPUT"
+          else
+            echo "image_tag=dev-sha-${short}" >> "$GITHUB_OUTPUT"
+          fi
 
   changes:
     runs-on: ubuntu-latest
@@ -102,6 +106,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Prepare image tags
+        id: prep
+        run: |
+          {
+            echo "ghcr.io/mastilovic/coffeeshop-backend:${{ needs.meta.outputs.image_tag }}"
+            if [ "${{ github.ref }}" = "refs/heads/main" ]; then
+              echo "ghcr.io/mastilovic/coffeeshop-backend:latest"
+            fi
+          } > "${RUNNER_TEMP}/tags.txt"
+          echo "tags<<EOF" >> "$GITHUB_OUTPUT"
+          cat "${RUNNER_TEMP}/tags.txt" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+
       - uses: docker/setup-buildx-action@v3
 
       - uses: docker/login-action@v3
@@ -114,9 +131,7 @@ jobs:
         with:
           context: coffeeshop
           push: true
-          tags: |
-            ghcr.io/mastilovic/coffeeshop-backend:${{ needs.meta.outputs.image_tag }}
-            ghcr.io/mastilovic/coffeeshop-backend:latest
+          tags: ${{ steps.prep.outputs.tags }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -130,6 +145,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Prepare image tags
+        id: prep
+        run: |
+          {
+            echo "ghcr.io/mastilovic/coffeeshop-frontend:${{ needs.meta.outputs.image_tag }}"
+            if [ "${{ github.ref }}" = "refs/heads/main" ]; then
+              echo "ghcr.io/mastilovic/coffeeshop-frontend:latest"
+            fi
+          } > "${RUNNER_TEMP}/tags.txt"
+          echo "tags<<EOF" >> "$GITHUB_OUTPUT"
+          cat "${RUNNER_TEMP}/tags.txt" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+
       - uses: docker/setup-buildx-action@v3
 
       - uses: docker/login-action@v3
@@ -142,15 +170,16 @@ jobs:
         with:
           context: coffeeshop-frontend
           push: true
-          tags: |
-            ghcr.io/mastilovic/coffeeshop-frontend:${{ needs.meta.outputs.image_tag }}
-            ghcr.io/mastilovic/coffeeshop-frontend:latest
+          tags: ${{ steps.prep.outputs.tags }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
   deploy:
     needs: [meta, build-backend, build-frontend]
-    if: needs.build-backend.result == 'success' && needs.build-frontend.result == 'success'
+    if: |
+      github.ref == 'refs/heads/main' &&
+      needs.build-backend.result == 'success' &&
+      needs.build-frontend.result == 'success'
     concurrency:
       group: deploy-staging
       cancel-in-progress: false
