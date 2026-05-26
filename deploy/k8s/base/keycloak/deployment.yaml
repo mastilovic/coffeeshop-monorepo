@@ -52,11 +52,12 @@ spec:
               value: "true"
             - name: KC_PROXY
               value: edge
-            - name: KC_HOSTNAME
+            # Keycloak 24: hostname and hostname-url are mutually exclusive; use full public URL only.
+            - name: KC_HOSTNAME_URL
               valueFrom:
                 configMapKeyRef:
                   name: coffeeshop-config
-                  key: AUTH_HOST
+                  key: KEYCLOAK_PUBLIC_URL
             - name: KC_HOSTNAME_STRICT
               value: "false"
             - name: KC_HOSTNAME_STRICT_HTTPS

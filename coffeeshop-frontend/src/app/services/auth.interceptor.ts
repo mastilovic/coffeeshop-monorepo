@@ -2,9 +2,11 @@ import { HttpInterceptorFn, HttpErrorResponse } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { catchError, switchMap, throwError } from 'rxjs';
 import { AuthService } from './auth.service';
+import { ProfileService } from './profile.service';
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const authService = inject(AuthService);
+  const profileService = inject(ProfileService);
   const token = authService.accessToken();
 
   const authReq = token
@@ -17,6 +19,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
         return authService.refreshToken().pipe(
           switchMap(() => {
             const newToken = authService.accessToken();
+            profileService.getProfile().subscribe();
             const retryReq = req.clone({
               setHeaders: { Authorization: `Bearer ${newToken}` },
             });

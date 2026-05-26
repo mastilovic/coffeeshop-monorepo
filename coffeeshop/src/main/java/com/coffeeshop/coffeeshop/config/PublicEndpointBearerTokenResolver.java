@@ -29,8 +29,7 @@ public class PublicEndpointBearerTokenResolver implements BearerTokenResolver {
         if (HttpMethod.GET.matches(method) && path.startsWith("/api/v1/")) {
             return !path.equals("/api/v1/reservation-request")
                     && !path.startsWith("/api/v1/reservation-request/")
-                    && !path.equals("/api/v1/shop/mine")
-                    && !path.equals("/api/v1/shop");
+                    && !path.equals("/api/v1/shop/mine");
         }
 
         if (HttpMethod.POST.matches(method)) {

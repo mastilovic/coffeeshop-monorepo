@@ -36,4 +36,5 @@ envsubst '${STAGING_APP_HOST} ${STAGING_KEYCLOAK_BACKEND_CLIENT_SECRET}' \
   < realm-coffeeshop.json.template > realm-coffeeshop.json
 
 echo "Wrote realm-coffeeshop.json (APP_HOST=${STAGING_APP_HOST}, AUTH_HOST=${AUTH_HOST}, scheme=${PUBLIC_SCHEME})"
+echo "Ensure config.env has KEYCLOAK_PUBLIC_URL=${PUBLIC_SCHEME}://${AUTH_HOST}"
 echo "Ensure config.env has KEYCLOAK_JWT_ISSUER_URI=${PUBLIC_SCHEME}://${AUTH_HOST}/realms/coffeeshop"
