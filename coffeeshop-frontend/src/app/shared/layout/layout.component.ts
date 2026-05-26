@@ -343,6 +343,7 @@ import { DialogHostComponent } from '../dialog-host/dialog-host.component';
     .content {
       flex: 1;
       overflow-y: auto;
+      overflow-x: clip;
       -webkit-overflow-scrolling: touch;
     }
 
