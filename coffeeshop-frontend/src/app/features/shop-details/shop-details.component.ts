@@ -106,7 +106,18 @@ type ReservationSubTab = 'pending' | 'approved' | 'denied';
           </div>
         </div>
 
-        <div class="tabs">
+        <select
+          class="tab-select view-mobile-only mb-3"
+          aria-label="Shop section"
+          [value]="activeTab()"
+          (change)="onPrimaryTabSelect($event)"
+        >
+          @for (t of visibleTabs(); track t.key) {
+            <option [value]="t.key">{{ t.label }}</option>
+          }
+        </select>
+
+        <div class="tabs view-desktop-only">
           @for (t of visibleTabs(); track t.key) {
             <button class="tab" [class.active]="activeTab() === t.key" (click)="onTabChange(t.key)">
               {{ t.label }}
@@ -143,15 +154,27 @@ type ReservationSubTab = 'pending' | 'approved' | 'denied';
           } @else if (membersTotalElements() === 0) {
             <div class="empty-state mb-3"><p>{{ membersEmptyStateMessage() }}</p></div>
           } @else {
-            <div class="table-container mb-3">
-              <table class="data-table data-table--responsive">
-                <thead><tr><th>Name</th><th>Username</th></tr></thead>
-                <tbody>
-                  @for (u of members(); track u.id) {
-                    <tr><td data-label="Name">{{ u.name }}</td><td data-label="Username">{{ u.username }}</td></tr>
-                  }
-                </tbody>
-              </table>
+            <div class="view-mobile-only list-card-grid mb-3">
+              @for (u of members(); track u.id) {
+                <article class="list-card">
+                  <div class="list-card__primary">
+                    <span class="list-card__title">{{ u.name }}</span>
+                    <span class="list-card__subtitle">{{ u.username }}</span>
+                  </div>
+                </article>
+              }
+            </div>
+            <div class="view-desktop-only">
+              <div class="table-container mb-3">
+                <table class="data-table">
+                  <thead><tr><th>Name</th><th>Username</th></tr></thead>
+                  <tbody>
+                    @for (u of members(); track u.id) {
+                      <tr><td>{{ u.name }}</td><td>{{ u.username }}</td></tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
             </div>
 
             <div class="pagination-bar mb-3">
@@ -309,33 +332,54 @@ type ReservationSubTab = 'pending' | 'approved' | 'denied';
             @if (shop()!.currentMenu!.items.length === 0) {
               <div class="empty-state"><p>No menu items.</p></div>
             } @else {
-            <div class="table-container">
-              <table class="data-table data-table--responsive">
-                <thead>
-                  <tr>
-                    <th>Name</th><th>Type</th><th>Description</th><th>Price</th>
-                    @if (canManageShop()) { <th>Actions</th> }
-                  </tr>
-                </thead>
-                <tbody>
-                    @for (item of shop()!.currentMenu!.items; track item.id) {
-                    <tr>
-                      <td data-label="Name">{{ item.name }}</td>
-                      <td data-label="Type">{{ formatMenuItemType(item.itemType) }}</td>
-                      <td data-label="Description">{{ item.description }}</td>
-                      <td data-label="Price">{{ item.price }} {{ item.priceCurrency }}</td>
-                      @if (canManageShop()) {
-                        <td class="data-table__actions" data-label="">
-                          <div style="display:flex;gap:0.5rem">
-                            <button class="btn btn-sm btn-secondary" (click)="onEditMenuItem(item)">Edit</button>
-                            <button class="btn btn-sm btn-danger" (click)="onDeleteMenuItem(item)">Delete</button>
-                          </div>
-                        </td>
-                      }
-                    </tr>
+            <div class="view-mobile-only list-card-grid mb-3">
+              @for (item of shop()!.currentMenu!.items; track item.id) {
+                <article class="list-card">
+                  <div class="list-card__primary">
+                    <span class="list-card__title">{{ item.name }}</span>
+                    <span class="list-card__subtitle">{{ item.price }} {{ item.priceCurrency }}</span>
+                  </div>
+                  <div class="list-card__meta list-card__meta--clamp">
+                    {{ formatMenuItemType(item.itemType) }} · {{ item.description }}
+                  </div>
+                  @if (canManageShop()) {
+                    <div class="list-card__actions">
+                      <button class="btn btn-sm btn-secondary" (click)="onEditMenuItem(item)">Edit</button>
+                      <button class="btn btn-sm btn-danger" (click)="onDeleteMenuItem(item)">Delete</button>
+                    </div>
                   }
-                </tbody>
-              </table>
+                </article>
+              }
+            </div>
+            <div class="view-desktop-only">
+              <div class="table-container">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Name</th><th>Type</th><th>Description</th><th>Price</th>
+                      @if (canManageShop()) { <th>Actions</th> }
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (item of shop()!.currentMenu!.items; track item.id) {
+                      <tr>
+                        <td>{{ item.name }}</td>
+                        <td>{{ formatMenuItemType(item.itemType) }}</td>
+                        <td>{{ item.description }}</td>
+                        <td>{{ item.price }} {{ item.priceCurrency }}</td>
+                        @if (canManageShop()) {
+                          <td class="data-table__actions">
+                            <div style="display:flex;gap:0.5rem">
+                              <button class="btn btn-sm btn-secondary" (click)="onEditMenuItem(item)">Edit</button>
+                              <button class="btn btn-sm btn-danger" (click)="onDeleteMenuItem(item)">Delete</button>
+                            </div>
+                          </td>
+                        }
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
             </div>
             }
           }
@@ -353,22 +397,37 @@ type ReservationSubTab = 'pending' | 'approved' | 'denied';
                 @if (historical.items.length === 0) {
                   <p class="text-muted mt-2">No items.</p>
                 } @else {
-                  <div class="table-container mt-2">
-                    <table class="data-table data-table--responsive">
-                      <thead>
-                        <tr><th>Name</th><th>Type</th><th>Description</th><th>Price</th></tr>
-                      </thead>
-                      <tbody>
-                        @for (item of historical.items; track item.id) {
-                          <tr>
-                            <td data-label="Name">{{ item.name }}</td>
-                            <td data-label="Type">{{ formatMenuItemType(item.itemType) }}</td>
-                            <td data-label="Description">{{ item.description }}</td>
-                            <td data-label="Price">{{ item.price }} {{ item.priceCurrency }}</td>
-                          </tr>
-                        }
-                      </tbody>
-                    </table>
+                  <div class="view-mobile-only list-card-grid mt-2">
+                    @for (item of historical.items; track item.id) {
+                      <article class="list-card">
+                        <div class="list-card__primary">
+                          <span class="list-card__title">{{ item.name }}</span>
+                          <span class="list-card__subtitle">{{ item.price }} {{ item.priceCurrency }}</span>
+                        </div>
+                        <div class="list-card__meta list-card__meta--clamp">
+                          {{ formatMenuItemType(item.itemType) }} · {{ item.description }}
+                        </div>
+                      </article>
+                    }
+                  </div>
+                  <div class="view-desktop-only">
+                    <div class="table-container mt-2">
+                      <table class="data-table">
+                        <thead>
+                          <tr><th>Name</th><th>Type</th><th>Description</th><th>Price</th></tr>
+                        </thead>
+                        <tbody>
+                          @for (item of historical.items; track item.id) {
+                            <tr>
+                              <td>{{ item.name }}</td>
+                              <td>{{ formatMenuItemType(item.itemType) }}</td>
+                              <td>{{ item.description }}</td>
+                              <td>{{ item.price }} {{ item.priceCurrency }}</td>
+                            </tr>
+                          }
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
                 }
               </details>
@@ -408,38 +467,66 @@ type ReservationSubTab = 'pending' | 'approved' | 'denied';
           @if (shop()!.tables.length === 0) {
             <div class="empty-state"><p>No tables.</p></div>
           } @else {
-            <div class="table-container">
-              <table class="data-table data-table--responsive">
-                <thead>
-                  <tr>
-                    <th>#</th><th>Capacity</th>
-                    @if (canManageShop()) { <th>Actions</th> }
-                  </tr>
-                </thead>
-                <tbody>
-                  @for (t of shop()!.tables; track t.id) {
-                    <tr>
-                      <td data-label="#">{{ t.number }}</td>
-                      <td data-label="Capacity">{{ t.capacity }}</td>
-                      @if (canManageShop()) {
-                        <td class="data-table__actions" data-label="">
-                          <div style="display:flex;gap:0.5rem">
-                            <button class="btn btn-sm btn-secondary" (click)="onEditTable(t)">Edit</button>
-                            <button class="btn btn-sm btn-danger" (click)="onDeleteTable(t)">Delete</button>
-                          </div>
-                        </td>
-                      }
-                    </tr>
+            <div class="view-mobile-only list-card-grid mb-3">
+              @for (t of shop()!.tables; track t.id) {
+                <article class="list-card">
+                  <div class="list-card__primary">
+                    <span class="list-card__title">Table {{ t.number }}</span>
+                    <span class="list-card__subtitle">Capacity {{ t.capacity }}</span>
+                  </div>
+                  @if (canManageShop()) {
+                    <div class="list-card__actions">
+                      <button class="btn btn-sm btn-secondary" (click)="onEditTable(t)">Edit</button>
+                      <button class="btn btn-sm btn-danger" (click)="onDeleteTable(t)">Delete</button>
+                    </div>
                   }
-                </tbody>
-              </table>
+                </article>
+              }
+            </div>
+            <div class="view-desktop-only">
+              <div class="table-container">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>#</th><th>Capacity</th>
+                      @if (canManageShop()) { <th>Actions</th> }
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (t of shop()!.tables; track t.id) {
+                      <tr>
+                        <td>{{ t.number }}</td>
+                        <td>{{ t.capacity }}</td>
+                        @if (canManageShop()) {
+                          <td class="data-table__actions">
+                            <div style="display:flex;gap:0.5rem">
+                              <button class="btn btn-sm btn-secondary" (click)="onEditTable(t)">Edit</button>
+                              <button class="btn btn-sm btn-danger" (click)="onDeleteTable(t)">Delete</button>
+                            </div>
+                          </td>
+                        }
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
             </div>
           }
         }
 
         <!-- RESERVATIONS TAB -->
         @if (activeTab() === 'reservations') {
-          <div class="tabs tabs--sub">
+          <select
+            class="tab-select view-mobile-only mb-3"
+            aria-label="Reservation status"
+            [value]="reservationSubTab()"
+            (change)="onReservationSubTabSelect($event)"
+          >
+            <option value="pending">Pending ({{ pendingRequests().length }})</option>
+            <option value="approved">Approved ({{ reservations().length }})</option>
+            <option value="denied">Denied ({{ deniedRequests().length }})</option>
+          </select>
+          <div class="tabs tabs--sub view-desktop-only">
             <button
               class="tab"
               [class.active]="reservationSubTab() === 'pending'"
@@ -464,57 +551,101 @@ type ReservationSubTab = 'pending' | 'approved' | 'denied';
             @if (pendingRequests().length === 0) {
               <div class="empty-state"><p>No pending reservation requests.</p></div>
             } @else if (canManageShop()) {
-              <div class="table-container table-container--dropdown-safe">
-                <table class="data-table data-table--responsive">
-                  <thead>
-                    <tr><th>Guest</th><th>Event</th><th>Party Size</th><th>Status</th><th>Actions</th></tr>
-                  </thead>
-                  <tbody>
-                    @for (req of pendingRequests(); track req.id) {
-                      <tr>
-                        <td data-label="Guest">{{ req.user?.name ?? '—' }}</td>
-                        <td data-label="Event">{{ eventLabel(req) }}</td>
-                        <td data-label="Party Size">{{ req.partySize }}</td>
-                        <td data-label="Status"><span class="badge badge-pending">{{ req.status }}</span></td>
-                        <td class="data-table__actions" data-label="">
-                          <div class="reservation-actions">
-                            <app-form-select
-                              [compact]="true"
-                              placeholder="Select table"
-                              [options]="tableSelectOptionsForRequest(req)"
-                              [ngModel]="tableSelectValue(req.id)"
-                              (ngModelChange)="onTableSelectChange(req.id, $event)"
-                            />
-                            @if (!hasSuitableTablesForRequest(req)) {
-                              <p class="text-muted" role="status">
-                                No table large enough for party of {{ req.partySize }}.
-                              </p>
-                            }
-                            <div class="reservation-actions__buttons">
-                              <button class="btn btn-sm btn-primary" (click)="onAcceptRequest(req)">Accept</button>
-                              <button class="btn btn-sm btn-danger" (click)="onDenyRequest(req)">Deny</button>
+              <div class="view-mobile-only list-card-grid mb-3">
+                @for (req of pendingRequests(); track req.id) {
+                  <article class="list-card">
+                    <div class="list-card__primary">
+                      <span class="list-card__title">{{ req.user?.name ?? '—' }}</span>
+                      <span class="list-card__subtitle">{{ eventLabel(req) }}</span>
+                    </div>
+                    <div class="list-card__meta">
+                      Party {{ req.partySize }} · <span class="badge badge-pending">{{ req.status }}</span>
+                    </div>
+                    <div class="list-card__actions reservation-actions">
+                      <app-form-select
+                        [compact]="true"
+                        placeholder="Select table"
+                        [options]="tableSelectOptionsForRequest(req)"
+                        [ngModel]="tableSelectValue(req.id)"
+                        (ngModelChange)="onTableSelectChange(req.id, $event)"
+                      />
+                      @if (!hasSuitableTablesForRequest(req)) {
+                        <p class="text-muted" role="status">No table large enough for party of {{ req.partySize }}.</p>
+                      }
+                      <div class="reservation-actions__buttons">
+                        <button class="btn btn-sm btn-primary" (click)="onAcceptRequest(req)">Accept</button>
+                        <button class="btn btn-sm btn-danger" (click)="onDenyRequest(req)">Deny</button>
+                      </div>
+                    </div>
+                  </article>
+                }
+              </div>
+              <div class="view-desktop-only">
+                <div class="table-container table-container--dropdown-safe">
+                  <table class="data-table">
+                    <thead>
+                      <tr><th>Guest</th><th>Event</th><th>Party Size</th><th>Status</th><th>Actions</th></tr>
+                    </thead>
+                    <tbody>
+                      @for (req of pendingRequests(); track req.id) {
+                        <tr>
+                          <td>{{ req.user?.name ?? '—' }}</td>
+                          <td>{{ eventLabel(req) }}</td>
+                          <td>{{ req.partySize }}</td>
+                          <td><span class="badge badge-pending">{{ req.status }}</span></td>
+                          <td class="data-table__actions">
+                            <div class="reservation-actions">
+                              <app-form-select
+                                [compact]="true"
+                                placeholder="Select table"
+                                [options]="tableSelectOptionsForRequest(req)"
+                                [ngModel]="tableSelectValue(req.id)"
+                                (ngModelChange)="onTableSelectChange(req.id, $event)"
+                              />
+                              @if (!hasSuitableTablesForRequest(req)) {
+                                <p class="text-muted" role="status">
+                                  No table large enough for party of {{ req.partySize }}.
+                                </p>
+                              }
+                              <div class="reservation-actions__buttons">
+                                <button class="btn btn-sm btn-primary" (click)="onAcceptRequest(req)">Accept</button>
+                                <button class="btn btn-sm btn-danger" (click)="onDenyRequest(req)">Deny</button>
+                              </div>
                             </div>
-                          </div>
-                        </td>
-                      </tr>
-                    }
-                  </tbody>
-                </table>
+                          </td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
               </div>
             } @else if (canSelfReserveAtShop()) {
-              <div class="table-container">
-                <table class="data-table data-table--responsive">
-                  <thead><tr><th>Event</th><th>Party Size</th><th>Status</th></tr></thead>
-                  <tbody>
-                    @for (req of pendingRequests(); track req.id) {
-                      <tr>
-                        <td data-label="Event">{{ eventLabel(req) }}</td>
-                        <td data-label="Party Size">{{ req.partySize }}</td>
-                        <td data-label="Status"><span class="badge badge-pending">{{ req.status }}</span></td>
-                      </tr>
-                    }
-                  </tbody>
-                </table>
+              <div class="view-mobile-only list-card-grid mb-3">
+                @for (req of pendingRequests(); track req.id) {
+                  <article class="list-card">
+                    <div class="list-card__primary">
+                      <span class="list-card__title">{{ eventLabel(req) }}</span>
+                      <span class="list-card__subtitle">Party {{ req.partySize }}</span>
+                    </div>
+                    <div class="list-card__meta"><span class="badge badge-pending">{{ req.status }}</span></div>
+                  </article>
+                }
+              </div>
+              <div class="view-desktop-only">
+                <div class="table-container">
+                  <table class="data-table">
+                    <thead><tr><th>Event</th><th>Party Size</th><th>Status</th></tr></thead>
+                    <tbody>
+                      @for (req of pendingRequests(); track req.id) {
+                        <tr>
+                          <td>{{ eventLabel(req) }}</td>
+                          <td>{{ req.partySize }}</td>
+                          <td><span class="badge badge-pending">{{ req.status }}</span></td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
               </div>
             }
           }
@@ -523,25 +654,42 @@ type ReservationSubTab = 'pending' | 'approved' | 'denied';
             @if (reservations().length === 0) {
               <div class="empty-state"><p>{{ canSelfReserveAtShop() ? 'No confirmed reservations for this shop.' : 'No approved reservations for this shop.' }}</p></div>
             } @else {
-              <div class="table-container">
-                <table class="data-table data-table--responsive">
-                  <thead>
-                    <tr>
-                      @if (canManageShop()) { <th>Guest</th> }
-                      <th>Event</th><th>Table</th><th>Party Size</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    @for (r of reservations(); track r.id) {
+              <div class="view-mobile-only list-card-grid mb-3">
+                @for (r of reservations(); track r.id) {
+                  <article class="list-card">
+                    <div class="list-card__primary">
+                      @if (canManageShop()) {
+                        <span class="list-card__title">{{ r.user.name }}</span>
+                      }
+                      <span class="list-card__subtitle">{{ eventLabel(r) }}</span>
+                    </div>
+                    <div class="list-card__meta">
+                      {{ r.table ? 'Table ' + r.table.number : 'N/A' }} · Party {{ r.partySize }}
+                    </div>
+                  </article>
+                }
+              </div>
+              <div class="view-desktop-only">
+                <div class="table-container">
+                  <table class="data-table">
+                    <thead>
                       <tr>
-                        @if (canManageShop()) { <td data-label="Guest">{{ r.user.name }}</td> }
-                        <td data-label="Event">{{ eventLabel(r) }}</td>
-                        <td data-label="Table">{{ r.table ? 'Table ' + r.table.number : 'N/A' }}</td>
-                        <td data-label="Party Size">{{ r.partySize }}</td>
+                        @if (canManageShop()) { <th>Guest</th> }
+                        <th>Event</th><th>Table</th><th>Party Size</th>
                       </tr>
-                    }
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      @for (r of reservations(); track r.id) {
+                        <tr>
+                          @if (canManageShop()) { <td>{{ r.user.name }}</td> }
+                          <td>{{ eventLabel(r) }}</td>
+                          <td>{{ r.table ? 'Table ' + r.table.number : 'N/A' }}</td>
+                          <td>{{ r.partySize }}</td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
               </div>
             }
           }
@@ -550,25 +698,42 @@ type ReservationSubTab = 'pending' | 'approved' | 'denied';
             @if (deniedRequests().length === 0) {
               <div class="empty-state"><p>No denied reservation requests.</p></div>
             } @else {
-              <div class="table-container">
-                <table class="data-table data-table--responsive">
-                  <thead>
-                    <tr>
-                      @if (canManageShop()) { <th>Guest</th> }
-                      <th>Event</th><th>Party Size</th><th>Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    @for (req of deniedRequests(); track req.id) {
+              <div class="view-mobile-only list-card-grid mb-3">
+                @for (req of deniedRequests(); track req.id) {
+                  <article class="list-card">
+                    <div class="list-card__primary">
+                      @if (canManageShop()) {
+                        <span class="list-card__title">{{ req.user?.name ?? '—' }}</span>
+                      }
+                      <span class="list-card__subtitle">{{ eventLabel(req) }}</span>
+                    </div>
+                    <div class="list-card__meta">
+                      Party {{ req.partySize }} · <span class="badge badge-denied">{{ req.status }}</span>
+                    </div>
+                  </article>
+                }
+              </div>
+              <div class="view-desktop-only">
+                <div class="table-container">
+                  <table class="data-table">
+                    <thead>
                       <tr>
-                        @if (canManageShop()) { <td data-label="Guest">{{ req.user?.name ?? '—' }}</td> }
-                        <td data-label="Event">{{ eventLabel(req) }}</td>
-                        <td data-label="Party Size">{{ req.partySize }}</td>
-                        <td data-label="Status"><span class="badge badge-denied">{{ req.status }}</span></td>
+                        @if (canManageShop()) { <th>Guest</th> }
+                        <th>Event</th><th>Party Size</th><th>Status</th>
                       </tr>
-                    }
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      @for (req of deniedRequests(); track req.id) {
+                        <tr>
+                          @if (canManageShop()) { <td>{{ req.user?.name ?? '—' }}</td> }
+                          <td>{{ eventLabel(req) }}</td>
+                          <td>{{ req.partySize }}</td>
+                          <td><span class="badge badge-denied">{{ req.status }}</span></td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
               </div>
             }
           }
@@ -621,46 +786,80 @@ type ReservationSubTab = 'pending' | 'approved' | 'denied';
               }
             </div>
           } @else {
-            <div class="table-container">
-              <table class="data-table data-table--responsive">
-                <thead>
-                  <tr>
-                    <th>Name</th><th>Date</th><th>Description</th><th>Availability</th>
-                    @if (canSelfReserveAtShop() || canManageShop()) { <th>Actions</th> }
-                  </tr>
-                </thead>
-                <tbody>
-                  @for (e of shop()!.events; track e.eventId) {
-                    <tr>
-                      <td data-label="Name">{{ e.eventName }}</td>
-                      <td data-label="Date">{{ e.eventDate }}</td>
-                      <td data-label="Description">{{ e.description }}</td>
-                      <td data-label="Availability">{{ eventAvailabilityLabel(e) }}</td>
-                      @if (canSelfReserveAtShop() || canManageShop()) {
-                        <td class="data-table__actions" data-label="">
-                          @if (canSelfReserveAtShop()) {
-                            <button
-                              type="button"
-                              class="btn btn-sm btn-primary"
-                              [disabled]="!canShowReserveButton(e)"
-                              [title]="reserveTooltip(e)"
-                              (click)="onReserveEventClick(e)"
-                            >
-                              Reserve
-                            </button>
-                          }
-                          @if (canManageShop()) {
-                            <div style="display:flex;gap:0.5rem">
-                              <button class="btn btn-sm btn-secondary" (click)="onEditEvent(e)">Edit</button>
-                              <button class="btn btn-sm btn-danger" (click)="onDeleteEvent(e)">Delete</button>
-                            </div>
-                          }
-                        </td>
+            <div class="view-mobile-only list-card-grid mb-3">
+              @for (e of shop()!.events; track e.eventId) {
+                <article class="list-card">
+                  <div class="list-card__primary">
+                    <span class="list-card__title">{{ e.eventName }}</span>
+                    <span class="list-card__subtitle">{{ e.eventDate }}</span>
+                  </div>
+                  <div class="list-card__meta list-card__meta--clamp">
+                    {{ e.description }} · {{ eventAvailabilityLabel(e) }}
+                  </div>
+                  @if (canSelfReserveAtShop() || canManageShop()) {
+                    <div class="list-card__actions">
+                      @if (canSelfReserveAtShop()) {
+                        <button
+                          type="button"
+                          class="btn btn-sm btn-primary"
+                          [disabled]="!canShowReserveButton(e)"
+                          [title]="reserveTooltip(e)"
+                          (click)="onReserveEventClick(e)"
+                        >
+                          Reserve
+                        </button>
                       }
-                    </tr>
+                      @if (canManageShop()) {
+                        <button class="btn btn-sm btn-secondary" (click)="onEditEvent(e)">Edit</button>
+                        <button class="btn btn-sm btn-danger" (click)="onDeleteEvent(e)">Delete</button>
+                      }
+                    </div>
                   }
-                </tbody>
-              </table>
+                </article>
+              }
+            </div>
+            <div class="view-desktop-only">
+              <div class="table-container">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Name</th><th>Date</th><th>Description</th><th>Availability</th>
+                      @if (canSelfReserveAtShop() || canManageShop()) { <th>Actions</th> }
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (e of shop()!.events; track e.eventId) {
+                      <tr>
+                        <td>{{ e.eventName }}</td>
+                        <td>{{ e.eventDate }}</td>
+                        <td>{{ e.description }}</td>
+                        <td>{{ eventAvailabilityLabel(e) }}</td>
+                        @if (canSelfReserveAtShop() || canManageShop()) {
+                          <td class="data-table__actions">
+                            @if (canSelfReserveAtShop()) {
+                              <button
+                                type="button"
+                                class="btn btn-sm btn-primary"
+                                [disabled]="!canShowReserveButton(e)"
+                                [title]="reserveTooltip(e)"
+                                (click)="onReserveEventClick(e)"
+                              >
+                                Reserve
+                              </button>
+                            }
+                            @if (canManageShop()) {
+                              <div style="display:flex;gap:0.5rem">
+                                <button class="btn btn-sm btn-secondary" (click)="onEditEvent(e)">Edit</button>
+                                <button class="btn btn-sm btn-danger" (click)="onDeleteEvent(e)">Delete</button>
+                              </div>
+                            }
+                          </td>
+                        }
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
             </div>
           }
 
@@ -1051,6 +1250,16 @@ export class ShopDetailsComponent implements OnInit {
       this.selectedEventForRequest.set(null);
       this.cancelEventForm();
     }
+  }
+
+  onPrimaryTabSelect(event: Event): void {
+    const value = (event.target as HTMLSelectElement).value as Tab;
+    this.onTabChange(value);
+  }
+
+  onReservationSubTabSelect(event: Event): void {
+    const value = (event.target as HTMLSelectElement).value as 'pending' | 'approved' | 'denied';
+    this.reservationSubTab.set(value);
   }
 
   membersEmptyStateMessage(): string {

@@ -114,67 +114,96 @@ import {
           <p>{{ emptyStateMessage() }}</p>
         </div>
       } @else {
-        <div class="table-container">
-          <table class="data-table data-table--responsive">
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Shop</th>
-                <th>City</th>
-                <th>Date</th>
-                <th>Description</th>
-                <th>Availability</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (event of events(); track event.eventId) {
-                <tr>
-                  <td data-label="Name">{{ event.eventName }}</td>
-                  <td data-label="Shop">{{ displayShopName(event) }}</td>
-                  <td data-label="City">{{ event.shopCity ?? '—' }}</td>
-                  <td data-label="Date">{{ event.eventDate }}</td>
-                  <td data-label="Description">{{ event.description }}</td>
-                  <td data-label="Availability">{{ availabilityLabel(event) }}</td>
-                  <td class="event-row-actions data-table__actions" data-label="">
-                    <div class="event-row-actions__inner">
-                      @if (canManageEvent(event)) {
-                        <button class="btn btn-sm btn-secondary" (click)="onEdit(event)">Edit</button>
-                        <button class="btn btn-sm btn-danger" (click)="onDelete(event)">Delete</button>
-                      }
-                      @if (canShowReserveButton(event)) {
-                      <button
-                        type="button"
-                        class="btn btn-icon btn-reserve"
-                        [attr.aria-label]="reserveTooltip(event)"
-                        [title]="reserveTooltip(event)"
-                        (click)="onReserve(event)"
-                      >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          width="18"
-                          height="18"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          stroke-width="2"
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          aria-hidden="true"
-                        >
-                          <path d="M6 12V8a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v4" />
-                          <path d="M4 20v-2a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v2" />
-                          <path d="M8 12v6" />
-                          <path d="M16 12v6" />
-                        </svg>
-                      </button>
-                      }
-                    </div>
-                  </td>
-                </tr>
+        <div class="view-mobile-only list-card-grid mb-3">
+          @for (event of events(); track event.eventId) {
+            <article class="list-card">
+              <div class="list-card__primary">
+                <span class="list-card__title">{{ event.eventName }}</span>
+                <span class="list-card__subtitle">{{ event.eventDate }}</span>
+              </div>
+              <div class="list-card__meta">
+                {{ displayShopName(event) }} · {{ event.shopCity ?? '—' }} · {{ availabilityLabel(event) }}
+              </div>
+              @if (event.description) {
+                <div class="list-card__meta list-card__meta--clamp">{{ event.description }}</div>
               }
-            </tbody>
-          </table>
+              <div class="list-card__actions event-row-actions__inner">
+                @if (canManageEvent(event)) {
+                  <button class="btn btn-sm btn-secondary" (click)="onEdit(event)">Edit</button>
+                  <button class="btn btn-sm btn-danger" (click)="onDelete(event)">Delete</button>
+                }
+                @if (canShowReserveButton(event)) {
+                  <button
+                    type="button"
+                    class="btn btn-icon btn-reserve"
+                    [attr.aria-label]="reserveTooltip(event)"
+                    [title]="reserveTooltip(event)"
+                    (click)="onReserve(event)"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <path d="M6 12V8a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v4" />
+                      <path d="M4 20v-2a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v2" />
+                      <path d="M8 12v6" />
+                      <path d="M16 12v6" />
+                    </svg>
+                  </button>
+                }
+              </div>
+            </article>
+          }
+        </div>
+        <div class="view-desktop-only">
+          <div class="table-container">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Shop</th>
+                  <th>City</th>
+                  <th>Date</th>
+                  <th>Description</th>
+                  <th>Availability</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (event of events(); track event.eventId) {
+                  <tr>
+                    <td>{{ event.eventName }}</td>
+                    <td>{{ displayShopName(event) }}</td>
+                    <td>{{ event.shopCity ?? '—' }}</td>
+                    <td>{{ event.eventDate }}</td>
+                    <td>{{ event.description }}</td>
+                    <td>{{ availabilityLabel(event) }}</td>
+                    <td class="event-row-actions data-table__actions">
+                      <div class="event-row-actions__inner">
+                        @if (canManageEvent(event)) {
+                          <button class="btn btn-sm btn-secondary" (click)="onEdit(event)">Edit</button>
+                          <button class="btn btn-sm btn-danger" (click)="onDelete(event)">Delete</button>
+                        }
+                        @if (canShowReserveButton(event)) {
+                          <button
+                            type="button"
+                            class="btn btn-icon btn-reserve"
+                            [attr.aria-label]="reserveTooltip(event)"
+                            [title]="reserveTooltip(event)"
+                            (click)="onReserve(event)"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                              <path d="M6 12V8a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v4" />
+                              <path d="M4 20v-2a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v2" />
+                              <path d="M8 12v6" />
+                              <path d="M16 12v6" />
+                            </svg>
+                          </button>
+                        }
+                      </div>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
         </div>
 
         <div class="pagination-bar">

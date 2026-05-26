@@ -80,42 +80,70 @@ const USER_TYPE_SELECT_OPTIONS: FormSelectOption[] = [
       } @else if (totalElements() === 0) {
         <div class="empty-state"><p>{{ emptyStateMessage() }}</p></div>
       } @else {
-        <div class="table-container">
-          <table class="data-table data-table--responsive">
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Username</th>
-                <th>Type</th>
-                <th>Roles</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (user of users(); track user.id) {
-                <tr>
-                  <td data-label="Name">{{ user.name }}</td>
-                  <td data-label="Username">{{ user.username }}</td>
-                  <td data-label="Type"><span class="badge badge-role">{{ user.userType }}</span></td>
-                  <td data-label="Roles">
-                    @for (role of user.roles; track role.id) {
-                      <span class="badge badge-role" style="margin-right:0.25rem">{{ role.name }}</span>
-                    }
-                  </td>
-                  <td class="data-table__actions" data-label="">
-                    <div style="display:flex;gap:0.5rem">
-                      @if (canEdit(user)) {
-                        <button class="btn btn-sm btn-secondary" (click)="onEdit(user)">Edit</button>
-                      }
-                      @if (isAdmin()) {
-                        <button class="btn btn-sm btn-danger" (click)="onDelete(user)">Delete</button>
-                      }
-                    </div>
-                  </td>
-                </tr>
+        <div class="view-mobile-only list-card-grid mb-3">
+          @for (user of users(); track user.id) {
+            <article class="list-card">
+              <div class="list-card__primary">
+                <span class="list-card__title">{{ user.name }}</span>
+                <span class="list-card__subtitle">{{ user.username }}</span>
+              </div>
+              <div class="list-card__meta">
+                <span class="badge badge-role">{{ user.userType }}</span>
+                @for (role of user.roles; track role.id) {
+                  <span class="badge badge-role">{{ role.name }}</span>
+                }
+              </div>
+              @if (canEdit(user) || isAdmin()) {
+                <div class="list-card__actions">
+                  @if (canEdit(user)) {
+                    <button class="btn btn-sm btn-secondary" (click)="onEdit(user)">Edit</button>
+                  }
+                  @if (isAdmin()) {
+                    <button class="btn btn-sm btn-danger" (click)="onDelete(user)">Delete</button>
+                  }
+                </div>
               }
-            </tbody>
-          </table>
+            </article>
+          }
+        </div>
+        <div class="view-desktop-only">
+          <div class="table-container">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Username</th>
+                  <th>Type</th>
+                  <th>Roles</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (user of users(); track user.id) {
+                  <tr>
+                    <td>{{ user.name }}</td>
+                    <td>{{ user.username }}</td>
+                    <td><span class="badge badge-role">{{ user.userType }}</span></td>
+                    <td>
+                      @for (role of user.roles; track role.id) {
+                        <span class="badge badge-role" style="margin-right:0.25rem">{{ role.name }}</span>
+                      }
+                    </td>
+                    <td class="data-table__actions">
+                      <div style="display:flex;gap:0.5rem">
+                        @if (canEdit(user)) {
+                          <button class="btn btn-sm btn-secondary" (click)="onEdit(user)">Edit</button>
+                        }
+                        @if (isAdmin()) {
+                          <button class="btn btn-sm btn-danger" (click)="onDelete(user)">Delete</button>
+                        }
+                      </div>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
         </div>
 
         <div class="pagination-bar">

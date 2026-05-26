@@ -146,7 +146,7 @@ import { DialogService } from '../../services/dialog.service';
     </div>
 
     <ng-template #shopCard let-shop>
-      <div class="card clickable shop-card" (click)="goToShop(shop.id)">
+      <div class="card clickable shop-card shop-card--compact" (click)="goToShop(shop.id)">
         @if (!canManage(shop)) {
           <button
             type="button"
@@ -174,19 +174,22 @@ import { DialogService } from '../../services/dialog.service';
             }
           </h3>
           <div class="shop-card__details">
-            <div class="shop-card__row">
+            <div class="view-mobile-only shop-card__row shop-card__row--location">
+              <span class="shop-card__value">{{ shop.city }} · {{ shop.address }}</span>
+            </div>
+            <div class="view-desktop-only shop-card__row">
               <span class="shop-card__label">City</span>
               <span class="shop-card__value">{{ shop.city }}</span>
             </div>
-            <div class="shop-card__row">
+            <div class="view-desktop-only shop-card__row">
               <span class="shop-card__label">Address</span>
               <span class="shop-card__value">{{ shop.address }}</span>
             </div>
-            <div class="shop-card__row">
+            <div class="view-desktop-only shop-card__row">
               <span class="shop-card__label">Email</span>
               <span class="shop-card__value">{{ shop.email || '—' }}</span>
             </div>
-            <div class="shop-card__row">
+            <div class="view-desktop-only shop-card__row">
               <span class="shop-card__label">Phone</span>
               <span class="shop-card__value">{{ shop.phoneNumber || '—' }}</span>
             </div>
@@ -220,26 +223,21 @@ import { DialogService } from '../../services/dialog.service';
   styles: `
     :host {
       display: block;
-      /* Fill scrollable main area below 56px topbar */
-      min-height: calc(100vh - 56px);
     }
 
     .shops-page {
       display: flex;
       flex-direction: column;
-      min-height: calc(100vh - 56px);
       box-sizing: border-box;
     }
 
     .shops-page__content {
       flex: 1 1 auto;
-      min-height: 0;
     }
 
     .shops-page__footer {
       flex-shrink: 0;
-      margin-top: auto;
-      background: #121212;
+      margin-top: 1rem;
     }
 
     .shops-page .shop-card-grid {
