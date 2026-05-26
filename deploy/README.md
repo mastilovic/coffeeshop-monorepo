@@ -96,23 +96,19 @@ kubectl apply -k .
 
 Recommended flow: feature branch → PR into **`dev`** → PR **`dev` → `main`** when ready for staging.
 
-### How to trigger CI/CD Staging
+### Automatic CI/CD (primary)
 
-- **Push** to `dev` or `main` — a workflow run is always created; tests/builds run only when `coffeeshop/**`, `coffeeshop-frontend/**`, `deploy/**`, or relevant workflow files changed (path filter inside the job).
-- **Merge to `main`** — same pipeline; deploy runs only on `main` when both image builds succeed.
-- **Manual:** Actions → **CI/CD Staging** → **Run workflow** → branch **`main`** (staging deploy). Optional **Skip unit tests** for emergency deploys only.
-- **Empty commits** do not reliably produce builds — prefer a real change under watched paths or a manual workflow run.
-- **PRs** use Backend CI / Frontend CI, not CI/CD Staging on push.
+**`main`** — every push or merge (including from `dev`) runs the full pipeline automatically:
 
-### Automatic deploy (primary)
-
-On every push to **`main`** or **`dev`**, **CI/CD Staging** starts; tests and builds are path-filtered inside the workflow:
-
-1. Path-filtered tests (backend and/or frontend; both run when only `deploy/**` changes).
-2. Builds and pushes **both** images as `sha-<7>` and `latest`.
+1. Backend and frontend tests (always on `main`, no path filter).
+2. Builds and pushes both images as `sha-<7>` and `latest`.
 3. Deploys to `coffeeshop-staging` with `sha-<7>`.
 
-Pushes to **`dev`** run the same pipeline but publish **`dev-sha-<7>`** only and **skip** the deploy job.
+**`dev`** — every push starts **CI/CD Staging**; tests and builds run only when app, frontend, or deploy paths changed. Images are tagged `dev-sha-<7>` only; deploy is skipped.
+
+**PRs** use Backend CI / Frontend CI, not CI/CD Staging.
+
+If **no runs appear** after pushing to `main`, see [GITHUB_SETUP.md](GITHUB_SETUP.md) (Actions must be enabled in repository settings).
 
 Both images are rebuilt on every `main` deploy so the cluster never pulls a missing tag for one app.
 
@@ -229,4 +225,3 @@ Push builds for **`dev`** and staging deploys for **`main`** are handled by **CI
 - cert-manager + Let's Encrypt on Ingress
 - Managed Postgres instead of in-cluster StatefulSets
 - Production overlay and sealed secrets
-# trigger 2026-05-26T11:02:51Z
