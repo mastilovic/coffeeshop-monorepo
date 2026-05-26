@@ -6,6 +6,11 @@ metadata:
     nginx.ingress.kubernetes.io/proxy-body-size: "10m"
 spec:
   ingressClassName: nginx
+  tls:
+    - hosts:
+        - APP_HOST_PLACEHOLDER
+        - AUTH_HOST_PLACEHOLDER
+      secretName: coffeeshop-tls
   rules:
     - host: APP_HOST_PLACEHOLDER
       http:
