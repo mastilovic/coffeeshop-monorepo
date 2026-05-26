@@ -6,10 +6,15 @@ import com.coffeeshop.coffeeshop.model.Menu;
 import com.coffeeshop.coffeeshop.model.dto.request.MenuCreateRequest;
 import com.coffeeshop.coffeeshop.model.dto.request.ShopCreateRequest;
 import com.coffeeshop.coffeeshop.model.dto.request.ShopUpdateRequest;
+import com.coffeeshop.coffeeshop.model.Shop;
 import com.coffeeshop.coffeeshop.model.dto.response.MenuResponseDto;
+import com.coffeeshop.coffeeshop.model.dto.response.PageResponseDto;
 import com.coffeeshop.coffeeshop.model.dto.response.ShopResponseDto;
 import com.coffeeshop.coffeeshop.service.MenuService;
 import com.coffeeshop.coffeeshop.service.ShopService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -18,6 +23,8 @@ import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -25,6 +32,8 @@ import java.util.stream.Collectors;
 @CrossOrigin(origins = "*")
 @RequestMapping("/api/v1/shop")
 public class ShopController {
+
+    private static final Set<Integer> ALLOWED_PAGE_SIZES = Set.of(10, 25, 50);
 
     private final ShopService shopService;
     private final ShopMapper shopMapper;
@@ -43,10 +52,29 @@ public class ShopController {
     }
 
     @GetMapping
-    public ResponseEntity<List<ShopResponseDto>> getAll() {
-        return new ResponseEntity<>(
-                shopService.findAll().stream().map(shopMapper::toShopResponse).collect(Collectors.toList()),
-                HttpStatus.OK);
+    public ResponseEntity<?> getAll(
+            @RequestParam(required = false) final String q,
+            @RequestParam(required = false) final Integer page,
+            @RequestParam(defaultValue = "10") final int size) {
+        if (page == null) {
+            return new ResponseEntity<>(
+                    shopService.findAll().stream().map(shopMapper::toShopResponse).collect(Collectors.toList()),
+                    HttpStatus.OK);
+        }
+
+        if (!ALLOWED_PAGE_SIZES.contains(size)) {
+            throw new IllegalArgumentException("size must be one of: 10, 25, 50");
+        }
+
+        final PageRequest pageable = PageRequest.of(page, size, Sort.unsorted());
+        final Page<Shop> result = shopService.search(Optional.ofNullable(q), pageable);
+        final PageResponseDto<ShopResponseDto> response = new PageResponseDto<>(
+                result.getContent().stream().map(shopMapper::toShopResponse).collect(Collectors.toList()),
+                result.getNumber(),
+                result.getSize(),
+                result.getTotalElements(),
+                result.getTotalPages());
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @PreAuthorize("isAuthenticated()")

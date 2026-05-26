@@ -1,3 +1,4 @@
+import { PageResponseDto } from './event.model';
 import { UserSummaryDto } from './user.model';
 import { MenuResponseDto } from './menu.model';
 import { LoyaltyPlanResponseDto } from './loyalty-plan.model';
@@ -36,6 +37,14 @@ export interface ShopSummaryDto {
   phoneNumber: string;
   email: string;
 }
+
+export interface ShopSearchParams {
+  q?: string;
+  page?: number;
+  size?: number;
+}
+
+export type ShopListPage = PageResponseDto<ShopResponseDto>;
 
 export interface ShopCreateRequest {
   name: string;

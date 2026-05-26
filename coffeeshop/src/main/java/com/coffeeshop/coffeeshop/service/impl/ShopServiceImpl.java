@@ -9,7 +9,10 @@ import com.coffeeshop.coffeeshop.model.User;
 import com.coffeeshop.coffeeshop.model.enums.UserType;
 import com.coffeeshop.coffeeshop.repository.LoyaltyPlanRepository;
 import com.coffeeshop.coffeeshop.repository.ShopRepository;
+import com.coffeeshop.coffeeshop.repository.ShopSpecifications;
 import com.coffeeshop.coffeeshop.repository.UserRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import com.coffeeshop.coffeeshop.service.ReviewCommentLoader;
 import com.coffeeshop.coffeeshop.service.ShopService;
 import com.coffeeshop.coffeeshop.service.UserService;
@@ -20,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -57,6 +61,12 @@ public class ShopServiceImpl implements ShopService {
     @Override
     public List<Shop> findAll() {
         return shopRepository.findAll();
+    }
+
+    @Override
+    public Page<Shop> search(final Optional<String> query, final Pageable pageable) {
+        final Optional<UUID> favouriteUserId = currentUserService.getCurrentUser().map(User::getId);
+        return shopRepository.findAll(ShopSpecifications.search(query, favouriteUserId), pageable);
     }
 
     @Override

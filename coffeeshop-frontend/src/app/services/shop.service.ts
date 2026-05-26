@@ -2,7 +2,7 @@ import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, switchMap, map } from 'rxjs';
 import { environment } from '../../environments/environment';
-import { ShopResponseDto, ShopCreateRequest } from '../models/shop.model';
+import { ShopResponseDto, ShopCreateRequest, ShopSearchParams, ShopListPage } from '../models/shop.model';
 import { ProfileService } from './profile.service';
 
 @Injectable({ providedIn: 'root' })
@@ -13,6 +13,17 @@ export class ShopService {
 
   getAll(): Observable<ShopResponseDto[]> {
     return this.http.get<ShopResponseDto[]>(this.base);
+  }
+
+  search(params: ShopSearchParams = {}): Observable<ShopListPage> {
+    const httpParams: Record<string, string> = {
+      page: String(params.page ?? 0),
+      size: String(params.size ?? 10),
+    };
+    if (params.q?.trim()) {
+      httpParams['q'] = params.q.trim();
+    }
+    return this.http.get<ShopListPage>(this.base, { params: httpParams });
   }
 
   getMine(): Observable<ShopResponseDto[]> {
