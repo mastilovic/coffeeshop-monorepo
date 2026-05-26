@@ -31,24 +31,51 @@ const ROLE_SELECT_OPTIONS: FormSelectOption[] = [
             <label for="name">Name</label>
             <input id="name" type="text" class="form-input" formControlName="name"
                    placeholder="Your full name" />
+            @if (form.controls.name.touched && form.controls.name.hasError('required')) {
+              <span class="form-error">Name is required.</span>
+            }
           </div>
 
           <div class="form-group">
             <label for="username">Username</label>
+            <p class="text-muted" style="font-size:0.75rem;margin:0.25rem 0 0.5rem">
+              3–30 characters, letters, numbers, and underscores only
+            </p>
             <input id="username" type="text" class="form-input" formControlName="username"
                    placeholder="your_username" />
+            @if (form.controls.username.touched && form.controls.username.hasError('required')) {
+              <span class="form-error">Username is required.</span>
+            }
+            @if (form.controls.username.touched && form.controls.username.hasError('pattern')) {
+              <span class="form-error">Use 3–30 letters, numbers, or underscores only.</span>
+            }
           </div>
 
           <div class="form-group">
             <label for="email">Email</label>
             <input id="email" type="email" class="form-input" formControlName="email"
                    placeholder="you@example.com" />
+            @if (form.controls.email.touched && form.controls.email.hasError('required')) {
+              <span class="form-error">Email is required.</span>
+            }
+            @if (form.controls.email.touched && form.controls.email.hasError('email')) {
+              <span class="form-error">Enter a valid email address.</span>
+            }
           </div>
 
           <div class="form-group">
             <label for="password">Password</label>
+            <p class="text-muted" style="font-size:0.75rem;margin:0.25rem 0 0.5rem">
+              At least 6 characters
+            </p>
             <input id="password" type="password" class="form-input" formControlName="password"
                    placeholder="Choose a password" />
+            @if (form.controls.password.touched && form.controls.password.hasError('required')) {
+              <span class="form-error">Password is required.</span>
+            }
+            @if (form.controls.password.touched && form.controls.password.hasError('minlength')) {
+              <span class="form-error">Password must be at least 6 characters.</span>
+            }
           </div>
 
           <div class="form-group">
@@ -62,7 +89,7 @@ const ROLE_SELECT_OPTIONS: FormSelectOption[] = [
           </div>
 
           <div class="form-actions">
-            <button type="submit" class="btn btn-primary btn-block" [disabled]="loading()">
+            <button type="submit" class="btn btn-primary btn-block" [disabled]="form.invalid || loading()">
               {{ loading() ? 'Creating account...' : 'Create Account' }}
             </button>
           </div>
@@ -95,7 +122,11 @@ export class RegisterComponent {
   });
 
   onSubmit(): void {
-    if (this.form.invalid) return;
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      this.errorMessage.set('Please fix the errors below.');
+      return;
+    }
     this.loading.set(true);
     this.errorMessage.set('');
 
