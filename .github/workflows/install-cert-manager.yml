@@ -1,0 +1,56 @@
+name: Install cert-manager (DOKS)
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: install-cert-manager
+  cancel-in-progress: false
+
+jobs:
+  install:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install Helm
+        run: |
+          set -euo pipefail
+          HELM_VERSION="v3.16.4"
+          curl -fsSL "https://get.helm.sh/helm-${HELM_VERSION}-linux-amd64.tar.gz" | tar xz
+          sudo mv linux-amd64/helm /usr/local/bin/helm
+          helm version
+
+      - name: Install kubectl
+        run: |
+          set -euo pipefail
+          KUBECTL_VERSION="v1.32.0"
+          curl -fsSL "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl" -o kubectl
+          chmod +x kubectl
+          sudo mv kubectl /usr/local/bin/kubectl
+          kubectl version --client
+
+      - name: Configure kubeconfig
+        env:
+          KUBE_CONFIG: ${{ secrets.KUBE_CONFIG }}
+        run: |
+          mkdir -p "$HOME/.kube"
+          if [ -z "$KUBE_CONFIG" ]; then
+            echo "::error::KUBE_CONFIG secret is empty. See deploy/GITHUB_SETUP.md."
+            exit 1
+          fi
+          printf '%s' "$KUBE_CONFIG" > "$HOME/.kube/config"
+          chmod 600 "$HOME/.kube/config"
+          kubectl cluster-info
+
+      - name: Install cert-manager and ClusterIssuers
+        run: |
+          chmod +x deploy/k8s/infra/cert-manager/install.sh
+          deploy/k8s/infra/cert-manager/install.sh
+
+      - name: Report status
+        run: |
+          kubectl get pods -n cert-manager
+          kubectl get clusterissuer

@@ -64,9 +64,30 @@ spec:
         - name: ghcr-pull
 ```
 
-### 4. TLS (optional for first smoke test)
+### 4. Install cert-manager (once per cluster)
 
-HTTP-only works for initial checks. For HTTPS, install [cert-manager](https://cert-manager.io/) and add a `Certificate` + TLS block on the Ingress.
+Required for HTTPS on the CoffeeShop Ingress. The app manifests already define TLS and a `letsencrypt-prod` issuer annotation; this step installs the controller and ClusterIssuers.
+
+```bash
+cd deploy/k8s/infra/cert-manager
+chmod +x install.sh
+./install.sh
+```
+
+Or use GitHub Actions: **Install cert-manager (DOKS)** (`workflow_dispatch`). See [deploy/k8s/infra/cert-manager/README.md](k8s/infra/cert-manager/README.md) for verification and troubleshooting.
+
+On **2 GB** nodes, install cert-manager after staging memory patches are applied; consider **≥2 vCPU / 4 GB** for a stable single-node stack.
+
+### 5. Deploy staging and enable HTTPS
+
+1. Deploy the app (local `kubectl apply -k deploy/k8s/overlays/staging` or push to **`main`** / **Deploy Staging**).
+2. Wait until the certificate is Ready:
+   ```bash
+   kubectl get certificate coffeeshop-tls -n coffeeshop-staging
+   ```
+3. Set GitHub variable `STAGING_PUBLIC_SCHEME=https` and redeploy so JWT issuer and CORS use `https://` (see [GITHUB_SETUP.md](GITHUB_SETUP.md)).
+
+HTTP-only smoke tests work before step 3 if `STAGING_PUBLIC_SCHEME` stays `http`.
 
 ## GitHub configuration
 
@@ -221,24 +242,54 @@ kubectl rollout status deployment/backend -n coffeeshop-staging
 
 ## Resource sizing
 
-Staging manifests in [`deploy/k8s/base`](k8s/base) use reduced CPU/memory **requests** so the stack fits a small DOKS node. App Deployments use `maxSurge: 0` so rollouts do not temporarily run two backend/frontend/Keycloak pods (avoids a deploy-time CPU spike; brief unavailability during image updates).
+App Deployments use `maxSurge: 0` so rollouts do not temporarily run two backend/frontend/Keycloak pods (avoids a deploy-time CPU spike; brief unavailability during image updates).
+
+### Base defaults ([`deploy/k8s/base`](k8s/base))
 
 | Workload | CPU request | Memory request | Memory limit |
 |----------|-------------|----------------|--------------|
-| backend | 150m | 384Mi | 768Mi |
+| backend | 50m | 64Mi | 256Mi |
 | keycloak | 150m | 384Mi | 768Mi |
 | postgres (×2) | 50m each | 192Mi each | 384Mi each |
 | frontend | 25m | 64Mi | 128Mi |
 
-**Steady-state total (namespace only):** ~425m CPU, ~1216Mi memory requests. Add headroom for `ingress-nginx` and system pods.
+**Base steady-state (namespace only):** ~325m CPU, ~896Mi memory requests.
 
-For comfort on a single node, use **≥2 vCPU / 4 GB** droplets. If pods are **OOMKilled**, bump memory limits slightly (e.g. backend 384Mi → 512Mi request).
+### Staging small-node patch ([`overlays/staging/patches/resources-small-node.yaml`](k8s/overlays/staging/patches/resources-small-node.yaml))
+
+Applied only when using `kubectl apply -k deploy/k8s/overlays/staging`. Keycloak is **not** reduced.
+
+| Workload | CPU request | Memory request | Memory limit |
+|----------|-------------|----------------|--------------|
+| backend | 50m | 32Mi | 192Mi |
+| keycloak | 150m | 384Mi | 768Mi |
+| postgres (×2) | 50m each | 96Mi each | 256Mi each |
+| frontend | 25m | 32Mi | 96Mi |
+
+**Staging steady-state (namespace only):** ~325m CPU, ~640Mi memory requests.
+
+Add headroom for `ingress-nginx` and DOKS system pods (`kube-system`). On a **2 GB** single-node pool, scheduling can still be tight; prefer **≥2 vCPU / 4 GB** droplets for reliable staging.
+
+If pods are **OOMKilled**, raise limits on the affected workload (e.g. Postgres to `128Mi` request / `320Mi` limit in the staging patch). If Postgres stays **Pending** with `Insufficient memory`, use **Bootstrap on 2GB nodes** below or resize the node pool.
+
+### Bootstrap on 2GB nodes
+
+If Keycloak schedules before `postgres-keycloak` and both DB pods stay **Pending**, free scheduler headroom once:
+
+```bash
+kubectl scale deployment keycloak backend -n coffeeshop-staging --replicas=0
+kubectl wait --for=condition=ready pod/postgres-0 pod/postgres-keycloak-0 -n coffeeshop-staging --timeout=180s
+kubectl scale deployment keycloak backend -n coffeeshop-staging --replicas=1
+```
+
+Optional cluster tweaks (not in this repo): lower `ingress-nginx` controller requests via Helm, or reduce/disable DOKS Hubble if you do not need it.
 
 Verify after deploy:
 
 ```bash
-kubectl describe node | grep -A5 "Allocated resources"
-kubectl get rs -n coffeeshop-staging
+kubectl describe node | grep -A6 "Allocated resources"
+kubectl get pods -n coffeeshop-staging
+kubectl rollout status deployment/keycloak -n coffeeshop-staging
 kubectl top pods -n coffeeshop-staging   # requires metrics-server
 ```
 
@@ -259,6 +310,5 @@ Push builds for **`dev`** and staging deploys for **`main`** are handled by **CI
 
 ## Follow-ups (not in v1)
 
-- cert-manager + Let's Encrypt on Ingress
 - Managed Postgres instead of in-cluster StatefulSets
 - Production overlay and sealed secrets
