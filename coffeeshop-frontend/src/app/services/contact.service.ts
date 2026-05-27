@@ -7,7 +7,7 @@ import { ContactResponseDto, ContactCreateRequest } from '../models/contact.mode
 @Injectable({ providedIn: 'root' })
 export class ContactService {
   private readonly http = inject(HttpClient);
-  private readonly base = `${environment.apiUrl}/api/v1/contact`;
+  private readonly base = `${environment.apiUrl}/api/v2/contact`;
 
   getAll(): Observable<ContactResponseDto[]> {
     return this.http.get<ContactResponseDto[]>(this.base);

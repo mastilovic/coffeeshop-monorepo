@@ -11,7 +11,7 @@ import {
 @Injectable({ providedIn: 'root' })
 export class ReservationRequestService {
   private readonly http = inject(HttpClient);
-  private readonly base = `${environment.apiUrl}/api/v1/reservation-request`;
+  private readonly base = `${environment.apiUrl}/api/v2/reservation-request`;
 
   getAll(shopId?: string): Observable<ReservationRequestResponseDto[]> {
     const url = shopId ? `${this.base}?shopId=${shopId}` : this.base;

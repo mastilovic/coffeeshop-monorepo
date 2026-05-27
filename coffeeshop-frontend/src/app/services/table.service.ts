@@ -7,7 +7,7 @@ import { TableResponseDto, TableCreateRequest } from '../models/table.model';
 @Injectable({ providedIn: 'root' })
 export class TableService {
   private readonly http = inject(HttpClient);
-  private readonly base = `${environment.apiUrl}/api/v1/table`;
+  private readonly base = `${environment.apiUrl}/api/v2/table`;
 
   getAll(): Observable<TableResponseDto[]> {
     return this.http.get<TableResponseDto[]>(this.base);

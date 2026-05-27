@@ -13,7 +13,7 @@ import {
 @Injectable({ providedIn: 'root' })
 export class EventService {
   private readonly http = inject(HttpClient);
-  private readonly base = `${environment.apiUrl}/api/v1/event`;
+  private readonly base = `${environment.apiUrl}/api/v2/event`;
 
   getAll(): Observable<EventResponseDto[]> {
     return this.http.get<EventResponseDto[]>(this.base);

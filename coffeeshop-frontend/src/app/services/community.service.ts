@@ -17,7 +17,7 @@ export class CommunityService {
   private readonly http = inject(HttpClient);
 
   private base(shopId: string): string {
-    return `${environment.apiUrl}/api/v1/shop/${shopId}/community`;
+    return `${environment.apiUrl}/api/v2/shop/${shopId}/community`;
   }
 
   getPosts(shopId: string, page = 0, size = 20): Observable<CommunityPostPage> {

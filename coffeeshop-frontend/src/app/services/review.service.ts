@@ -7,7 +7,7 @@ import { ReviewResponseDto, ReviewCreateRequest, ReviewUpdateRequest } from '../
 @Injectable({ providedIn: 'root' })
 export class ReviewService {
   private readonly http = inject(HttpClient);
-  private readonly base = `${environment.apiUrl}/api/v1/review`;
+  private readonly base = `${environment.apiUrl}/api/v2/review`;
 
   getAll(): Observable<ReviewResponseDto[]> {
     return this.http.get<ReviewResponseDto[]>(this.base);
