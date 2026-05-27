@@ -55,7 +55,7 @@ class ShopFavouriteIntegrationTest {
         assertThat(favouriteResponse.getBody().get("favouriteByCurrentUser")).isEqualTo(true);
 
         final ResponseEntity<Map> profileResponse = restTemplate.exchange(
-                "/profile",
+                "/api/v1/profile",
                 HttpMethod.GET,
                 new HttpEntity<>(customerHeaders(customerId)),
                 Map.class);
@@ -93,7 +93,7 @@ class ShopFavouriteIntegrationTest {
         assertThat(removeResponse.getBody().get("favouriteByCurrentUser")).isEqualTo(false);
 
         final ResponseEntity<Map> profileResponse = restTemplate.exchange(
-                "/profile",
+                "/api/v1/profile",
                 HttpMethod.GET,
                 new HttpEntity<>(customerHeaders(customerId)),
                 Map.class);

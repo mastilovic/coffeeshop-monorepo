@@ -13,7 +13,7 @@ public class PublicEndpointBearerTokenResolver implements BearerTokenResolver {
 
     /**
      * Skip JWT parsing only for endpoints that are {@code permitAll} in {@link SecurityConfiguration}.
-     * Do not skip for authenticated GET routes such as {@code /profile}.
+     * Do not skip for authenticated GET routes such as {@code /api/v1/profile}.
      */
     private static boolean isPublicEndpoint(final HttpServletRequest request) {
         final String path = extractPath(request);
@@ -32,7 +32,8 @@ public class PublicEndpointBearerTokenResolver implements BearerTokenResolver {
         }
 
         if (HttpMethod.GET.matches(method) && path.startsWith("/api/v1/")) {
-            return !path.equals("/api/v1/reservation-request")
+            return !path.equals("/api/v1/profile")
+                    && !path.equals("/api/v1/reservation-request")
                     && !path.startsWith("/api/v1/reservation-request/")
                     && !path.equals("/api/v1/shop/mine")
                     && !path.equals("/api/v1/shop");
@@ -40,7 +41,8 @@ public class PublicEndpointBearerTokenResolver implements BearerTokenResolver {
 
         if (HttpMethod.POST.matches(method)) {
             return switch (path) {
-                case "/register", "/login", "/auth/login", "/auth/refresh", "/auth/logout" -> true;
+                case "/api/v1/auth/login", "/api/v1/auth/register",
+                     "/api/v1/auth/refresh", "/api/v1/auth/logout" -> true;
                 default -> false;
             };
         }

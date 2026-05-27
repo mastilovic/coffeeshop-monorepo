@@ -62,8 +62,7 @@ Set these values in `.env` (see `.env.example`):
 
 - `GET /login` returns the public login page.
 - `GET /register` returns the public registration page.
-- `POST /login` is the primary API sign-in endpoint.
-- `POST /auth/login` is a backward-compatible alias that delegates to the same login logic.
+- `POST /api/v1/auth/login` is the API sign-in endpoint.
 - Clients must store returned tokens client-side and attach bearer tokens to protected requests.
 - `POST /auth/refresh` exchanges a refresh token for a new access token.
 - `POST /auth/logout` invalidates a refresh token in Keycloak.
@@ -71,7 +70,7 @@ Set these values in `.env` (see `.env.example`):
 
 ## REST login flow (API clients)
 
-1. Client sends `POST /login` with JSON body:
+1. Client sends `POST /api/v1/auth/login` with JSON body:
    `{"email":"user@example.com","password":"secret"}`.
 2. App exchanges credentials at Keycloak token endpoint and returns:
    `{"access_token":"...","refresh_token":"...","expires_in":3600,"token_type":"Bearer"}`.
@@ -93,7 +92,7 @@ curl -X POST http://localhost:8000/login \
 Backward-compatible alias:
 
 ```bash
-curl -X POST http://localhost:8000/auth/login \
+curl -X POST http://localhost:8000/api/v1/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email":"user@example.com","password":"secret"}'
 ```
@@ -112,7 +111,7 @@ curl -X POST http://localhost:8000/auth/refresh \
 
 ## Public registration role policy
 
-- `POST /register` is public and accepts form or JSON clients.
+- `POST /api/v1/auth/register` is public and accepts form or JSON clients.
 - Self-registration roles are restricted to:
     - `customer`
     - `shop_owner`
@@ -134,10 +133,10 @@ curl -X POST http://localhost:8000/auth/refresh \
 ### Authorize flow (correct order)
 
 1. **Clear** Swagger **Authorize** (or use a fresh browser session) so no stale token is sent globally.
-2. Call **`POST /login`** (or `POST /auth/login`) on the backend (e.g. `http://localhost:18080`) **without** a pre-set Bearer token.
+2. Call **`POST /api/v1/auth/login`** on the backend (e.g. `http://localhost:18080`) **without** a pre-set Bearer token.
 3. Copy **`access_token`** only from the JSON response — not `refresh_token`.
 4. **Authorize** → paste the token **without** the `Bearer ` prefix (Swagger adds it).
-5. Call protected **`POST` / `PUT` / `DELETE`** under `/api/v1/**` or **`GET /profile`**.
+5. Call protected **`POST` / `PUT` / `DELETE`** under `/api/v1/**` or **`GET /api/v1/profile`**.
 
 ### GET vs POST Bearer behavior
 
@@ -145,7 +144,7 @@ curl -X POST http://localhost:8000/auth/refresh \
 |---------|-------------------------|
 | `GET /api/v1/**` | **200** — Bearer is ignored on public GETs (`PublicEndpointBearerTokenResolver`) |
 | `POST` / `PUT` / `DELETE` `/api/v1/**` | **401** — JWT is always validated |
-| `GET /profile` | **401** — requires valid authentication |
+| `GET /api/v1/profile` | **401** — requires valid authentication |
 
 A token that “works” on `GET /api/v1/user` can still fail on `POST /api/v1/user` if it is expired, wrong type, or has a mismatched `iss`.
 
@@ -155,9 +154,9 @@ In docker-compose the backend expects:
 
 `KEYCLOAK_JWT_ISSUER_URI=http://keycloak:8080/realms/coffeeshop`
 
-1. Obtain a token via **`POST /login` through the backend** (uses `KEYCLOAK_BASE_URL=http://keycloak:8080`).
+1. Obtain a token via **`POST /api/v1/auth/login` through the backend** (uses `KEYCLOAK_BASE_URL=http://keycloak:8080`).
 2. Decode the JWT payload and confirm **`iss`** equals that URI exactly.
-3. Docker compose does not pin `KC_HOSTNAME`; tokens from `POST /login` (backend → `http://keycloak:8080`) use `iss` `http://keycloak:8080/realms/coffeeshop`.
+3. Docker compose does not pin `KC_HOSTNAME`; tokens from `POST /api/v1/auth/login` (backend → `http://keycloak:8080`) use `iss` `http://keycloak:8080/realms/coffeeshop`.
 4. Tokens from Keycloak UI at `http://localhost:8080` often have `iss` with `localhost` and will **401** on protected POSTs.
 
 ### Common mistakes

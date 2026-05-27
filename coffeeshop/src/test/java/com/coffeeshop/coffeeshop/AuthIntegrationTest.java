@@ -52,7 +52,7 @@ class AuthIntegrationTest {
         final HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         final ResponseEntity<Map> response = restTemplate.postForEntity(
-                "/login",
+                "/api/v1/auth/login",
                 new HttpEntity<>(Map.of("email", "unknown@example.com", "password", "secret"), headers),
                 Map.class);
 
@@ -77,7 +77,7 @@ class AuthIntegrationTest {
         final HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         final ResponseEntity<Map> response = restTemplate.postForEntity(
-                "/login",
+                "/api/v1/auth/login",
                 new HttpEntity<>(Map.of("email", "login-wrong@example.com", "password", "wrong"), headers),
                 Map.class);
 
@@ -100,13 +100,13 @@ class AuthIntegrationTest {
                 "role", "customer");
 
         final ResponseEntity<Map> first = restTemplate.postForEntity(
-                "/register",
+                "/api/v1/auth/register",
                 new HttpEntity<>(body, headers),
                 Map.class);
         assertThat(first.getStatusCode()).isEqualTo(HttpStatus.CREATED);
 
         final ResponseEntity<Map> second = restTemplate.postForEntity(
-                "/register",
+                "/api/v1/auth/register",
                 new HttpEntity<>(body, headers),
                 Map.class);
 
