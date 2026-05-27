@@ -131,8 +131,8 @@ jobs:
           push: 'true'
           cache_scope: backend
           tags: |
-            ghcr.io/mastilovic/coffeeshop-backend:${{ needs.meta.outputs.image_tag }}
-            ghcr.io/mastilovic/coffeeshop-backend:latest
+            ghcr.io/mastilovic/coffeeshop-backend-go:${{ needs.meta.outputs.image_tag }}
+            ghcr.io/mastilovic/coffeeshop-backend-go:latest
 
   build-frontend:
     runs-on: ubuntu-latest
