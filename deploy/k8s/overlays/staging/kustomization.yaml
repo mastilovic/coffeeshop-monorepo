@@ -23,8 +23,8 @@ generatorOptions:
   disableNameSuffixHash: true
 
 images:
-  - name: ghcr.io/mastilovic/coffeeshop-backend
-    newName: ghcr.io/mastilovic/coffeeshop-backend
+  - name: ghcr.io/mastilovic/coffeeshop-backend-go
+    newName: ghcr.io/mastilovic/coffeeshop-backend-go
     newTag: latest
   - name: ghcr.io/mastilovic/coffeeshop-frontend
     newName: ghcr.io/mastilovic/coffeeshop-frontend

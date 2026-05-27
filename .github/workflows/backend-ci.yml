@@ -45,4 +45,4 @@ jobs:
           context: coffeeshop-go
           push: 'false'
           cache_scope: backend-pr
-          tags: ghcr.io/mastilovic/coffeeshop-backend:pr-${{ github.event.pull_request.number }}
+          tags: ghcr.io/mastilovic/coffeeshop-backend-go:pr-${{ github.event.pull_request.number }}
