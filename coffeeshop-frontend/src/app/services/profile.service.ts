@@ -11,7 +11,7 @@ export class ProfileService {
   readonly currentUser = signal<UserProfileResponseDto | null>(null);
 
   getProfile(): Observable<UserProfileResponseDto> {
-    const url = environment.profileUrl ?? `${environment.apiUrl}/profile`;
+    const url = `${environment.apiUrl}/api/v1/profile`;
     return this.http.get<UserProfileResponseDto>(url).pipe(
       tap(user => this.currentUser.set(user)),
       catchError((error: HttpErrorResponse) => {

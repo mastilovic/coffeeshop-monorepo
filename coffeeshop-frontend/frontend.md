@@ -164,7 +164,7 @@ export const environment = {
 };
 ```
 
-- **Auth endpoints** are at the API root: `` `${environment.apiUrl}/login` ``, `` `${environment.apiUrl}/register` ``, etc.
+- **Auth endpoints** are under `/api/v1/auth`: `` `${environment.apiUrl}/api/v1/auth/login` ``, `` `${environment.apiUrl}/api/v1/auth/register` ``, etc.
 - **Resource endpoints** use versioned paths: `` `${environment.apiUrl}/api/v1/...` ``
 
 ---
@@ -213,9 +213,9 @@ The backend uses **Keycloak** (OAuth2 resource server). Tokens are issued by the
 
 ### Flow
 
-1. **Register:** `POST /register` with `{ name, email, password, role }` where `role` is `customer` or `shop_owner` (not `admin`).
+1. **Register:** `POST /api/v1/auth/register` with `{ name, email, password, role }` where `role` is `customer` or `shop_owner` (not `admin`).
 2. **Response:** `201` + `UserResponseDto` — registration does **not** return tokens; user must log in.
-3. **Login:** `POST /login` or `POST /auth/login` with `{ email, password }`.
+3. **Login:** `POST /api/v1/auth/login` with `{ email, password }`.
 4. **Response:** Keycloak-style token bundle:
 
 ```json
@@ -251,11 +251,11 @@ Exposed signals/computed (suggested):
 
 ### Current user profile
 
-`GET /profile` (authenticated) returns full `UserResponseDto` for the JWT subject — use this instead of a `/api/v1/user/self` route (which does not exist).
+`GET /api/v1/profile` (authenticated) returns full `UserResponseDto` for the JWT subject — use this instead of a `/api/v1/user/self` route (which does not exist).
 
 ### Logout
 
-Clear tokens from storage, call `/auth/logout` with refresh token, reset signals, navigate to `/login`.
+Clear tokens from storage, call `/api/v1/auth/logout` with refresh token, reset signals, navigate to `/login`.
 
 ---
 
@@ -274,8 +274,8 @@ Each domain has an `@Injectable({ providedIn: 'root' })` service:
 
 | Service | Base path | Notes |
 |---------|-----------|-------|
-| `AuthService` | `/login`, `/register`, `/auth/login`, `/auth/refresh`, `/auth/logout` | Root paths, not under `/api/v1` |
-| `ProfileService` | `/profile` | Authenticated current user |
+| `AuthService` | `/api/v1/auth/login`, `/register`, `/refresh`, `/logout` | Under `/api/v1/auth` |
+| `ProfileService` | `/api/v1/profile` | Authenticated current user |
 | `UserService` | `/api/v1/user` | |
 | `ShopService` | `/api/v1/shop` | Replaces legacy “Tenant” |
 | `EventService` | `/api/v1/event` | |
@@ -295,9 +295,9 @@ All versioned resources use **kebab-case** paths under `/api/v1/`.
 
 From `SecurityConfiguration`:
 
-- **Public:** `POST /login`, `/register`, `/auth/login`, `/auth/refresh`, `/auth/logout`
+- **Public:** `POST /api/v1/auth/login`, `/api/v1/auth/register`, `/api/v1/auth/refresh`, `/api/v1/auth/logout`
 - **Public:** all `GET /api/v1/**`
-- **Authenticated:** `GET /profile`, all mutating methods on resources (`POST`/`PUT`/`DELETE` on `/api/v1/**`), reservation-request endpoints
+- **Authenticated:** `GET /api/v1/profile`, all mutating methods on resources (`POST`/`PUT`/`DELETE` on `/api/v1/**`), reservation-request endpoints
 
 Plan UI so browsing works without login, but create/edit/delete and reservation requests require a token.
 
@@ -411,7 +411,7 @@ Customer flow: create **request** → shop owner **accepts** (with table) or **d
 ### 9.1 Login (`/login`)
 
 - Reactive form: email, password
-- `POST /login` → store `access_token` + `refresh_token`
+- `POST /api/v1/auth/login` → store `access_token` + `refresh_token`
 - On success: navigate to `/dashboard`
 - On `401`: show error from `{ message }` body
 - Link to `/register`
@@ -419,7 +419,7 @@ Customer flow: create **request** → shop owner **accepts** (with table) or **d
 ### 9.2 Register (`/register`)
 
 - Fields: **name**, email, password, role select (`customer` | `shop_owner`)
-- `POST /register` → show success; link to login (no auto-login)
+- `POST /api/v1/auth/register` → show success; link to login (no auto-login)
 - Handle `409` (email exists), `403` (admin role), validation errors
 
 ### 9.3 Dashboard (`/dashboard`)
@@ -444,7 +444,7 @@ Customer flow: create **request** → shop owner **accepts** (with table) or **d
 Two sub-flows recommended:
 
 1. **Requests (customer):** `POST /api/v1/reservation-request` with current user’s `userId`, target `shopId`, party size
-2. **Confirmed:** `GET /api/v1/reservation`, filter where `reservation.user.id === currentUserId` (from `/profile`)
+2. **Confirmed:** `GET /api/v1/reservation`, filter where `reservation.user.id === currentUserId` (from `/api/v1/profile`)
 
 Shop owners: list requests for their shops (filter client-side on `shop.id`), call accept/deny endpoints.
 
@@ -483,7 +483,7 @@ Suggested tabs:
 
 ### 9.10 Profile (`/profile`)
 
-- `GET /profile` → `UserResponseDto`
+- `GET /api/v1/profile` → `UserResponseDto`
 - View: `name`, `email`, `userType`, roles, favourite shops
 - Edit: `PUT /api/v1/user/{id}` with `UserUpdateRequest` (`name`, `email`, `favouriteShopIds`, …)
 
@@ -541,7 +541,7 @@ System stack: `-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica
 | Reservation request accept/deny | Shop owner for that shop (app-level check; backend enforces authenticated) |
 | My reservations list | Filter by `user.id` from profile |
 
-Resolve the app user id via `GET /profile` after login (JWT `sub` is Keycloak subject; app `User.id` is a separate UUID in the database).
+Resolve the app user id via `GET /api/v1/profile` after login (JWT `sub` is Keycloak subject; app `User.id` is a separate UUID in the database).
 
 ---
 
@@ -554,7 +554,7 @@ Resolve the app user id via `GET /profile` after login (JWT `sub` is Keycloak su
 3. Implement token refresh before expiry using `/auth/refresh`.
 4. Replace legacy **Tenant** UI copy and routes with **Shop** (`/api/v1/shop`).
 5. Map register/login DTOs to `RegisterRequest` / `LoginRequest` (name + role, not username).
-6. Use `GET /profile` for the current user (not `/api/v1/user/self`).
+6. Use `GET /api/v1/profile` for the current user (not `/api/v1/user/self`).
 7. Implement **reservation request** flow; do not assume date/guest-count reservation fields.
 8. Use **UUID** strings for all ids in paths and bodies.
 9. Import OpenAPI from `http://localhost:8080/v3/api-docs` when generating clients.
@@ -568,8 +568,8 @@ Backend expects JWT issuer `KEYCLOAK_JWT_ISSUER_URI` (default `http://localhost:
 
 | Capability | Endpoints |
 |------------|-----------|
-| Auth | `/login`, `/register`, `/auth/refresh`, `/auth/logout` |
-| Current user | `GET /profile` |
+| Auth | `/api/v1/auth/login`, `/api/v1/auth/register`, `/api/v1/auth/refresh`, `/api/v1/auth/logout` |
+| Current user | `GET /api/v1/profile` |
 | Users | `/api/v1/user` CRUD |
 | Shops | `/api/v1/shop` CRUD + nested data on GET by id |
 | Events | `/api/v1/event` CRUD |
@@ -629,7 +629,7 @@ location / {
 | Menu entity | No name/description; only `id` + items |
 | `LoyaltyPlanType` enum | Empty in backend |
 | Register → login | Two-step; no token on register |
-| JWT `sub` vs `User.id` | May differ; always use `/profile` for app user uuid |
+| JWT `sub` vs `User.id` | May differ; always use `/api/v1/profile` for app user uuid |
 | `api-docs.json` in frontend folder | May be stale; prefer live `/v3/api-docs` from running backend |
 
 ---
@@ -642,12 +642,11 @@ Base: `{apiUrl}` (default `http://localhost:8080`).
 
 | Method | Path | Body | Response |
 |--------|------|------|----------|
-| POST | `/register` | `RegisterRequest` | `201` `UserResponseDto` |
-| POST | `/login` | `LoginRequest` | `TokenResponse` |
-| POST | `/auth/login` | `LoginRequest` | `TokenResponse` (alias) |
-| POST | `/auth/refresh` | `{ "refresh_token": "..." }` | `TokenResponse` |
-| POST | `/auth/logout` | `{ "refresh_token": "..." }` | `204` |
-| GET | `/profile` | — | `UserResponseDto` (auth required) |
+| POST | `/api/v1/auth/register` | `RegisterRequest` | `201` `UserResponseDto` |
+| POST | `/api/v1/auth/login` | `LoginRequest` | `TokenResponse` |
+| POST | `/api/v1/auth/refresh` | `{ "refresh_token": "..." }` | `TokenResponse` |
+| POST | `/api/v1/auth/logout` | `{ "refresh_token": "..." }` | `204` |
+| GET | `/api/v1/profile` | — | `UserResponseDto` (auth required) |
 
 ### Users — `/api/v1/user`
 

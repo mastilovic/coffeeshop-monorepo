@@ -69,7 +69,7 @@ class ApiSecurityIntegrationTest {
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setBearerAuth("not-a-valid-jwt");
         final ResponseEntity<Map> response = restTemplate.postForEntity(
-                "/register",
+                "/api/v1/auth/register",
                 new HttpEntity<>(
                         Map.of(
                                 "name", "Register Bearer",

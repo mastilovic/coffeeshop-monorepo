@@ -32,9 +32,10 @@ public class SecurityConfiguration {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(HttpMethod.GET, "/api/v1/profile").authenticated()
                         .requestMatchers(HttpMethod.POST,
-                                "/login", "/register",
-                                "/auth/login", "/auth/refresh", "/auth/logout")
+                                "/api/v1/auth/login", "/api/v1/auth/register",
+                                "/api/v1/auth/refresh", "/api/v1/auth/logout")
                         .permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/**").permitAll()
                         .requestMatchers(

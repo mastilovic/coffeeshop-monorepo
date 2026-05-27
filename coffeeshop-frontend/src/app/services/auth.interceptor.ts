@@ -15,7 +15,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 
   return next(authReq).pipe(
     catchError((error: HttpErrorResponse) => {
-      if (error.status === 401 && authService.refreshTokenValue() && !req.url.includes('/auth/refresh')) {
+      if (error.status === 401 && authService.refreshTokenValue() && !req.url.includes('/api/v1/auth/refresh')) {
         return authService.refreshToken().pipe(
           switchMap(() => {
             const newToken = authService.accessToken();

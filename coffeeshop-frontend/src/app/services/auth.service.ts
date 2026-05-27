@@ -20,7 +20,7 @@ interface JwtPayload {
 export class AuthService {
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
-  private readonly authBase = environment.authApiUrl ?? environment.apiUrl;
+  private readonly authBase = `${environment.apiUrl}/api/v1/auth`;
 
   readonly accessToken = signal<string | null>(localStorage.getItem(ACCESS_TOKEN_KEY));
   readonly refreshTokenValue = signal<string | null>(localStorage.getItem(REFRESH_TOKEN_KEY));
@@ -83,7 +83,7 @@ export class AuthService {
   }
 
   refreshToken(): Observable<TokenResponse> {
-    return this.http.post<TokenResponse>(`${this.authBase}/auth/refresh`, {
+    return this.http.post<TokenResponse>(`${this.authBase}/refresh`, {
       refresh_token: this.refreshTokenValue(),
     }).pipe(tap(res => this.storeTokens(res)));
   }
@@ -91,7 +91,7 @@ export class AuthService {
   logout(): void {
     const rt = this.refreshTokenValue();
     if (rt) {
-      this.http.post(`${this.authBase}/auth/logout`, { refresh_token: rt }).subscribe();
+      this.http.post(`${this.authBase}/logout`, { refresh_token: rt }).subscribe();
     }
     this.clearTokens();
     this.router.navigate(['/login']);
