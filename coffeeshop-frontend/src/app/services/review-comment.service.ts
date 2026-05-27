@@ -7,7 +7,7 @@ import { ReviewCommentCreateRequest, ReviewCommentResponseDto } from '../models/
 @Injectable({ providedIn: 'root' })
 export class ReviewCommentService {
   private readonly http = inject(HttpClient);
-  private readonly reviewBase = `${environment.apiUrl}/api/v1/review`;
+  private readonly reviewBase = `${environment.apiUrl}/api/v2/review`;
 
   getByReviewId(reviewId: string): Observable<ReviewCommentResponseDto[]> {
     return this.http.get<ReviewCommentResponseDto[]>(`${this.reviewBase}/${reviewId}/comments`);

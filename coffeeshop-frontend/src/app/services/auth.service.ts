@@ -20,7 +20,7 @@ interface JwtPayload {
 export class AuthService {
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
-  private readonly authBase = `${environment.apiUrl}/api/v1/auth`;
+  private readonly authBase = `${environment.apiUrl}/api/v2/auth`;
 
   readonly accessToken = signal<string | null>(localStorage.getItem(ACCESS_TOKEN_KEY));
   readonly refreshTokenValue = signal<string | null>(localStorage.getItem(REFRESH_TOKEN_KEY));

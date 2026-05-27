@@ -9,7 +9,7 @@ import { ProfileService } from './profile.service';
 export class ShopService {
   private readonly http = inject(HttpClient);
   private readonly profileService = inject(ProfileService);
-  private readonly base = `${environment.apiUrl}/api/v1/shop`;
+  private readonly base = `${environment.apiUrl}/api/v2/shop`;
 
   getAll(): Observable<ShopResponseDto[]> {
     return this.http.get<ShopResponseDto[]>(this.base);

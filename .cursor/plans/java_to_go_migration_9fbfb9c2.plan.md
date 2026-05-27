@@ -49,7 +49,7 @@ todos:
     status: completed
   - id: phase-15-frontend
     content: "Phase 15: Frontend cutover — Angular services /api/v1 -> /api/v2, interceptor update, E2E smoke"
-    status: pending
+    status: completed
   - id: phase-16-decommission
     content: "Phase 16: Decommission Java — remove backend from compose/K8s, archive coffeeshop/, introduce Go-managed migrations"
     status: pending
