@@ -6,15 +6,15 @@ Deploy workflows install pinned `kubectl` and `kustomize` from official release 
 
 CI workflows avoid third-party marketplace actions that download from `codeload.github.com` (for example `dorny/paths-filter`, `docker/*`, `gradle/actions`). Path filtering uses `git diff` in shell; Docker build/push uses the local composite [`.github/actions/docker-build-push`](../.github/actions/docker-build-push); Gradle runs via `./gradlew` after `actions/setup-java` only. If logs still show `Failed to download archive` from `codeload.github.com`, check **Settings → Actions** allowlists — the shell/local approach does not depend on those downloads.
 
-**Branches:** Every push or merge to **`main`** runs the full **CI/CD Staging** pipeline (tests, both images, DOKS deploy) automatically — including empty commits. Pushes to **`dev`** run path-filtered tests/builds and push `dev-sha-*` only (no deploy). Rollback redeploy only: manual [Deploy Staging (DOKS)](../.github/workflows/deploy-staging.yml) with an existing `image_tag`.
+**Branches:** Every push or merge to **`main`** runs the full **CI/CD Staging** pipeline (tests, three images, DOKS deploy) automatically — including empty commits. Pushes to **`dev`** run path-filtered tests/builds and push `dev-sha-*` only (no deploy). Rollback redeploy only: manual [Deploy Staging (DOKS)](../.github/workflows/deploy-staging.yml) with an existing `image_tag`.
 
 ## When workflows run
 
 | Trigger | What you see |
 |---------|----------------|
-| Push or merge to **`main`** | **CI/CD Staging**: backend + frontend tests, both image builds (`sha-*` / `latest`), DOKS deploy. No path filtering on `main`. |
-| Push to **`dev`** | **CI/CD Staging** starts; tests/builds only when `coffeeshop/**`, `coffeeshop-frontend/**`, `deploy/**`, or workflow files changed. |
-| **PR** | **Backend CI** and **Frontend CI** only — not **CI/CD Staging**. |
+| Push or merge to **`main`** | **CI/CD Staging**: Java backend, Go backend, and frontend tests; three image builds (`sha-*` / `latest`); DOKS deploy. Triggered when `coffeeshop/**`, `coffeeshop-go/**`, `coffeeshop-frontend/**`, `deploy/**`, or workflow files change. |
+| Push to **`dev`** | **CI/CD Staging** starts; tests/builds only when `coffeeshop/**`, `coffeeshop-go/**`, `coffeeshop-frontend/**`, `deploy/**`, or workflow files changed. |
+| **PR** | **Backend CI**, **Backend Go CI**, and **Frontend CI** only — not **CI/CD Staging**. |
 | **Deploy Staging (DOKS)** (manual) | Redeploy an existing image without rebuilding — rollback/hotfix only. |
 
 ### No runs appear in Actions at all?
