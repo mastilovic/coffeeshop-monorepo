@@ -1,0 +1,773 @@
+openapi: "3.0.3"
+info:
+  title: Coffeeshop Go API
+  version: "2.0.0"
+  description: Go-based backend for the Coffeeshop application.
+servers:
+  - url: http://localhost:18081
+    description: Local development
+
+paths:
+  /api/v2/auth/login:
+    post:
+      summary: Authenticate user
+      tags: [Auth]
+      responses:
+        "200":
+          description: OK
+
+  /api/v2/auth/register:
+    post:
+      summary: Register new user
+      tags: [Auth]
+      responses:
+        "201":
+          description: Created
+
+  /api/v2/auth/refresh:
+    post:
+      summary: Refresh access token
+      tags: [Auth]
+      responses:
+        "200":
+          description: OK
+
+  /api/v2/auth/logout:
+    post:
+      summary: Logout user
+      tags: [Auth]
+      responses:
+        "204":
+          description: No Content
+
+  /api/v2/profile:
+    get:
+      summary: Get current user profile
+      tags: [Profile]
+      responses:
+        "200":
+          description: OK
+
+  /api/v2/shop:
+    get:
+      summary: List shops
+      tags: [Shop]
+      responses:
+        "200":
+          description: OK
+    post:
+      summary: Create shop
+      tags: [Shop]
+      responses:
+        "201":
+          description: Created
+
+  /api/v2/shop/{id}:
+    get:
+      summary: Get shop by ID
+      tags: [Shop]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+    put:
+      summary: Update shop
+      tags: [Shop]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+    delete:
+      summary: Delete shop
+      tags: [Shop]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: No Content
+
+  /api/v2/shop/mine:
+    get:
+      summary: Get current user's shops
+      tags: [Shop]
+      responses:
+        "200":
+          description: OK
+
+  /api/v2/shop/{shopId}/favourite:
+    post:
+      summary: Add shop to favourites
+      tags: [Shop]
+      parameters:
+        - name: shopId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+    delete:
+      summary: Remove shop from favourites
+      tags: [Shop]
+      parameters:
+        - name: shopId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: No Content
+
+  /api/v2/shop/{shopId}/menus:
+    get:
+      summary: Get menus for a shop
+      tags: [Shop]
+      parameters:
+        - name: shopId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+    post:
+      summary: Create menu for a shop
+      tags: [Shop]
+      parameters:
+        - name: shopId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "201":
+          description: Created
+
+  /api/v2/event:
+    get:
+      summary: List events
+      tags: [Event]
+      responses:
+        "200":
+          description: OK
+    post:
+      summary: Create event
+      tags: [Event]
+      responses:
+        "201":
+          description: Created
+
+  /api/v2/event/{eventId}:
+    get:
+      summary: Get event by ID
+      tags: [Event]
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+    put:
+      summary: Update event
+      tags: [Event]
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+    delete:
+      summary: Delete event
+      tags: [Event]
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: No Content
+
+  /api/v2/user:
+    get:
+      summary: List users
+      tags: [User]
+      responses:
+        "200":
+          description: OK
+    post:
+      summary: Create user
+      tags: [User]
+      responses:
+        "201":
+          description: Created
+
+  /api/v2/user/{id}:
+    get:
+      summary: Get user by ID
+      tags: [User]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+    put:
+      summary: Update user
+      tags: [User]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+    delete:
+      summary: Delete user
+      tags: [User]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: No Content
+
+  /api/v2/review:
+    get:
+      summary: List reviews
+      tags: [Review]
+      responses:
+        "200":
+          description: OK
+    post:
+      summary: Create review
+      tags: [Review]
+      responses:
+        "201":
+          description: Created
+
+  /api/v2/review/{id}:
+    get:
+      summary: Get review by ID
+      tags: [Review]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+    put:
+      summary: Update review
+      tags: [Review]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+    delete:
+      summary: Delete review
+      tags: [Review]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: No Content
+
+  /api/v2/review/{reviewId}/comments:
+    get:
+      summary: Get comments for a review
+      tags: [Review]
+      parameters:
+        - name: reviewId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+    post:
+      summary: Add comment to a review
+      tags: [Review]
+      parameters:
+        - name: reviewId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "201":
+          description: Created
+
+  /api/v2/reservation:
+    get:
+      summary: List reservations
+      tags: [Reservation]
+      responses:
+        "200":
+          description: OK
+    post:
+      summary: Create reservation
+      tags: [Reservation]
+      responses:
+        "201":
+          description: Created
+
+  /api/v2/reservation/{id}:
+    get:
+      summary: Get reservation by ID
+      tags: [Reservation]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+    put:
+      summary: Update reservation
+      tags: [Reservation]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+    delete:
+      summary: Delete reservation
+      tags: [Reservation]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: No Content
+
+  /api/v2/reservation-request:
+    get:
+      summary: List reservation requests
+      tags: [ReservationRequest]
+      responses:
+        "200":
+          description: OK
+    post:
+      summary: Create reservation request
+      tags: [ReservationRequest]
+      responses:
+        "201":
+          description: Created
+
+  /api/v2/reservation-request/{id}/accept:
+    post:
+      summary: Accept reservation request
+      tags: [ReservationRequest]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+
+  /api/v2/reservation-request/{id}/deny:
+    post:
+      summary: Deny reservation request
+      tags: [ReservationRequest]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+
+  /api/v2/role:
+    get:
+      summary: List roles
+      tags: [Role]
+      responses:
+        "200":
+          description: OK
+    post:
+      summary: Create role
+      tags: [Role]
+      responses:
+        "201":
+          description: Created
+
+  /api/v2/role/{id}:
+    get:
+      summary: Get role by ID
+      tags: [Role]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+    put:
+      summary: Update role
+      tags: [Role]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+    delete:
+      summary: Delete role
+      tags: [Role]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: No Content
+
+  /api/v2/contact:
+    get:
+      summary: List contacts
+      tags: [Contact]
+      responses:
+        "200":
+          description: OK
+    post:
+      summary: Create contact
+      tags: [Contact]
+      responses:
+        "201":
+          description: Created
+
+  /api/v2/contact/{id}:
+    get:
+      summary: Get contact by ID
+      tags: [Contact]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+    put:
+      summary: Update contact
+      tags: [Contact]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+    delete:
+      summary: Delete contact
+      tags: [Contact]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: No Content
+
+  /api/v2/table:
+    get:
+      summary: List tables
+      tags: [Table]
+      responses:
+        "200":
+          description: OK
+    post:
+      summary: Create table
+      tags: [Table]
+      responses:
+        "201":
+          description: Created
+
+  /api/v2/table/{id}:
+    get:
+      summary: Get table by ID
+      tags: [Table]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+    put:
+      summary: Update table
+      tags: [Table]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+    delete:
+      summary: Delete table
+      tags: [Table]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: No Content
+
+  /api/v2/loyalty-plan:
+    get:
+      summary: List loyalty plans
+      tags: [LoyaltyPlan]
+      responses:
+        "200":
+          description: OK
+    post:
+      summary: Create loyalty plan
+      tags: [LoyaltyPlan]
+      responses:
+        "201":
+          description: Created
+
+  /api/v2/loyalty-plan/{id}:
+    get:
+      summary: Get loyalty plan by ID
+      tags: [LoyaltyPlan]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+    put:
+      summary: Update loyalty plan
+      tags: [LoyaltyPlan]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+    delete:
+      summary: Delete loyalty plan
+      tags: [LoyaltyPlan]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: No Content
+
+  /api/v2/menu:
+    get:
+      summary: List menus
+      tags: [Menu]
+      responses:
+        "200":
+          description: OK
+    post:
+      summary: Create menu
+      tags: [Menu]
+      responses:
+        "201":
+          description: Created
+
+  /api/v2/menu/{id}:
+    get:
+      summary: Get menu by ID
+      tags: [Menu]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+    put:
+      summary: Update menu
+      tags: [Menu]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+    delete:
+      summary: Delete menu
+      tags: [Menu]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: No Content
+
+  /api/v2/menu-item:
+    get:
+      summary: List menu items
+      tags: [MenuItem]
+      responses:
+        "200":
+          description: OK
+    post:
+      summary: Create menu item
+      tags: [MenuItem]
+      responses:
+        "201":
+          description: Created
+
+  /api/v2/menu-item/{id}:
+    get:
+      summary: Get menu item by ID
+      tags: [MenuItem]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+    put:
+      summary: Update menu item
+      tags: [MenuItem]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+    delete:
+      summary: Delete menu item
+      tags: [MenuItem]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: No Content
+
+  /api/v2/reference/serbia-cities:
+    get:
+      summary: List Serbian cities
+      tags: [Reference]
+      responses:
+        "200":
+          description: OK
+
+  /health/ready:
+    get:
+      summary: Readiness probe
+      tags: [Health]
+      responses:
+        "200":
+          description: OK
+
+  /health/live:
+    get:
+      summary: Liveness probe
+      tags: [Health]
+      responses:
+        "200":
+          description: OK
