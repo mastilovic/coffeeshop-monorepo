@@ -1,21 +1,25 @@
 # CoffeeShop — DigitalOcean Kubernetes (staging)
 
-Deploy the full stack (Postgres ×2, Keycloak, Spring backend, Angular frontend) to a DOKS cluster using [Kustomize](https://kustomize.io/).
+Deploy the full stack (Postgres ×2, Keycloak, Spring backend, Go backend, Angular frontend) to a DOKS cluster using [Kustomize](https://kustomize.io/).
 
 ## Architecture
 
 ```text
 Internet → NGINX Ingress (DO Load Balancer)
-  ├─ APP_HOST  → frontend:80 → nginx proxies /api/* → backend:8080
+  ├─ APP_HOST  → frontend:80 → nginx proxies /api/v1/* → backend:8080
+  │                          → nginx proxies /api/v2/* → backend-go:8080
   └─ AUTH_HOST → keycloak:8080
 
-backend → postgres (app DB), keycloak (token/admin API)
+backend, backend-go → postgres (app DB), keycloak (token/admin API)
 keycloak → postgres-keycloak
 ```
+
+`backend-go` reads `DATABASE_URL`, Keycloak, and CORS from the shared `coffeeshop-config` ConfigMap and `coffeeshop-secrets` Secret (same as the Java backend).
 
 Images are built by GitHub Actions and published to GHCR:
 
 - `ghcr.io/mastilovic/coffeeshop-backend`
+- `ghcr.io/mastilovic/coffeeshop-backend-go`
 - `ghcr.io/mastilovic/coffeeshop-frontend`
 
 ## One-time cluster setup
