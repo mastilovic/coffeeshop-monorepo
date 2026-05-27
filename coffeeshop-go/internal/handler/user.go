@@ -52,7 +52,7 @@ func toUserResponse(u auth.User) userResponseDTO {
 		Name:     u.Name,
 		Username: u.Username,
 		Email:    u.Email,
-		UserType: u.UserType,
+		UserType: auth.NormalizeUserType(u.UserType),
 	}
 }
 
@@ -158,7 +158,7 @@ func (h *UserHandler) Create(w http.ResponseWriter, r *http.Request) {
 		Username: req.Username,
 		Email:    req.Email,
 		Password: req.Password,
-		UserType: req.UserType,
+		UserType: auth.NormalizeUserType(req.UserType),
 	}
 
 	if err := h.db.WithContext(r.Context()).Create(&user).Error; err != nil {
@@ -193,7 +193,7 @@ func (h *UserHandler) Update(w http.ResponseWriter, r *http.Request) {
 	existing.Name = req.Name
 	existing.Username = req.Username
 	existing.Email = req.Email
-	existing.UserType = req.UserType
+	existing.UserType = auth.NormalizeUserType(req.UserType)
 
 	if err := h.db.WithContext(r.Context()).Save(&existing).Error; err != nil {
 		apperror.WriteError(w, apperror.Internal("Failed to update user"))
