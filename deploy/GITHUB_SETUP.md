@@ -12,10 +12,11 @@ CI workflows avoid third-party marketplace actions that download from `codeload.
 
 | Trigger | What you see |
 |---------|----------------|
-| Push or merge to **`main`** | **CI/CD Staging**: Go backend and frontend tests; two image builds (`sha-*` / `latest`); DOKS deploy. Triggered when `coffeeshop-go/**`, `coffeeshop-frontend/**`, `deploy/**`, or workflow files change. |
+| Push or merge to **`main`** | **CI/CD Staging**: Java backend, Go backend, and frontend tests; three image builds (`sha-*` / `latest`); DOKS deploy. Triggered when `coffeeshop/**`, `coffeeshop-go/**`, `coffeeshop-frontend/**`, `deploy/**`, or workflow files change. |
 | Push to **`dev`** | **CI/CD Staging** starts; tests/builds only when `coffeeshop/**`, `coffeeshop-go/**`, `coffeeshop-frontend/**`, `deploy/**`, or workflow files changed. |
 | **PR** | **Backend CI**, **Backend Go CI**, and **Frontend CI** only — not **CI/CD Staging**. |
 | **Deploy Staging (DOKS)** (manual) | Redeploy an existing image without rebuilding — rollback/hotfix only. |
+| **Install cert-manager (DOKS)** (manual) | One-time: Helm install cert-manager + apply ClusterIssuers (`deploy/k8s/infra/cert-manager/install.sh`). |
 
 ### No runs appear in Actions at all?
 
@@ -92,6 +93,27 @@ kubectl --kubeconfig ~/.kube/config-coffeeshop-staging cluster-info
 
 Paste the entire file into secret `KUBE_CONFIG`.
 
+## TLS / cert-manager
+
+cert-manager is **not** installed by **CI/CD Staging** or **Deploy Staging**. Install it once per cluster before expecting HTTPS certificates.
+
+### One-time install
+
+1. **Actions → Install cert-manager (DOKS) → Run workflow** (uses `KUBE_CONFIG`), or locally:
+   ```bash
+   cd deploy/k8s/infra/cert-manager && ./install.sh
+   ```
+2. Deploy the app (**CI/CD Staging** on `main` or **Deploy Staging**).
+3. Wait until the certificate is Ready:
+   ```bash
+   kubectl get certificate coffeeshop-tls -n coffeeshop-staging
+   ```
+4. Set variable **`STAGING_PUBLIC_SCHEME`** to **`https`** and redeploy.
+
+Do **not** set `STAGING_PUBLIC_SCHEME=https` until step 3 succeeds, or the backend JWT issuer URL will not match a working HTTPS endpoint.
+
+Details: [deploy/k8s/infra/cert-manager/README.md](k8s/infra/cert-manager/README.md).
+
 ## Keycloak realm re-import
 
 Keycloak starts with `--import-realm`. If realm `coffeeshop` **already exists** in Postgres, a redeploy may **not** update client redirect URIs.
@@ -113,9 +135,7 @@ curl -sS -o /dev/null -w "%{http_code}\n" "http://auth.kafenerija.online/health/
 
 Browser: `http://<STAGING_APP_HOST>/` — register/login. If **401 after login**, decode the JWT `iss` claim; it must exactly match `KEYCLOAK_JWT_ISSUER_URI` on the backend (same scheme and host).
 
-When you add TLS later, set `STAGING_PUBLIC_SCHEME=https`, redeploy, and use `https://` URLs in the browser.
-
-If pods stay **Pending** with `Insufficient cpu` or `Insufficient memory`, see [deploy/README.md — Resource sizing](README.md#resource-sizing).
+If pods stay **Pending** with `Insufficient cpu` or `Insufficient memory`, see [deploy/README.md — Resource sizing](README.md#resource-sizing) and [Bootstrap on 2GB nodes](README.md#bootstrap-on-2gb-nodes). Staging applies reduced memory requests via `patches/resources-small-node.yaml` (Keycloak unchanged).
 
 ## Local deploy (same substitution model)
 
