@@ -29,6 +29,6 @@ func (h *ProfileHandler) GetProfile(w http.ResponseWriter, r *http.Request) {
 		"name":     user.Name,
 		"username": user.Username,
 		"email":    user.Email,
-		"userType": user.UserType,
+		"userType": auth.NormalizeUserType(user.UserType),
 	})
 }
