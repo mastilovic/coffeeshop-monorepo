@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.coffeeshop.coffeeshop.AuthIntegrationTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-05-27T07:22:22.173Z" hostname="PD-AMASTILOVIC.local" time="4.984">
+  <properties/>
+  <testcase name="login_unknownEmail_returns404()" classname="com.coffeeshop.coffeeshop.AuthIntegrationTest" time="0.041"/>
+  <testcase name="register_duplicateEmail_returns404()" classname="com.coffeeshop.coffeeshop.AuthIntegrationTest" time="0.036"/>
+  <testcase name="login_wrongPassword_returns401()" classname="com.coffeeshop.coffeeshop.AuthIntegrationTest" time="0.021"/>
+  <system-out><![CDATA[2026-05-27T09:22:22.174+02:00  INFO 77442 --- [    Test worker] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.coffeeshop.coffeeshop.AuthIntegrationTest]: AuthIntegrationTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-05-27T09:22:22.179+02:00  INFO 77442 --- [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.coffeeshop.coffeeshop.CoffeeshopApplication for test class com.coffeeshop.coffeeshop.AuthIntegrationTest
+2026-05-27T09:22:22.179+02:00  INFO 77442 --- [    Test worker] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.coffeeshop.coffeeshop.AuthIntegrationTest]: AuthIntegrationTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-05-27T09:22:22.182+02:00  INFO 77442 --- [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.coffeeshop.coffeeshop.CoffeeshopApplication for test class com.coffeeshop.coffeeshop.AuthIntegrationTest
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v4.0.6)
+
+2026-05-27T09:22:22.202+02:00  INFO 77442 --- [    Test worker] c.c.coffeeshop.AuthIntegrationTest       : Starting AuthIntegrationTest using Java 25.0.2 with PID 77442 (started by amastilovic in /Users/amastilovic/Desktop/dev/coffeeshop-monorepo/coffeeshop)
+2026-05-27T09:22:22.202+02:00  INFO 77442 --- [    Test worker] c.c.coffeeshop.AuthIntegrationTest       : No active profile set, falling back to 1 default profile: "default"
+2026-05-27T09:22:22.474+02:00  INFO 77442 --- [    Test worker] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-05-27T09:22:22.503+02:00  INFO 77442 --- [    Test worker] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 24 ms. Found 15 JPA repository interfaces.
+2026-05-27T09:22:22.614+02:00  INFO 77442 --- [    Test worker] o.s.boot.tomcat.TomcatWebServer          : Tomcat initialized with port 0 (http)
+2026-05-27T09:22:22.614+02:00  INFO 77442 --- [    Test worker] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-05-27T09:22:22.615+02:00  INFO 77442 --- [    Test worker] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/11.0.21]
+2026-05-27T09:22:22.632+02:00  INFO 77442 --- [    Test worker] b.w.c.s.WebApplicationContextInitializer : Root WebApplicationContext: initialization completed in 428 ms
+2026-05-27T09:22:22.665+02:00  INFO 77442 --- [    Test worker] tc.postgres:latest                       : Creating container for image: postgres:latest
+2026-05-27T09:22:22.972+02:00  INFO 77442 --- [    Test worker] tc.postgres:latest                       : Container postgres:latest is starting: e48469f5c5170adbdae50d650c744a0f94b000ff11b107a9b9173c8abe1d0993
+2026-05-27T09:22:26.421+02:00  INFO 77442 --- [    Test worker] tc.postgres:latest                       : Container postgres:latest started in PT3.755772S
+2026-05-27T09:22:26.421+02:00  INFO 77442 --- [    Test worker] tc.postgres:latest                       : Container is started (JDBC URL: jdbc:postgresql://localhost:33044/test?loggerLevel=OFF)
+2026-05-27T09:22:26.482+02:00  INFO 77442 --- [    Test worker] org.hibernate.orm.jpa                    : HHH008540: Processing PersistenceUnitInfo [name: default]
+2026-05-27T09:22:26.496+02:00  INFO 77442 --- [    Test worker] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-05-27T09:22:26.497+02:00  INFO 77442 --- [    Test worker] com.zaxxer.hikari.HikariDataSource       : HikariPool-2 - Starting...
+2026-05-27T09:22:26.510+02:00  INFO 77442 --- [    Test worker] com.zaxxer.hikari.pool.HikariPool        : HikariPool-2 - Added connection org.postgresql.jdbc.PgConnection@9c10e9c
+2026-05-27T09:22:26.510+02:00  INFO 77442 --- [    Test worker] com.zaxxer.hikari.HikariDataSource       : HikariPool-2 - Start completed.
+2026-05-27T09:22:26.515+02:00  INFO 77442 --- [    Test worker] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [jdbc:postgresql://localhost:33044/test?loggerLevel=OFF]
+	Database driver: PostgreSQL JDBC Driver
+	Database dialect: PostgreSQLDialect
+	Database version: 18.3
+	Default catalog/schema: test/public
+	Autocommit mode: undefined/unknown
+	Isolation level: READ_COMMITTED [default READ_COMMITTED]
+	JDBC fetch size: none
+	Pool: DataSourceConnectionProvider
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-05-27T09:22:26.599+02:00  INFO 77442 --- [    Test worker] org.hibernate.orm.core                   : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-05-27T09:22:26.718+02:00  INFO 77442 --- [    Test worker] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-05-27T09:22:26.853+02:00  WARN 77442 --- [    Test worker] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2026-05-27T09:22:27.016+02:00  INFO 77442 --- [    Test worker] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 1 endpoint beneath base path '/actuator'
+2026-05-27T09:22:27.028+02:00  INFO 77442 --- [    Test worker] o.s.boot.tomcat.TomcatWebServer          : Tomcat started on port 57447 (http) with context path '/'
+2026-05-27T09:22:27.032+02:00  INFO 77442 --- [    Test worker] c.c.coffeeshop.AuthIntegrationTest       : Started AuthIntegrationTest in 4.846 seconds (process running for 23.44)
+2026-05-27T09:22:27.043+02:00  WARN 77442 --- [    Test worker] o.s.core.events.SpringDocAppInitializer  : SpringDoc /v3/api-docs endpoint is enabled by default. To disable it in production, set the property 'springdoc.api-docs.enabled=false'
+2026-05-27T09:22:27.043+02:00  WARN 77442 --- [    Test worker] o.s.core.events.SpringDocAppInitializer  : SpringDoc /swagger-ui.html endpoint is enabled by default. To disable it in production, set the property 'springdoc.swagger-ui.enabled=false'
+2026-05-27T09:22:27.063+02:00  INFO 77442 --- [o-auto-2-exec-1] o.a.c.c.C.[Tomcat-1].[localhost].[/]     : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-05-27T09:22:27.063+02:00  INFO 77442 --- [o-auto-2-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2026-05-27T09:22:27.064+02:00  INFO 77442 --- [o-auto-2-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 1 ms
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

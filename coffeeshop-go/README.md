@@ -1,6 +1,6 @@
 # Coffeeshop Go Backend
 
-Go backend for the coffeeshop application, exposing `/api/v2` endpoints with identical behavior to the Java Spring Boot `/api/v1` backend.
+Primary backend for the coffeeshop application, exposing `/api/v2` endpoints. The former Java Spring Boot backend is archived under `archive/coffeeshop-java/`.
 
 ## Architecture
 
@@ -231,8 +231,8 @@ All errors return:
 cd coffeeshop-go
 go run ./cmd/api
 
-# Docker
-docker compose up backend-go
+# Docker (from coffeeshop/)
+docker compose up backend
 
 # Tests
 go test ./...
@@ -252,3 +252,15 @@ go test ./...
 | `KEYCLOAK_ADMIN_USER` | `admin` | Keycloak admin username |
 | `KEYCLOAK_ADMIN_PASSWORD` | `admin` | Keycloak admin password |
 | `CORS_ALLOWED_ORIGINS` | `http://localhost:4200` | Comma-separated allowed origins |
+| `RUN_MIGRATIONS` | `false` | Run `golang-migrate` on startup |
+| `MIGRATIONS_PATH` | `migrations` | Path to SQL migration files |
+| `SENTRY_DSN` | _(empty)_ | Sentry DSN (optional) |
+
+## Database migrations
+
+Schema is managed with [golang-migrate](https://github.com/golang-migrate/migrate) in `migrations/`. The initial migration uses `CREATE TABLE IF NOT EXISTS` so it is safe on databases already created by Hibernate.
+
+```bash
+# Enable on startup (Docker Compose sets this automatically)
+RUN_MIGRATIONS=true MIGRATIONS_PATH=migrations go run ./cmd/api
+```

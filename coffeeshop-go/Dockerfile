@@ -8,9 +8,11 @@ RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o /app/server ./cmd/api
 
 FROM alpine:3.20
 
-RUN apk --no-cache add ca-certificates
+RUN apk --no-cache add ca-certificates wget
 WORKDIR /app
 COPY --from=builder /app/server .
+COPY migrations ./migrations
+COPY api ./api
 
 EXPOSE 8080
 ENTRYPOINT ["./server"]

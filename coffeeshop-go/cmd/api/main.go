@@ -14,6 +14,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/mastilovic/coffeeshop-go/internal/auth"
 	"github.com/mastilovic/coffeeshop-go/internal/config"
+	"github.com/mastilovic/coffeeshop-go/internal/database"
 	"github.com/mastilovic/coffeeshop-go/internal/handler"
 	"github.com/mastilovic/coffeeshop-go/internal/middleware"
 	"gorm.io/driver/postgres"
@@ -40,6 +41,13 @@ func main() {
 			slog.Info("sentry initialized")
 		}
 		defer sentry.Flush(2 * time.Second)
+	}
+
+	if cfg.RunMigrations {
+		if err := database.RunMigrations(cfg.DatabaseURL, cfg.MigrationsPath); err != nil {
+			slog.Error("failed to run database migrations", "error", err)
+			os.Exit(1)
+		}
 	}
 
 	db, err := connectDB(cfg.DatabaseURL)

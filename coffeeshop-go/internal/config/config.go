@@ -14,6 +14,8 @@ type Config struct {
 	KeycloakAdminPassword string `env:"KEYCLOAK_ADMIN_PASSWORD" envDefault:"admin"`
 	CORSAllowedOrigins    string `env:"CORS_ALLOWED_ORIGINS" envDefault:"http://localhost:4200"`
 	SentryDSN             string `env:"SENTRY_DSN" envDefault:""`
+	RunMigrations         bool   `env:"RUN_MIGRATIONS" envDefault:"false"`
+	MigrationsPath        string `env:"MIGRATIONS_PATH" envDefault:"migrations"`
 }
 
 func Load() (Config, error) {

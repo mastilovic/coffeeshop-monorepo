@@ -4,7 +4,6 @@ on:
   push:
     branches: [main]
     paths:
-      - 'coffeeshop/**'
       - 'coffeeshop-go/**'
       - 'coffeeshop-frontend/**'
       - 'deploy/**'
@@ -29,7 +28,6 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       backend: ${{ steps.filter.outputs.backend }}
-      backend_go: ${{ steps.filter.outputs.backend_go }}
       frontend: ${{ steps.filter.outputs.frontend }}
       deploy: ${{ steps.filter.outputs.deploy }}
     steps:
@@ -45,7 +43,6 @@ jobs:
 
           if [ -z "$before" ] || [ "$before" = "0000000000000000000000000000000000000000" ]; then
             echo "backend=true" >> "$GITHUB_OUTPUT"
-            echo "backend_go=true" >> "$GITHUB_OUTPUT"
             echo "frontend=true" >> "$GITHUB_OUTPUT"
             echo "deploy=true" >> "$GITHUB_OUTPUT"
             exit 0
@@ -55,17 +52,13 @@ jobs:
           changed=$(git diff --name-only "$before" "$after")
 
           backend=false
-          backend_go=false
           frontend=false
           deploy=false
 
           while IFS= read -r file || [ -n "$file" ]; do
             [ -z "$file" ] && continue
-            if echo "$file" | grep -qE '^(coffeeshop/|\.github/workflows/backend-ci\.yml|\.github/workflows/ci-cd-staging\.yml)'; then
+            if echo "$file" | grep -qE '^(coffeeshop-go/|\.github/workflows/backend-ci\.yml|\.github/workflows/ci-cd-staging\.yml)'; then
               backend=true
-            fi
-            if echo "$file" | grep -qE '^(coffeeshop-go/|\.github/workflows/backend-go-ci\.yml|\.github/workflows/ci-cd-staging\.yml)'; then
-              backend_go=true
             fi
             if echo "$file" | grep -qE '^(coffeeshop-frontend/|\.github/workflows/frontend-ci\.yml|\.github/workflows/ci-cd-staging\.yml)'; then
               frontend=true
@@ -76,7 +69,6 @@ jobs:
           done <<< "$changed"
 
           echo "backend=$backend" >> "$GITHUB_OUTPUT"
-          echo "backend_go=$backend_go" >> "$GITHUB_OUTPUT"
           echo "frontend=$frontend" >> "$GITHUB_OUTPUT"
           echo "deploy=$deploy" >> "$GITHUB_OUTPUT"
 
@@ -84,24 +76,6 @@ jobs:
     runs-on: ubuntu-latest
     needs: changes
     if: needs.changes.outputs.backend == 'true' || needs.changes.outputs.deploy == 'true'
-    defaults:
-      run:
-        working-directory: coffeeshop
-    steps:
-      - uses: actions/checkout@v6
-
-      - uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '25'
-
-      - name: Build and test
-        run: ./gradlew build --no-daemon
-
-  backend-go-test:
-    runs-on: ubuntu-latest
-    needs: changes
-    if: needs.changes.outputs.backend_go == 'true' || needs.changes.outputs.deploy == 'true'
     defaults:
       run:
         working-directory: coffeeshop-go
@@ -153,31 +127,12 @@ jobs:
 
       - uses: ./.github/actions/docker-build-push
         with:
-          context: coffeeshop
+          context: coffeeshop-go
           push: 'true'
           cache_scope: backend
           tags: |
             ghcr.io/mastilovic/coffeeshop-backend:${{ needs.meta.outputs.image_tag }}
             ghcr.io/mastilovic/coffeeshop-backend:latest
-
-  build-backend-go:
-    runs-on: ubuntu-latest
-    needs: [meta, changes, backend-go-test]
-    if: always() && (needs.backend-go-test.result == 'success' || needs.backend-go-test.result == 'skipped')
-    permissions:
-      contents: read
-      packages: write
-    steps:
-      - uses: actions/checkout@v6
-
-      - uses: ./.github/actions/docker-build-push
-        with:
-          context: coffeeshop-go
-          push: 'true'
-          cache_scope: backend-go
-          tags: |
-            ghcr.io/mastilovic/coffeeshop-backend-go:${{ needs.meta.outputs.image_tag }}
-            ghcr.io/mastilovic/coffeeshop-backend-go:latest
 
   build-frontend:
     runs-on: ubuntu-latest
@@ -199,10 +154,9 @@ jobs:
             ghcr.io/mastilovic/coffeeshop-frontend:latest
 
   deploy:
-    needs: [meta, build-backend, build-backend-go, build-frontend]
+    needs: [meta, build-backend, build-frontend]
     if: >-
       needs.build-backend.result == 'success' &&
-      needs.build-backend-go.result == 'success' &&
       needs.build-frontend.result == 'success'
     concurrency:
       group: deploy-staging

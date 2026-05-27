@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.coffeeshop.coffeeshop.EventOwnershipIntegrationTest" tests="6" skipped="0" failures="0" errors="0" timestamp="2026-05-27T07:22:35.400Z" hostname="PD-AMASTILOVIC.local" time="0.611">
+  <properties/>
+  <testcase name="deleteEvent_asCustomer_returnsForbidden()" classname="com.coffeeshop.coffeeshop.EventOwnershipIntegrationTest" time="0.116"/>
+  <testcase name="createEvent_onOtherOwnersShop_returnsForbidden()" classname="com.coffeeshop.coffeeshop.EventOwnershipIntegrationTest" time="0.096"/>
+  <testcase name="updateEvent_asCustomer_returnsForbidden()" classname="com.coffeeshop.coffeeshop.EventOwnershipIntegrationTest" time="0.123"/>
+  <testcase name="createEvent_onOwnShop_returnsCreated()" classname="com.coffeeshop.coffeeshop.EventOwnershipIntegrationTest" time="0.089"/>
+  <testcase name="createEvent_asAdmin_onOtherOwnersShop_returnsCreated()" classname="com.coffeeshop.coffeeshop.EventOwnershipIntegrationTest" time="0.101"/>
+  <testcase name="createEvent_asCustomer_returnsForbidden()" classname="com.coffeeshop.coffeeshop.EventOwnershipIntegrationTest" time="0.076"/>
+  <system-out><![CDATA[2026-05-27T09:22:35.401+02:00  INFO 77442 --- [    Test worker] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.coffeeshop.coffeeshop.EventOwnershipIntegrationTest]: EventOwnershipIntegrationTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-05-27T09:22:35.405+02:00  INFO 77442 --- [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.coffeeshop.coffeeshop.CoffeeshopApplication for test class com.coffeeshop.coffeeshop.EventOwnershipIntegrationTest
+2026-05-27T09:22:35.405+02:00  INFO 77442 --- [    Test worker] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.coffeeshop.coffeeshop.EventOwnershipIntegrationTest]: EventOwnershipIntegrationTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-05-27T09:22:35.407+02:00  INFO 77442 --- [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.coffeeshop.coffeeshop.CoffeeshopApplication for test class com.coffeeshop.coffeeshop.EventOwnershipIntegrationTest
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

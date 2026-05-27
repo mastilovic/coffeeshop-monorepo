@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.coffeeshop.coffeeshop.ReferenceControllerIntegrationTest" tests="2" skipped="0" failures="0" errors="0" timestamp="2026-05-27T07:22:37.284Z" hostname="PD-AMASTILOVIC.local" time="0.023">
+  <properties/>
+  <testcase name="getSerbiaCities_returnsFullCatalog()" classname="com.coffeeshop.coffeeshop.ReferenceControllerIntegrationTest" time="0.009"/>
+  <testcase name="getSerbiaCities_withQuery_filtersResults()" classname="com.coffeeshop.coffeeshop.ReferenceControllerIntegrationTest" time="0.005"/>
+  <system-out><![CDATA[2026-05-27T09:22:37.285+02:00  INFO 77442 --- [    Test worker] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.coffeeshop.coffeeshop.ReferenceControllerIntegrationTest]: ReferenceControllerIntegrationTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-05-27T09:22:37.289+02:00  INFO 77442 --- [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.coffeeshop.coffeeshop.CoffeeshopApplication for test class com.coffeeshop.coffeeshop.ReferenceControllerIntegrationTest
+2026-05-27T09:22:37.289+02:00  INFO 77442 --- [    Test worker] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.coffeeshop.coffeeshop.ReferenceControllerIntegrationTest]: ReferenceControllerIntegrationTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-05-27T09:22:37.291+02:00  INFO 77442 --- [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.coffeeshop.coffeeshop.CoffeeshopApplication for test class com.coffeeshop.coffeeshop.ReferenceControllerIntegrationTest
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

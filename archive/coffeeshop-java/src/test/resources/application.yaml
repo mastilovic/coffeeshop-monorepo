@@ -1,0 +1,15 @@
+spring:
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8080/realms/coffeeshop
+
+coffeeshop:
+  keycloak:
+    server-url: http://127.0.0.1:9
+    realm: coffeeshop
+    client-id: test-client
+    client-secret: test-secret
+    admin-username: test
+    admin-password: test

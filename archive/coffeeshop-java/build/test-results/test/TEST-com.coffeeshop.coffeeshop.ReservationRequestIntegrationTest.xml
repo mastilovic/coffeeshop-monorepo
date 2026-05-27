@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.coffeeshop.coffeeshop.ReservationRequestIntegrationTest" tests="17" skipped="0" failures="0" errors="0" timestamp="2026-05-27T07:22:37.961Z" hostname="PD-AMASTILOVIC.local" time="1.71">
+  <properties/>
+  <testcase name="createRequest_thenDeny_returnsDeniedWithoutReservation()" classname="com.coffeeshop.coffeeshop.ReservationRequestIntegrationTest" time="0.117"/>
+  <testcase name="customerCreateRequest_forAnotherUser_returnsForbidden()" classname="com.coffeeshop.coffeeshop.ReservationRequestIntegrationTest" time="0.106"/>
+  <testcase name="createRequest_withoutEventId_returnsBadRequest()" classname="com.coffeeshop.coffeeshop.ReservationRequestIntegrationTest" time="0.062"/>
+  <testcase name="ownerCreateRequest_forShopNotOwned_returnsForbidden()" classname="com.coffeeshop.coffeeshop.ReservationRequestIntegrationTest" time="0.108"/>
+  <testcase name="customerCanRequestAgainAfterDenied()" classname="com.coffeeshop.coffeeshop.ReservationRequestIntegrationTest" time="0.101"/>
+  <testcase name="createRequest_withEventFromDifferentShop_returnsBadRequest()" classname="com.coffeeshop.coffeeshop.ReservationRequestIntegrationTest" time="0.125"/>
+  <testcase name="acceptRequest_whenEventAtCapacity_returnsConflict()" classname="com.coffeeshop.coffeeshop.ReservationRequestIntegrationTest" time="0.188"/>
+  <testcase name="listByShopId_asCustomer_isForbidden()" classname="com.coffeeshop.coffeeshop.ReservationRequestIntegrationTest" time="0.093"/>
+  <testcase name="ownerCreateRequest_forSelf_atShopNotOwned_returnsCreated()" classname="com.coffeeshop.coffeeshop.ReservationRequestIntegrationTest" time="0.076"/>
+  <testcase name="customerSecondRequestAfterAccepted_returnsConflict()" classname="com.coffeeshop.coffeeshop.ReservationRequestIntegrationTest" time="0.112"/>
+  <testcase name="listByShopId_asShopOwner_returnsShopRequests()" classname="com.coffeeshop.coffeeshop.ReservationRequestIntegrationTest" time="0.088"/>
+  <testcase name="createRequest_thenAccept_createsReservationLinkedToRequest()" classname="com.coffeeshop.coffeeshop.ReservationRequestIntegrationTest" time="0.122"/>
+  <testcase name="ownerCreateRequest_forGuest_returnsCreated()" classname="com.coffeeshop.coffeeshop.ReservationRequestIntegrationTest" time="0.068"/>
+  <testcase name="customerSecondRequestWhilePending_returnsConflict()" classname="com.coffeeshop.coffeeshop.ReservationRequestIntegrationTest" time="0.069"/>
+  <testcase name="createRequest_withUnknownEventId_returnsNotFound()" classname="com.coffeeshop.coffeeshop.ReservationRequestIntegrationTest" time="0.062"/>
+  <testcase name="ownerListRequests_includesOwnRequestAtOtherShop()" classname="com.coffeeshop.coffeeshop.ReservationRequestIntegrationTest" time="0.096"/>
+  <testcase name="listEventsByShopId_returnsOnlyShopEvents()" classname="com.coffeeshop.coffeeshop.ReservationRequestIntegrationTest" time="0.103"/>
+  <system-out><![CDATA[2026-05-27T09:22:37.962+02:00  INFO 77442 --- [    Test worker] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.coffeeshop.coffeeshop.ReservationRequestIntegrationTest]: ReservationRequestIntegrationTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-05-27T09:22:37.965+02:00  INFO 77442 --- [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.coffeeshop.coffeeshop.CoffeeshopApplication for test class com.coffeeshop.coffeeshop.ReservationRequestIntegrationTest
+2026-05-27T09:22:37.965+02:00  INFO 77442 --- [    Test worker] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.coffeeshop.coffeeshop.ReservationRequestIntegrationTest]: ReservationRequestIntegrationTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-05-27T09:22:37.967+02:00  INFO 77442 --- [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.coffeeshop.coffeeshop.CoffeeshopApplication for test class com.coffeeshop.coffeeshop.ReservationRequestIntegrationTest
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

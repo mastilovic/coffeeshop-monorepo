@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.coffeeshop.coffeeshop.ShopMultiOwnerIntegrationTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-05-27T07:22:41.374Z" hostname="PD-AMASTILOVIC.local" time="0.058">
+  <properties/>
+  <testcase name="sameOwner_canCreateMultipleShops_andMineReturnsAll()" classname="com.coffeeshop.coffeeshop.ShopMultiOwnerIntegrationTest" time="0.052"/>
+  <system-out><![CDATA[2026-05-27T09:22:41.375+02:00  INFO 77442 --- [    Test worker] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.coffeeshop.coffeeshop.ShopMultiOwnerIntegrationTest]: ShopMultiOwnerIntegrationTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-05-27T09:22:41.377+02:00  INFO 77442 --- [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.coffeeshop.coffeeshop.CoffeeshopApplication for test class com.coffeeshop.coffeeshop.ShopMultiOwnerIntegrationTest
+2026-05-27T09:22:41.378+02:00  INFO 77442 --- [    Test worker] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.coffeeshop.coffeeshop.ShopMultiOwnerIntegrationTest]: ShopMultiOwnerIntegrationTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-05-27T09:22:41.379+02:00  INFO 77442 --- [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.coffeeshop.coffeeshop.CoffeeshopApplication for test class com.coffeeshop.coffeeshop.ShopMultiOwnerIntegrationTest
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<meta http-equiv="x-ua-compatible" content="IE=edge"/>
+<title>Test results - com.coffeeshop.coffeeshop.ApiSecurityIntegrationTest</title>
+<link href="../css/base-style.css" rel="stylesheet" type="text/css"/>
+<link href="../css/style.css" rel="stylesheet" type="text/css"/>
+<script src="../js/report.js" type="text/javascript"></script>
+</head>
+<body>
+<div id="content">
+<div class="breadcrumbs">
+<a class="breadcrumb" href="../index.html">all</a> &gt; 
+<span class="breadcrumb">com.coffeeshop.coffeeshop.ApiSecurityIntegrationTest</span>
+</div>
+<div class="tab-container">
+<ul class="tabLinks">
+<li>
+<a class="successGroup" href="#">Gradle Test Run :test</a>
+</li>
+</ul>
+<div class="tab">
+<h2>Gradle Test Run :test</h2>
+<h1>ApiSecurityIntegrationTest</h1>
+<div class="tab-container">
+<ul class="tabLinks">
+<li>
+<a class="" href="#">summary</a>
+</li>
+<li>
+<a class="" href="#">standard output</a>
+</li>
+<li>
+<a class="" href="#">error output</a>
+</li>
+</ul>
+<div class="tab">
+<h2>summary</h2>
+<div>
+<div class="summary">
+<table>
+<tr>
+<td>
+<div class="summaryGroup">
+<table>
+<tr>
+<td>
+<div class="infoBox">
+<div class="counter">4</div>
+<p>tests</p>
+</div>
+</td>
+<td>
+<div class="infoBox">
+<div class="counter">0</div>
+<p>failures</p>
+</div>
+</td>
+<td>
+<div class="infoBox">
+<div class="counter">0</div>
+<p>skipped</p>
+</div>
+</td>
+<td>
+<div class="infoBox duration">
+<div class="counter">17.784s</div>
+<p>duration</p>
+</div>
+</td>
+</tr>
+</table>
+</div>
+</td>
+<td>
+<div class="infoBox success successRate">
+<div class="percent">100%</div>
+<p>successful</p>
+</div>
+</td>
+</tr>
+</table>
+</div>
+<table class="test-results">
+<thead>
+<tr>
+<th>Child</th>
+<th hidden="">Name</th>
+<th>Tests</th>
+<th>Failures</th>
+<th>Skipped</th>
+<th>Duration</th>
+<th>Success rate</th>
+</tr>
+</thead>
+<tr>
+<td class="success">getUsers_withoutBearer_isOk()</td>
+<td class="path" hidden="">getUsers_withoutBearer_isOk()</td>
+<td>1</td>
+<td>0</td>
+<td>0</td>
+<td>0.043s</td>
+<td class="success">100%</td>
+</tr>
+<tr>
+<td class="success">postUser_withBearer_isCreated()</td>
+<td class="path" hidden="">postUser_withBearer_isCreated()</td>
+<td>1</td>
+<td>0</td>
+<td>0</td>
+<td>0.046s</td>
+<td class="success">100%</td>
+</tr>
+<tr>
+<td class="success">
+<a href="2nuVGLiOSA0.html">postUser_withoutBearer_isUnauthorized()</a>
+</td>
+<td class="path" hidden="">postUser_withoutBearer_isUnauthorized()</td>
+<td>1</td>
+<td>0</td>
+<td>0</td>
+<td>0.185s</td>
+<td class="success">100%</td>
+</tr>
+<tr>
+<td class="success">register_withInvalidBearer_isCreated()</td>
+<td class="path" hidden="">register_withInvalidBearer_isCreated()</td>
+<td>1</td>
+<td>0</td>
+<td>0</td>
+<td>0.224s</td>
+<td class="success">100%</td>
+</tr>
+</table>
+</div>
+</div>
+<div class="tab">
+<h2>standard output</h2>
+<span class="code">
+<pre id="root-0-test-stdout-com.coffeeshop.coffeeshop.ApiSecurityIntegrationTest">09:22:04.508 [Test worker] INFO org.springframework.test.context.support.AnnotationConfigContextLoaderUtils -- Could not detect default configuration classes for test class [com.coffeeshop.coffeeshop.ApiSecurityIntegrationTest]: ApiSecurityIntegrationTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+09:22:04.633 [Test worker] INFO org.springframework.boot.test.context.SpringBootTestContextBootstrapper -- Found @SpringBootConfiguration com.coffeeshop.coffeeshop.CoffeeshopApplication for test class com.coffeeshop.coffeeshop.ApiSecurityIntegrationTest
+09:22:04.694 [Test worker] INFO org.springframework.test.context.support.AnnotationConfigContextLoaderUtils -- Could not detect default configuration classes for test class [com.coffeeshop.coffeeshop.ApiSecurityIntegrationTest]: ApiSecurityIntegrationTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+09:22:04.699 [Test worker] INFO org.springframework.boot.test.context.SpringBootTestContextBootstrapper -- Found @SpringBootConfiguration com.coffeeshop.coffeeshop.CoffeeshopApplication for test class com.coffeeshop.coffeeshop.ApiSecurityIntegrationTest
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v4.0.6)
+
+2026-05-27T09:22:04.996+02:00  INFO 77442 --- [    Test worker] c.c.c.ApiSecurityIntegrationTest         : Starting ApiSecurityIntegrationTest using Java 25.0.2 with PID 77442 (started by amastilovic in /Users/amastilovic/Desktop/dev/coffeeshop-monorepo/coffeeshop)
+2026-05-27T09:22:04.997+02:00  INFO 77442 --- [    Test worker] c.c.c.ApiSecurityIntegrationTest         : No active profile set, falling back to 1 default profile: &quot;default&quot;
+2026-05-27T09:22:05.958+02:00  INFO 77442 --- [    Test worker] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-05-27T09:22:06.034+02:00  INFO 77442 --- [    Test worker] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 69 ms. Found 15 JPA repository interfaces.
+2026-05-27T09:22:07.637+02:00  INFO 77442 --- [    Test worker] o.s.boot.tomcat.TomcatWebServer          : Tomcat initialized with port 0 (http)
+2026-05-27T09:22:07.650+02:00  INFO 77442 --- [    Test worker] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-05-27T09:22:07.650+02:00  INFO 77442 --- [    Test worker] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/11.0.21]
+2026-05-27T09:22:07.692+02:00  INFO 77442 --- [    Test worker] b.w.c.s.WebApplicationContextInitializer : Root WebApplicationContext: initialization completed in 2684 ms
+2026-05-27T09:22:07.890+02:00  INFO 77442 --- [    Test worker] org.testcontainers.images.PullPolicy     : Image pull policy will be performed by: DefaultPullPolicy()
+2026-05-27T09:22:07.891+02:00  INFO 77442 --- [    Test worker] o.t.utility.ImageNameSubstitutor         : Image name substitution will be performed by: DefaultImageNameSubstitutor (composite of 'ConfigurationFileImageNameSubstitutor' and 'PrefixingImageNameSubstitutor')
+2026-05-27T09:22:07.907+02:00  INFO 77442 --- [    Test worker] org.testcontainers.DockerClientFactory   : Testcontainers version: 2.0.5
+2026-05-27T09:22:08.481+02:00  INFO 77442 --- [    Test worker] o.t.d.DockerClientProviderStrategy       : Loaded org.testcontainers.dockerclient.UnixSocketClientProviderStrategy from ~/.testcontainers.properties, will try it first
+2026-05-27T09:22:09.525+02:00  INFO 77442 --- [    Test worker] o.t.d.DockerClientProviderStrategy       : Found Docker environment with local Unix socket (unix:///var/run/docker.sock)
+2026-05-27T09:22:09.528+02:00  INFO 77442 --- [    Test worker] org.testcontainers.DockerClientFactory   : Docker host IP address is localhost
+2026-05-27T09:22:09.615+02:00  INFO 77442 --- [    Test worker] org.testcontainers.DockerClientFactory   : Connected to docker: 
+  Server Version: 28.5.2
+  API Version: 1.51
+  Operating System: OrbStack
+  Total Memory: 16030 MB
+2026-05-27T09:22:11.483+02:00  INFO 77442 --- [    Test worker] tc.testcontainers/ryuk:0.14.0            : Creating container for image: testcontainers/ryuk:0.14.0
+2026-05-27T09:22:11.586+02:00  INFO 77442 --- [    Test worker] o.t.utility.RegistryAuthLocator          : Credential helper/store (docker-credential-osxkeychain) does not have credentials for https://index.docker.io/v1/
+2026-05-27T09:22:11.876+02:00  INFO 77442 --- [    Test worker] tc.testcontainers/ryuk:0.14.0            : Container testcontainers/ryuk:0.14.0 is starting: cfd38c294b8cbb40d6b131fa96a972505df9794c68ac55f5b65aed3dfdab5288
+2026-05-27T09:22:12.876+02:00  INFO 77442 --- [    Test worker] tc.testcontainers/ryuk:0.14.0            : Container testcontainers/ryuk:0.14.0 started in PT1.392716S
+2026-05-27T09:22:12.882+02:00  INFO 77442 --- [    Test worker] o.t.utility.RyukResourceReaper           : Ryuk started - will monitor and terminate Testcontainers containers on JVM exit
+2026-05-27T09:22:12.882+02:00  INFO 77442 --- [    Test worker] org.testcontainers.DockerClientFactory   : Checking the system...
+2026-05-27T09:22:12.882+02:00  INFO 77442 --- [    Test worker] org.testcontainers.DockerClientFactory   : ✔︎ Docker server version should be at least 1.6.0
+2026-05-27T09:22:12.883+02:00  INFO 77442 --- [    Test worker] tc.postgres:latest                       : Creating container for image: postgres:latest
+2026-05-27T09:22:13.472+02:00  INFO 77442 --- [    Test worker] tc.postgres:latest                       : Container postgres:latest is starting: ba67b713a89c6d6afd4870722afc396b1e359ac68f005db30883d1e0b367a3ef
+2026-05-27T09:22:18.051+02:00  INFO 77442 --- [    Test worker] tc.postgres:latest                       : Container postgres:latest started in PT5.168086S
+2026-05-27T09:22:18.052+02:00  INFO 77442 --- [    Test worker] tc.postgres:latest                       : Container is started (JDBC URL: jdbc:postgresql://localhost:33043/test?loggerLevel=OFF)
+2026-05-27T09:22:18.208+02:00  INFO 77442 --- [    Test worker] org.hibernate.orm.jpa                    : HHH008540: Processing PersistenceUnitInfo [name: default]
+2026-05-27T09:22:18.255+02:00  INFO 77442 --- [    Test worker] org.hibernate.orm.core                   : HHH000001: Hibernate ORM core version 7.2.12.Final
+2026-05-27T09:22:18.490+02:00  INFO 77442 --- [    Test worker] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-05-27T09:22:18.517+02:00  INFO 77442 --- [    Test worker] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-05-27T09:22:18.653+02:00  INFO 77442 --- [    Test worker] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@30c96ea9
+2026-05-27T09:22:18.655+02:00  INFO 77442 --- [    Test worker] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2026-05-27T09:22:18.723+02:00  INFO 77442 --- [    Test worker] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [jdbc:postgresql://localhost:33043/test?loggerLevel=OFF]
+	Database driver: PostgreSQL JDBC Driver
+	Database dialect: PostgreSQLDialect
+	Database version: 18.3
+	Default catalog/schema: test/public
+	Autocommit mode: undefined/unknown
+	Isolation level: READ_COMMITTED [default READ_COMMITTED]
+	JDBC fetch size: none
+	Pool: DataSourceConnectionProvider
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-05-27T09:22:19.550+02:00  INFO 77442 --- [    Test worker] org.hibernate.orm.core                   : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-05-27T09:22:19.673+02:00  INFO 77442 --- [    Test worker] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-05-27T09:22:19.786+02:00  INFO 77442 --- [    Test worker] o.s.d.j.r.query.QueryEnhancerFactories   : Hibernate is in classpath; If applicable, HQL parser will be used.
+2026-05-27T09:22:20.747+02:00  WARN 77442 --- [    Test worker] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2026-05-27T09:22:21.397+02:00  INFO 77442 --- [    Test worker] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 1 endpoint beneath base path '/actuator'
+2026-05-27T09:22:21.454+02:00  INFO 77442 --- [    Test worker] o.s.boot.tomcat.TomcatWebServer          : Tomcat started on port 57414 (http) with context path '/'
+2026-05-27T09:22:21.467+02:00  INFO 77442 --- [    Test worker] c.c.c.ApiSecurityIntegrationTest         : Started ApiSecurityIntegrationTest in 16.706 seconds (process running for 17.875)
+2026-05-27T09:22:21.649+02:00  WARN 77442 --- [    Test worker] o.s.core.events.SpringDocAppInitializer  : SpringDoc /v3/api-docs endpoint is enabled by default. To disable it in production, set the property 'springdoc.api-docs.enabled=false'
+2026-05-27T09:22:21.650+02:00  WARN 77442 --- [    Test worker] o.s.core.events.SpringDocAppInitializer  : SpringDoc /swagger-ui.html endpoint is enabled by default. To disable it in production, set the property 'springdoc.swagger-ui.enabled=false'
+</pre>
+<button class="clipboard-copy-btn" aria-label="Copy to clipboard" data-copy-element-id="root-0-test-stdout-com.coffeeshop.coffeeshop.ApiSecurityIntegrationTest">Copy</button>
+</span>
+</div>
+<div class="tab">
+<h2>error output</h2>
+<span class="code">
+<pre id="root-0-test-stderr-com.coffeeshop.coffeeshop.ApiSecurityIntegrationTest">Mockito is currently self-attaching to enable the inline-mock-maker. This will no longer work in future releases of the JDK. Please add Mockito as an agent to your build as described in Mockito's documentation: https://javadoc.io/doc/org.mockito/mockito-core/latest/org.mockito/org/mockito/Mockito.html#0.3
+WARNING: A Java agent has been loaded dynamically (/Users/amastilovic/.gradle/caches/modules-2/files-2.1/net.bytebuddy/byte-buddy-agent/1.17.8/f09415827a71be7ed621c7bd02550678f28bc81c/byte-buddy-agent-1.17.8.jar)
+WARNING: If a serviceability tool is in use, please run with -XX:+EnableDynamicAgentLoading to hide this warning
+WARNING: If a serviceability tool is not in use, please run with -Djdk.instrument.traceUsage for more information
+WARNING: Dynamic loading of agents will be disallowed by default in a future release
+</pre>
+<button class="clipboard-copy-btn" aria-label="Copy to clipboard" data-copy-element-id="root-0-test-stderr-com.coffeeshop.coffeeshop.ApiSecurityIntegrationTest">Copy</button>
+</span>
+</div>
+</div>
+</div>
+</div>
+<div id="footer">
+<p>
+<div>
+<label class="hidden" id="label-for-line-wrapping-toggle" for="line-wrapping-toggle">Wrap lines
+<input id="line-wrapping-toggle" type="checkbox" autocomplete="off"/>
+</label>
+</div>Generated by 
+<a href="https://www.gradle.org">Gradle 9.4.1</a> at May 27, 2026, 9:22:53 AM</p>
+</div>
+</div>
+</body>
+</html>
