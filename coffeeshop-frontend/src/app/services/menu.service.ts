@@ -7,7 +7,7 @@ import { MenuCreateRequest, MenuResponseDto } from '../models/menu.model';
 @Injectable({ providedIn: 'root' })
 export class MenuService {
   private readonly http = inject(HttpClient);
-  private readonly shopBase = `${environment.apiUrl}/api/v1/shop`;
+  private readonly shopBase = `${environment.apiUrl}/api/v2/shop`;
 
   getMenusForShop(shopId: string): Observable<MenuResponseDto[]> {
     return this.http.get<MenuResponseDto[]>(`${this.shopBase}/${shopId}/menus`);

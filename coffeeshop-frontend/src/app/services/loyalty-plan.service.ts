@@ -7,7 +7,7 @@ import { LoyaltyPlanResponseDto, LoyaltyPlanCreateRequest } from '../models/loya
 @Injectable({ providedIn: 'root' })
 export class LoyaltyPlanService {
   private readonly http = inject(HttpClient);
-  private readonly base = `${environment.apiUrl}/api/v1/loyalty-plan`;
+  private readonly base = `${environment.apiUrl}/api/v2/loyalty-plan`;
 
   getAll(): Observable<LoyaltyPlanResponseDto[]> {
     return this.http.get<LoyaltyPlanResponseDto[]>(this.base);

@@ -48,11 +48,11 @@ export class DashboardComponent implements OnInit {
 
   ngOnInit(): void {
     forkJoin({
-      shops: this.http.get<ShopResponseDto[]>(`${this.api}/api/v1/shop`),
-      events: this.http.get<PageResponseDto<EventResponseDto>>(`${this.api}/api/v1/event`, {
+      shops: this.http.get<ShopResponseDto[]>(`${this.api}/api/v2/shop`),
+      events: this.http.get<PageResponseDto<EventResponseDto>>(`${this.api}/api/v2/event`, {
         params: { page: '0', size: '1' },
       }),
-      menuItems: this.http.get<MenuItemResponseDto[]>(`${this.api}/api/v1/menu-item`),
+      menuItems: this.http.get<MenuItemResponseDto[]>(`${this.api}/api/v2/menu-item`),
     }).subscribe({
       next: ({ shops, events, menuItems }) => {
         this.shopCount.set(shops.length);

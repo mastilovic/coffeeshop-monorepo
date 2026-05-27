@@ -18,7 +18,7 @@ export interface UserListParams {
 @Injectable({ providedIn: 'root' })
 export class UserService {
   private readonly http = inject(HttpClient);
-  private readonly base = `${environment.apiUrl}/api/v1/user`;
+  private readonly base = `${environment.apiUrl}/api/v2/user`;
 
   getAll(): Observable<UserResponseDto[]> {
     return this.http.get<UserResponseDto[]>(this.base);
