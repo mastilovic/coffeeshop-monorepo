@@ -96,6 +96,35 @@ services:
       retries: 20
       start_period: 30s
 
+  backend-go:
+    build:
+      context: ../coffeeshop-go
+      dockerfile: Dockerfile
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:-coffeeshop}:${POSTGRES_PASSWORD:-coffeeshop_dev_password}@postgres:5432/${POSTGRES_DB:-coffeeshop}?sslmode=disable
+      KEYCLOAK_BASE_URL: http://keycloak:8080
+      KEYCLOAK_JWT_ISSUER_URI: http://keycloak:8080/realms/${KEYCLOAK_REALM:-coffeeshop}
+      KEYCLOAK_REALM: ${KEYCLOAK_REALM:-coffeeshop}
+      KEYCLOAK_BACKEND_CLIENT_ID: ${KEYCLOAK_BACKEND_CLIENT_ID:-coffeeshop-backend}
+      KEYCLOAK_BACKEND_CLIENT_SECRET: ${KEYCLOAK_BACKEND_CLIENT_SECRET:-local-backend-secret}
+      KEYCLOAK_ADMIN_USER: ${KEYCLOAK_ADMIN:-admin}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:4200}
+      PORT: "8080"
+    ports:
+      - "${BACKEND_GO_PORT:-18081}:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/health/ready || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+
   frontend:
     build:
       context: ../coffeeshop-frontend
