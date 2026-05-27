@@ -12,7 +12,7 @@ CI workflows avoid third-party marketplace actions that download from `codeload.
 
 | Trigger | What you see |
 |---------|----------------|
-| Push or merge to **`main`** | **CI/CD Staging**: Java backend, Go backend, and frontend tests; three image builds (`sha-*` / `latest`); DOKS deploy. Triggered when `coffeeshop/**`, `coffeeshop-go/**`, `coffeeshop-frontend/**`, `deploy/**`, or workflow files change. |
+| Push or merge to **`main`** | **CI/CD Staging**: Go backend and frontend tests; two image builds (`sha-*` / `latest`); DOKS deploy. Triggered when `coffeeshop-go/**`, `coffeeshop-frontend/**`, `deploy/**`, or workflow files change. |
 | Push to **`dev`** | **CI/CD Staging** starts; tests/builds only when `coffeeshop/**`, `coffeeshop-go/**`, `coffeeshop-frontend/**`, `deploy/**`, or workflow files changed. |
 | **PR** | **Backend CI**, **Backend Go CI**, and **Frontend CI** only — not **CI/CD Staging**. |
 | **Deploy Staging (DOKS)** (manual) | Redeploy an existing image without rebuilding — rollback/hotfix only. |

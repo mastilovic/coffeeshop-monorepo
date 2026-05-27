@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.coffeeshop.coffeeshop.ReviewIntegrationTest" tests="7" skipped="0" failures="0" errors="0" timestamp="2026-05-27T07:22:40.056Z" hostname="PD-AMASTILOVIC.local" time="0.46">
+  <properties/>
+  <testcase name="customerCreateReview_appearsOnShop()" classname="com.coffeeshop.coffeeshop.ReviewIntegrationTest" time="0.068"/>
+  <testcase name="shopOwnerCannotReviewOwnShop_returnsForbidden()" classname="com.coffeeshop.coffeeshop.ReviewIntegrationTest" time="0.038"/>
+  <testcase name="multipleReviews_computesAverageRating()" classname="com.coffeeshop.coffeeshop.ReviewIntegrationTest" time="0.107"/>
+  <testcase name="createReview_invalidRating_returnsUnprocessableEntity()" classname="com.coffeeshop.coffeeshop.ReviewIntegrationTest" time="0.066"/>
+  <testcase name="shopWithNoReviews_hasZeroCountAndNullAverage()" classname="com.coffeeshop.coffeeshop.ReviewIntegrationTest" time="0.036"/>
+  <testcase name="customerSecondReviewForSameShop_returnsConflict()" classname="com.coffeeshop.coffeeshop.ReviewIntegrationTest" time="0.056"/>
+  <testcase name="customerCannotUpdateAnotherUsersReview_returnsForbidden()" classname="com.coffeeshop.coffeeshop.ReviewIntegrationTest" time="0.081"/>
+  <system-out><![CDATA[2026-05-27T09:22:40.057+02:00  INFO 77442 --- [    Test worker] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.coffeeshop.coffeeshop.ReviewIntegrationTest]: ReviewIntegrationTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-05-27T09:22:40.059+02:00  INFO 77442 --- [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.coffeeshop.coffeeshop.CoffeeshopApplication for test class com.coffeeshop.coffeeshop.ReviewIntegrationTest
+2026-05-27T09:22:40.060+02:00  INFO 77442 --- [    Test worker] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.coffeeshop.coffeeshop.ReviewIntegrationTest]: ReviewIntegrationTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-05-27T09:22:40.061+02:00  INFO 77442 --- [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.coffeeshop.coffeeshop.CoffeeshopApplication for test class com.coffeeshop.coffeeshop.ReviewIntegrationTest
+2026-05-27T09:22:40.514+02:00  INFO 77442 --- [o-auto-4-exec-6] org.hibernate.orm.collection             : HHH90030005: Detaching an uninitialized collection with queued operations from a session: [com.coffeeshop.coffeeshop.model.Review.comments with owner id 'd37ca5d4-e70d-4629-83c4-7a7da992e08d']
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.coffeeshop.coffeeshop.ShopCreateIntegrationTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-05-27T07:22:41.010Z" hostname="PD-AMASTILOVIC.local" time="0.04">
+  <properties/>
+  <testcase name="createShop_withoutEmailOrCreatedByUserId_setsOwnerAndEmailFromJwt()" classname="com.coffeeshop.coffeeshop.ShopCreateIntegrationTest" time="0.033"/>
+  <system-out><![CDATA[2026-05-27T09:22:41.011+02:00  INFO 77442 --- [    Test worker] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.coffeeshop.coffeeshop.ShopCreateIntegrationTest]: ShopCreateIntegrationTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-05-27T09:22:41.014+02:00  INFO 77442 --- [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.coffeeshop.coffeeshop.CoffeeshopApplication for test class com.coffeeshop.coffeeshop.ShopCreateIntegrationTest
+2026-05-27T09:22:41.014+02:00  INFO 77442 --- [    Test worker] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.coffeeshop.coffeeshop.ShopCreateIntegrationTest]: ShopCreateIntegrationTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-05-27T09:22:41.017+02:00  INFO 77442 --- [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.coffeeshop.coffeeshop.CoffeeshopApplication for test class com.coffeeshop.coffeeshop.ShopCreateIntegrationTest
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

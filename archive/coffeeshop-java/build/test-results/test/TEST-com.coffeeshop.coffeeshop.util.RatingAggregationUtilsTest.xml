@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.coffeeshop.coffeeshop.util.RatingAggregationUtilsTest" tests="5" skipped="0" failures="0" errors="0" timestamp="2026-05-27T07:22:43.691Z" hostname="PD-AMASTILOVIC.local" time="0.002">
+  <properties/>
+  <testcase name="fromReviews_emptyList_returnsZeroCountAndNullAverage()" classname="com.coffeeshop.coffeeshop.util.RatingAggregationUtilsTest" time="0.001"/>
+  <testcase name="fromReviews_singleRating_returnsAverage()" classname="com.coffeeshop.coffeeshop.util.RatingAggregationUtilsTest" time="0.001"/>
+  <testcase name="fromReviews_nullList_returnsZeroCountAndNullAverage()" classname="com.coffeeshop.coffeeshop.util.RatingAggregationUtilsTest" time="0.0"/>
+  <testcase name="fromReviews_skipsNullRatings()" classname="com.coffeeshop.coffeeshop.util.RatingAggregationUtilsTest" time="0.0"/>
+  <testcase name="fromReviews_multipleRatings_roundsToOneDecimal()" classname="com.coffeeshop.coffeeshop.util.RatingAggregationUtilsTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

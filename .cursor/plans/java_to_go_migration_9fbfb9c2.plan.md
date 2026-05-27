@@ -52,7 +52,7 @@ todos:
     status: completed
   - id: phase-16-decommission
     content: "Phase 16: Decommission Java — remove backend from compose/K8s, archive coffeeshop/, introduce Go-managed migrations"
-    status: pending
+    status: completed
 isProject: false
 ---
 

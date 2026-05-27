@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.coffeeshop.coffeeshop.reference.SerbiaCityCatalogTest" tests="5" skipped="0" failures="0" errors="0" timestamp="2026-05-27T07:22:43.677Z" hostname="PD-AMASTILOVIC.local" time="0.005">
+  <properties/>
+  <testcase name="getAll_returnsNonEmptySortedCatalog()" classname="com.coffeeshop.coffeeshop.reference.SerbiaCityCatalogTest" time="0.002"/>
+  <testcase name="search_blankQueryReturnsAll()" classname="com.coffeeshop.coffeeshop.reference.SerbiaCityCatalogTest" time="0.0"/>
+  <testcase name="isAllowed_acceptsCanonicalNames()" classname="com.coffeeshop.coffeeshop.reference.SerbiaCityCatalogTest" time="0.001"/>
+  <testcase name="search_filtersBySubstringIgnoringCaseAndDiacritics()" classname="com.coffeeshop.coffeeshop.reference.SerbiaCityCatalogTest" time="0.001"/>
+  <testcase name="isAllowed_rejectsUnknownCity()" classname="com.coffeeshop.coffeeshop.reference.SerbiaCityCatalogTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

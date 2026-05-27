@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.coffeeshop.coffeeshop.ReviewCommentIntegrationTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-05-27T07:22:39.671Z" hostname="PD-AMASTILOVIC.local" time="0.384">
+  <properties/>
+  <testcase name="postComment_whenDisabled_returnsForbidden()" classname="com.coffeeshop.coffeeshop.ReviewCommentIntegrationTest" time="0.119"/>
+  <testcase name="authorDisablesComments_blocksNewComments()" classname="com.coffeeshop.coffeeshop.ReviewCommentIntegrationTest" time="0.121"/>
+  <testcase name="postComment_whenEnabled_appearsOnShop()" classname="com.coffeeshop.coffeeshop.ReviewCommentIntegrationTest" time="0.138"/>
+  <system-out><![CDATA[2026-05-27T09:22:39.672+02:00  INFO 77442 --- [    Test worker] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.coffeeshop.coffeeshop.ReviewCommentIntegrationTest]: ReviewCommentIntegrationTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-05-27T09:22:39.675+02:00  INFO 77442 --- [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.coffeeshop.coffeeshop.CoffeeshopApplication for test class com.coffeeshop.coffeeshop.ReviewCommentIntegrationTest
+2026-05-27T09:22:39.675+02:00  INFO 77442 --- [    Test worker] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.coffeeshop.coffeeshop.ReviewCommentIntegrationTest]: ReviewCommentIntegrationTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-05-27T09:22:39.676+02:00  INFO 77442 --- [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.coffeeshop.coffeeshop.CoffeeshopApplication for test class com.coffeeshop.coffeeshop.ReviewCommentIntegrationTest
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

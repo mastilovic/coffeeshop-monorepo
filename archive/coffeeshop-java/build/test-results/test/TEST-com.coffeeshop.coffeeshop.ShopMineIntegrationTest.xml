@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.coffeeshop.coffeeshop.ShopMineIntegrationTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-05-27T07:22:41.290Z" hostname="PD-AMASTILOVIC.local" time="0.083">
+  <properties/>
+  <testcase name="getMine_withoutAuth_returnsUnauthorized()" classname="com.coffeeshop.coffeeshop.ShopMineIntegrationTest" time="0.004"/>
+  <testcase name="getMine_asShopOwner_returnsOnlyOwnedShops()" classname="com.coffeeshop.coffeeshop.ShopMineIntegrationTest" time="0.065"/>
+  <testcase name="getMine_withEmailNotInDatabase_returnsNotFound()" classname="com.coffeeshop.coffeeshop.ShopMineIntegrationTest" time="0.006"/>
+  <system-out><![CDATA[2026-05-27T09:22:41.291+02:00  INFO 77442 --- [    Test worker] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.coffeeshop.coffeeshop.ShopMineIntegrationTest]: ShopMineIntegrationTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-05-27T09:22:41.294+02:00  INFO 77442 --- [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.coffeeshop.coffeeshop.CoffeeshopApplication for test class com.coffeeshop.coffeeshop.ShopMineIntegrationTest
+2026-05-27T09:22:41.294+02:00  INFO 77442 --- [    Test worker] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.coffeeshop.coffeeshop.ShopMineIntegrationTest]: ShopMineIntegrationTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-05-27T09:22:41.296+02:00  INFO 77442 --- [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.coffeeshop.coffeeshop.CoffeeshopApplication for test class com.coffeeshop.coffeeshop.ShopMineIntegrationTest
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

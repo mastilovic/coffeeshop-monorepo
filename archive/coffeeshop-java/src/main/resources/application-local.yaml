@@ -1,0 +1,10 @@
+server:
+  port: '8080'
+
+spring:
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://postgres:5432/coffeeshop}
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: update

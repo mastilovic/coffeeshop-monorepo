@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.coffeeshop.coffeeshop.UserPaginationIntegrationTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-05-27T07:22:43.230Z" hostname="PD-AMASTILOVIC.local" time="0.447">
+  <properties/>
+  <testcase name="searchByName_returnsMatchingPage()" classname="com.coffeeshop.coffeeshop.UserPaginationIntegrationTest" time="0.024"/>
+  <testcase name="searchByUsername_returnsMatchingPage()" classname="com.coffeeshop.coffeeshop.UserPaginationIntegrationTest" time="0.013"/>
+  <testcase name="paginatedWithoutQuery_returnsPage()" classname="com.coffeeshop.coffeeshop.UserPaginationIntegrationTest" time="0.03"/>
+  <testcase name="getAllWithoutPage_returnsArray()" classname="com.coffeeshop.coffeeshop.UserPaginationIntegrationTest" time="0.371"/>
+  <system-out><![CDATA[2026-05-27T09:22:43.231+02:00  INFO 77442 --- [    Test worker] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.coffeeshop.coffeeshop.UserPaginationIntegrationTest]: UserPaginationIntegrationTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-05-27T09:22:43.234+02:00  INFO 77442 --- [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.coffeeshop.coffeeshop.CoffeeshopApplication for test class com.coffeeshop.coffeeshop.UserPaginationIntegrationTest
+2026-05-27T09:22:43.234+02:00  INFO 77442 --- [    Test worker] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.coffeeshop.coffeeshop.UserPaginationIntegrationTest]: UserPaginationIntegrationTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-05-27T09:22:43.236+02:00  INFO 77442 --- [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.coffeeshop.coffeeshop.CoffeeshopApplication for test class com.coffeeshop.coffeeshop.UserPaginationIntegrationTest
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

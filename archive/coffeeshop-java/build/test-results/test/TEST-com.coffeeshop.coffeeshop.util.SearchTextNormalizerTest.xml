@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.coffeeshop.coffeeshop.util.SearchTextNormalizerTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-05-27T07:22:43.693Z" hostname="PD-AMASTILOVIC.local" time="0.001">
+  <properties/>
+  <testcase name="normalizeForSearch_normalizesCityNames()" classname="com.coffeeshop.coffeeshop.util.SearchTextNormalizerTest" time="0.001"/>
+  <testcase name="normalizeForSearch_nullReturnsEmpty()" classname="com.coffeeshop.coffeeshop.util.SearchTextNormalizerTest" time="0.0"/>
+  <testcase name="normalizeForSearch_mapsSerbianLatinCharacters()" classname="com.coffeeshop.coffeeshop.util.SearchTextNormalizerTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

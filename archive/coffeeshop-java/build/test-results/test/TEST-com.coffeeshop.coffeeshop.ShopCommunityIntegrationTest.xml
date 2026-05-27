@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.coffeeshop.coffeeshop.ShopCommunityIntegrationTest" tests="8" skipped="0" failures="0" errors="0" timestamp="2026-05-27T07:22:40.517Z" hostname="PD-AMASTILOVIC.local" time="0.493">
+  <properties/>
+  <testcase name="feed_ordersPinnedAnnouncementFirst()" classname="com.coffeeshop.coffeeshop.ShopCommunityIntegrationTest" time="0.071"/>
+  <testcase name="announcement_asFavouritedCustomer_returnsForbidden()" classname="com.coffeeshop.coffeeshop.ShopCommunityIntegrationTest" time="0.065"/>
+  <testcase name="announcement_asAdminNotOwner_returnsForbidden()" classname="com.coffeeshop.coffeeshop.ShopCommunityIntegrationTest" time="0.046"/>
+  <testcase name="members_searchByName_returnsMatchingPage()" classname="com.coffeeshop.coffeeshop.ShopCommunityIntegrationTest" time="0.096"/>
+  <testcase name="announcement_withoutJoin_returnsForbidden()" classname="com.coffeeshop.coffeeshop.ShopCommunityIntegrationTest" time="0.055"/>
+  <testcase name="getPosts_withoutAuth_isPublic()" classname="com.coffeeshop.coffeeshop.ShopCommunityIntegrationTest" time="0.041"/>
+  <testcase name="announcement_asOwner_succeedsAndIsPinned()" classname="com.coffeeshop.coffeeshop.ShopCommunityIntegrationTest" time="0.048"/>
+  <testcase name="announcement_asCustomer_returnsForbidden()" classname="com.coffeeshop.coffeeshop.ShopCommunityIntegrationTest" time="0.061"/>
+  <system-out><![CDATA[2026-05-27T09:22:40.518+02:00  INFO 77442 --- [    Test worker] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.coffeeshop.coffeeshop.ShopCommunityIntegrationTest]: ShopCommunityIntegrationTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-05-27T09:22:40.520+02:00  INFO 77442 --- [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.coffeeshop.coffeeshop.CoffeeshopApplication for test class com.coffeeshop.coffeeshop.ShopCommunityIntegrationTest
+2026-05-27T09:22:40.521+02:00  INFO 77442 --- [    Test worker] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.coffeeshop.coffeeshop.ShopCommunityIntegrationTest]: ShopCommunityIntegrationTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-05-27T09:22:40.522+02:00  INFO 77442 --- [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.coffeeshop.coffeeshop.CoffeeshopApplication for test class com.coffeeshop.coffeeshop.ShopCommunityIntegrationTest
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

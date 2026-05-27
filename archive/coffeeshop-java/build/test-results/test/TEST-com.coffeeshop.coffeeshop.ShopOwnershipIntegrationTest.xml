@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.coffeeshop.coffeeshop.ShopOwnershipIntegrationTest" tests="14" skipped="0" failures="0" errors="0" timestamp="2026-05-27T07:22:41.433Z" hostname="PD-AMASTILOVIC.local" time="0.682">
+  <properties/>
+  <testcase name="createMenu_forOwnShop_returnsCreatedAndSetsCurrent()" classname="com.coffeeshop.coffeeshop.ShopOwnershipIntegrationTest" time="0.054"/>
+  <testcase name="updateShop_asOtherShopOwner_returnsForbidden()" classname="com.coffeeshop.coffeeshop.ShopOwnershipIntegrationTest" time="0.049"/>
+  <testcase name="updateShop_asAdmin_onOtherOwnersShop_returnsOk()" classname="com.coffeeshop.coffeeshop.ShopOwnershipIntegrationTest" time="0.046"/>
+  <testcase name="createMenuItem_onOtherOwnersMenu_returnsForbidden()" classname="com.coffeeshop.coffeeshop.ShopOwnershipIntegrationTest" time="0.066"/>
+  <testcase name="createMenu_asCustomer_returnsForbidden()" classname="com.coffeeshop.coffeeshop.ShopOwnershipIntegrationTest" time="0.041"/>
+  <testcase name="createMenuItem_onHistoricalMenu_returnsForbidden()" classname="com.coffeeshop.coffeeshop.ShopOwnershipIntegrationTest" time="0.052"/>
+  <testcase name="createSecondMenu_promotesNewMenuAndKeepsHistory()" classname="com.coffeeshop.coffeeshop.ShopOwnershipIntegrationTest" time="0.057"/>
+  <testcase name="createMenu_asOtherOwner_returnsForbidden()" classname="com.coffeeshop.coffeeshop.ShopOwnershipIntegrationTest" time="0.046"/>
+  <testcase name="createMenuItem_withoutItemType_defaultsToFood()" classname="com.coffeeshop.coffeeshop.ShopOwnershipIntegrationTest" time="0.049"/>
+  <testcase name="createTable_onOtherOwnersShop_returnsForbidden()" classname="com.coffeeshop.coffeeshop.ShopOwnershipIntegrationTest" time="0.041"/>
+  <testcase name="deleteShop_asOtherShopOwner_returnsForbidden()" classname="com.coffeeshop.coffeeshop.ShopOwnershipIntegrationTest" time="0.04"/>
+  <testcase name="deleteShop_asOwner_returnsNoContent()" classname="com.coffeeshop.coffeeshop.ShopOwnershipIntegrationTest" time="0.039"/>
+  <testcase name="updateShop_asOwner_returnsOk()" classname="com.coffeeshop.coffeeshop.ShopOwnershipIntegrationTest" time="0.043"/>
+  <testcase name="createMenuItem_onCurrentMenu_returnsCreated()" classname="com.coffeeshop.coffeeshop.ShopOwnershipIntegrationTest" time="0.05"/>
+  <system-out><![CDATA[2026-05-27T09:22:41.434+02:00  INFO 77442 --- [    Test worker] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.coffeeshop.coffeeshop.ShopOwnershipIntegrationTest]: ShopOwnershipIntegrationTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-05-27T09:22:41.436+02:00  INFO 77442 --- [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.coffeeshop.coffeeshop.CoffeeshopApplication for test class com.coffeeshop.coffeeshop.ShopOwnershipIntegrationTest
+2026-05-27T09:22:41.437+02:00  INFO 77442 --- [    Test worker] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.coffeeshop.coffeeshop.ShopOwnershipIntegrationTest]: ShopOwnershipIntegrationTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-05-27T09:22:41.438+02:00  INFO 77442 --- [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.coffeeshop.coffeeshop.CoffeeshopApplication for test class com.coffeeshop.coffeeshop.ShopOwnershipIntegrationTest
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

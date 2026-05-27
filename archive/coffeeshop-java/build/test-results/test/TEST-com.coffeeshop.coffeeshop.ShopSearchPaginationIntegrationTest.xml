@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.coffeeshop.coffeeshop.ShopSearchPaginationIntegrationTest" tests="6" skipped="0" failures="0" errors="0" timestamp="2026-05-27T07:22:42.116Z" hostname="PD-AMASTILOVIC.local" time="1.096">
+  <properties/>
+  <testcase name="paginatedWithSize25_returnsPageWithSize25()" classname="com.coffeeshop.coffeeshop.ShopSearchPaginationIntegrationTest" time="0.04"/>
+  <testcase name="searchByCity_returnsMatchingPage()" classname="com.coffeeshop.coffeeshop.ShopSearchPaginationIntegrationTest" time="0.055"/>
+  <testcase name="paginatedWithInvalidSize_returnsBadRequest()" classname="com.coffeeshop.coffeeshop.ShopSearchPaginationIntegrationTest" time="0.004"/>
+  <testcase name="paginatedWithoutQuery_returnsPage()" classname="com.coffeeshop.coffeeshop.ShopSearchPaginationIntegrationTest" time="0.092"/>
+  <testcase name="paginatedAsCustomer_favouriteShopAppearsFirst()" classname="com.coffeeshop.coffeeshop.ShopSearchPaginationIntegrationTest" time="0.16"/>
+  <testcase name="getAllWithoutPage_returnsArray()" classname="com.coffeeshop.coffeeshop.ShopSearchPaginationIntegrationTest" time="0.734"/>
+  <system-out><![CDATA[2026-05-27T09:22:42.117+02:00  INFO 77442 --- [    Test worker] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.coffeeshop.coffeeshop.ShopSearchPaginationIntegrationTest]: ShopSearchPaginationIntegrationTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-05-27T09:22:42.120+02:00  INFO 77442 --- [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.coffeeshop.coffeeshop.CoffeeshopApplication for test class com.coffeeshop.coffeeshop.ShopSearchPaginationIntegrationTest
+2026-05-27T09:22:42.120+02:00  INFO 77442 --- [    Test worker] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.coffeeshop.coffeeshop.ShopSearchPaginationIntegrationTest]: ShopSearchPaginationIntegrationTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-05-27T09:22:42.122+02:00  INFO 77442 --- [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.coffeeshop.coffeeshop.CoffeeshopApplication for test class com.coffeeshop.coffeeshop.ShopSearchPaginationIntegrationTest
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

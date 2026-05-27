@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.coffeeshop.coffeeshop.ReservationEventCreateIntegrationTest" tests="5" skipped="0" failures="0" errors="0" timestamp="2026-05-27T07:22:37.307Z" hostname="PD-AMASTILOVIC.local" time="0.654">
+  <properties/>
+  <testcase name="ownerDirectCreate_withEvent_returnsCreated()" classname="com.coffeeshop.coffeeshop.ReservationEventCreateIntegrationTest" time="0.13"/>
+  <testcase name="ownerDirectCreate_withEventFromWrongShop_returnsBadRequest()" classname="com.coffeeshop.coffeeshop.ReservationEventCreateIntegrationTest" time="0.166"/>
+  <testcase name="customerDirectCreate_returnsForbidden()" classname="com.coffeeshop.coffeeshop.ReservationEventCreateIntegrationTest" time="0.084"/>
+  <testcase name="ownerDirectCreate_whenEventAtCapacity_returnsConflict()" classname="com.coffeeshop.coffeeshop.ReservationEventCreateIntegrationTest" time="0.141"/>
+  <testcase name="ownerSecondDirectReservationForSameUserEvent_returnsConflict()" classname="com.coffeeshop.coffeeshop.ReservationEventCreateIntegrationTest" time="0.125"/>
+  <system-out><![CDATA[2026-05-27T09:22:37.309+02:00  INFO 77442 --- [    Test worker] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.coffeeshop.coffeeshop.ReservationEventCreateIntegrationTest]: ReservationEventCreateIntegrationTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-05-27T09:22:37.311+02:00  INFO 77442 --- [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.coffeeshop.coffeeshop.CoffeeshopApplication for test class com.coffeeshop.coffeeshop.ReservationEventCreateIntegrationTest
+2026-05-27T09:22:37.311+02:00  INFO 77442 --- [    Test worker] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.coffeeshop.coffeeshop.ReservationEventCreateIntegrationTest]: ReservationEventCreateIntegrationTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-05-27T09:22:37.313+02:00  INFO 77442 --- [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.coffeeshop.coffeeshop.CoffeeshopApplication for test class com.coffeeshop.coffeeshop.ReservationEventCreateIntegrationTest
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
