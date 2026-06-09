@@ -2,7 +2,7 @@ import { NgTemplateOutlet } from '@angular/common';
 import { Component, computed, inject, Injector, OnInit, signal, ChangeDetectionStrategy } from '@angular/core';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { debounceTime, distinctUntilChanged, skip } from 'rxjs';
 import { ShopService } from '../../services/shop.service';
 import { AuthService } from '../../services/auth.service';
@@ -15,7 +15,7 @@ import { DialogService } from '../../services/dialog.service';
 @Component({
   selector: 'app-shops',
   standalone: true,
-  imports: [ReactiveFormsModule, StarRatingComponent, CitySearchSelectComponent, NgTemplateOutlet],
+  imports: [ReactiveFormsModule, StarRatingComponent, CitySearchSelectComponent, NgTemplateOutlet, RouterLink],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="page page--with-footer shops-page">
@@ -29,17 +29,17 @@ import { DialogService } from '../../services/dialog.service';
           <div class="shops-form-wrapper">
             <div class="form-card">
               <form [formGroup]="form" (ngSubmit)="onSubmit()">
-                <div class="form-group shop-form-group--name">
+                <div class="form-group">
                   <label>Name</label>
                   <input class="form-input" formControlName="name" placeholder="Shop name" />
                 </div>
                 @if (editingId()) {
-                  <div class="form-group shop-form-group--email">
+                  <div class="form-group">
                     <label>Email</label>
                     <input class="form-input" type="email" formControlName="email" placeholder="shop@example.com" />
                   </div>
                 }
-                <div class="form-row shop-form-row--address-city">
+                <div class="form-row">
                   <div class="form-group">
                     <label>Address</label>
                     <input class="form-input" formControlName="address" placeholder="Street address" />
@@ -49,11 +49,11 @@ import { DialogService } from '../../services/dialog.service';
                     <app-city-search-select formControlName="city" />
                   </div>
                 </div>
-                <div class="form-group shop-form-group--phone">
+                <div class="form-group">
                   <label>Phone</label>
                   <input class="form-input" formControlName="phoneNumber" placeholder="+1 234 567 890" />
                 </div>
-                <div class="form-actions shops-form-actions">
+                <div class="form-actions">
                   <button type="submit" class="btn btn-primary" [disabled]="form.invalid">
                     {{ editingId() ? 'Update' : 'Create' }}
                   </button>
@@ -146,7 +146,7 @@ import { DialogService } from '../../services/dialog.service';
     </div>
 
     <ng-template #shopCard let-shop>
-      <div class="card clickable shop-card shop-card--compact" (click)="goToShop(shop.id)">
+      <a class="card clickable shop-card" [routerLink]="['/shops', shop.id]">
         @if (!canManage(shop)) {
           <button
             type="button"
@@ -174,53 +174,54 @@ import { DialogService } from '../../services/dialog.service';
             }
           </h3>
           <div class="shop-card__details">
-            <div class="view-mobile-only shop-card__row shop-card__row--location">
-              <span class="shop-card__value">{{ shop.city }} · {{ shop.address }}</span>
+            <div class="shop-card__meta-row">
+              <span class="shop-card__city">{{ shop.city }}</span>
+              @if (shop.address) {
+                <span class="shop-card__address">&#8226; {{ shop.address }}</span>
+              }
             </div>
-            <div class="view-desktop-only shop-card__row">
-              <span class="shop-card__label">City</span>
-              <span class="shop-card__value">{{ shop.city }}</span>
-            </div>
-            <div class="view-desktop-only shop-card__row">
-              <span class="shop-card__label">Address</span>
-              <span class="shop-card__value">{{ shop.address }}</span>
-            </div>
-            <div class="view-desktop-only shop-card__row">
-              <span class="shop-card__label">Email</span>
-              <span class="shop-card__value">{{ shop.email || '—' }}</span>
-            </div>
-            <div class="view-desktop-only shop-card__row">
-              <span class="shop-card__label">Phone</span>
-              <span class="shop-card__value">{{ shop.phoneNumber || '—' }}</span>
+            <div class="shop-card__desktop-meta">
+              @if (shop.email) {
+                <div class="shop-card__row">
+                  <span class="shop-card__label">Email</span>
+                  <span class="shop-card__value">{{ shop.email }}</span>
+                </div>
+              }
+              @if (shop.phoneNumber) {
+                <div class="shop-card__row">
+                  <span class="shop-card__label">Phone</span>
+                  <span class="shop-card__value">{{ shop.phoneNumber }}</span>
+                </div>
+              }
             </div>
             @if (hasSecondaryMeta(shop)) {
-              <div class="shop-card__row shop-card__row--stats">
+              <div class="shop-card__stats">
                 @if (shop.reviewCount > 0) {
                   <span class="shop-card__rating">
                     <app-star-rating [rating]="roundedRating(shop)" [readonly]="true" />
-                    <span class="shop-card__value">{{ shop.averageRating!.toFixed(1) }} ({{ shop.reviewCount }})</span>
+                    <span class="shop-card__rating-value">{{ shop.averageRating!.toFixed(1) }} ({{ shop.reviewCount }})</span>
                   </span>
                 }
                 @if (shop.memberCount != null && shop.memberCount > 0) {
                   @if (shop.reviewCount > 0) {
-                    <span class="shop-card__meta-sep">·</span>
+                    <span class="shop-card__meta-sep">&#8226;</span>
                   }
-                  <span class="shop-card__value">{{ shop.memberCount }} member{{ shop.memberCount === 1 ? '' : 's' }}</span>
+                  <span class="shop-card__members">{{ shop.memberCount }} member{{ shop.memberCount === 1 ? '' : 's' }}</span>
                 }
               </div>
             }
           </div>
         </div>
         @if (canManage(shop)) {
-          <div class="shop-card__actions" (click)="$event.stopPropagation()">
+          <div class="shop-card__actions" (click)="$event.stopPropagation(); $event.preventDefault()">
             <button type="button" class="btn btn-sm btn-secondary" (click)="onEdit(shop)">Edit</button>
+            <button type="button" class="btn btn-sm btn-secondary" (click)="goToEmployees(shop.id)">Employees</button>
             <button type="button" class="btn btn-sm btn-danger" (click)="onDelete(shop)">Delete</button>
           </div>
         }
-      </div>
-    </ng-template>
+      </a>
   `,
-  styles: `
+  styles: [`
     :host {
       display: block;
       min-height: 100%;
@@ -241,43 +242,45 @@ import { DialogService } from '../../services/dialog.service';
       margin-top: auto;
     }
 
-    .shops-page .shop-card-grid {
+    .shop-card-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-      gap: 1rem;
-      margin-bottom: 1rem;
-    }
-
-    .shops-page .shops-section-title + .shop-card-grid:last-of-type {
-      margin-bottom: 0;
-    }
-
-    .shops-page .shops-section-title {
+      grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
+      gap: 0.5rem;
       margin-bottom: 0.75rem;
     }
 
-    .shops-page .shop-card {
-      display: flex;
-      flex-direction: column;
-      padding: 1rem;
+    .shops-section-title + .shop-card-grid:last-of-type {
+      margin-bottom: 0;
     }
 
-    .shops-page .shop-card .btn-favourite {
-      top: 0.5rem;
-      right: 0.5rem;
+    .shops-section-title {
+      margin-bottom: 0.5rem;
+    }
+
+    .shop-card {
+      display: flex;
+      flex-direction: column;
+      padding: 0.75rem;
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .shop-card .btn-favourite {
+      top: 0.375rem;
+      right: 0.375rem;
     }
 
     .shop-card__body {
       flex: 1;
       min-width: 0;
-      padding-right: 1.75rem;
+      padding-right: 2rem;
     }
 
     .shop-card__title {
       color: #fff;
-      font-size: 1rem;
+      font-size: 0.9375rem;
       font-weight: 600;
-      margin: 0 0 0.5rem;
+      margin: 0 0 0.25rem;
       line-height: 1.3;
       display: -webkit-box;
       -webkit-box-orient: vertical;
@@ -288,7 +291,32 @@ import { DialogService } from '../../services/dialog.service';
     .shop-card__details {
       display: flex;
       flex-direction: column;
-      gap: 0.2rem;
+      gap: 0.25rem;
+    }
+
+    .shop-card__meta-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.25rem 0.5rem;
+      font-size: 0.8125rem;
+    }
+
+    .shop-card__city {
+      color: #d4a574;
+      font-weight: 500;
+    }
+
+    .shop-card__address {
+      color: #aaa;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .shop-card__desktop-meta {
+      display: none;
     }
 
     .shop-card__row {
@@ -309,26 +337,14 @@ import { DialogService } from '../../services/dialog.service';
       color: #aaa;
       min-width: 0;
       word-break: break-word;
-      display: -webkit-box;
-      -webkit-box-orient: vertical;
-      -webkit-line-clamp: 2;
-      overflow: hidden;
     }
 
-    .shop-card__row--stats {
+    .shop-card__stats {
       display: flex;
       align-items: center;
       gap: 0.35rem;
       flex-wrap: wrap;
-      grid-column: 1 / -1;
-      margin-top: 0.15rem;
-    }
-
-    .shop-card__row--stats .shop-card__value {
-      display: inline;
-      -webkit-line-clamp: unset;
-      overflow: visible;
-      word-break: normal;
+      margin-top: 0.1rem;
     }
 
     .shop-card__rating {
@@ -342,6 +358,16 @@ import { DialogService } from '../../services/dialog.service';
       font-size: 0.75rem;
     }
 
+    .shop-card__rating-value {
+      font-size: 0.8125rem;
+      color: #aaa;
+    }
+
+    .shop-card__members {
+      font-size: 0.8125rem;
+      color: #aaa;
+    }
+
     .shop-card__meta-sep {
       flex-shrink: 0;
       color: #666;
@@ -350,9 +376,16 @@ import { DialogService } from '../../services/dialog.service';
     .shop-card__actions {
       display: flex;
       justify-content: flex-end;
-      gap: 0.5rem;
+      gap: 0.375rem;
       margin-top: auto;
-      padding-top: 0.75rem;
+      padding-top: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .shop-card__actions .btn {
+      min-height: 32px;
+      font-size: 0.75rem;
+      padding: 0.25rem 0.5rem;
     }
 
     .shops-form-wrapper {
@@ -363,32 +396,27 @@ import { DialogService } from '../../services/dialog.service';
     .shops-form-wrapper .form-card {
       width: 100%;
       max-width: 560px;
-      padding: 1.75rem;
+      padding: 1.25rem;
     }
 
-    .shop-form-group--name,
-    .shop-form-group--email,
-    .shop-form-group--phone {
-      margin-bottom: 1.1rem;
-    }
-
-    .shop-form-row--address-city {
-      display: grid;
-      grid-template-columns: 2fr 1fr;
-      gap: 1rem;
-      margin-bottom: 1.1rem;
-    }
-
-    @media (max-width: 640px) {
-      .shop-form-row--address-city {
-        grid-template-columns: 1fr;
+    @media (min-width: 769px) {
+      .shop-card__desktop-meta {
+        display: flex;
+        flex-direction: column;
+        gap: 0.15rem;
       }
     }
 
-    .shops-form-actions {
-      margin-top: 1.25rem;
+    @media (max-width: 640px) {
+      .shop-card-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .shops-form-wrapper .form-card {
+        padding: 1rem;
+      }
     }
-  `,
+  `],
 })
 export class ShopsComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
@@ -535,8 +563,8 @@ export class ShopsComponent implements OnInit {
     return this.canCreateShop();
   }
 
-  goToShop(id: string): void {
-    this.router.navigate(['/shops', id]);
+  goToEmployees(shopId: string): void {
+    this.router.navigate(['/shops', shopId]);
   }
 
   isFavourite(shop: ShopResponseDto): boolean {
@@ -546,6 +574,7 @@ export class ShopsComponent implements OnInit {
 
   toggleFavourite(shop: ShopResponseDto, event: Event): void {
     event.stopPropagation();
+    event.preventDefault();
     if (this.canManage(shop) || this.togglingFavouriteId() === shop.id) return;
 
     this.togglingFavouriteId.set(shop.id);
@@ -577,12 +606,19 @@ export class ShopsComponent implements OnInit {
     const id = this.editingId();
 
     const op = id
-      ? this.shopService.update(id, { ...val, createdByUserId: profile.id })
+      ? this.shopService.update(id, {
+          name: val.name,
+          address: val.address,
+          city: val.city,
+          phoneNumber: val.phoneNumber,
+          email: val.email,
+        })
       : this.shopService.create({
           name: val.name,
           address: val.address,
           city: val.city,
           phoneNumber: val.phoneNumber,
+          ownerUserId: profile.id,
         });
 
     op.subscribe(() => {

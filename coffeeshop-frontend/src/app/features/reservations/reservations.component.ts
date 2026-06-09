@@ -1,6 +1,7 @@
 import { Component, inject, signal, computed, OnInit, ChangeDetectionStrategy, DestroyRef } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, NavigationEnd } from '@angular/router';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import { filter } from 'rxjs';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { FormSelectComponent } from '../../shared/form-select/form-select.component';
 import { FormSelectOption } from '../../shared/form-select/form-select-option.model';
@@ -37,7 +38,7 @@ import { DialogService } from '../../services/dialog.service';
       <div class="page-header">
         <h1 class="page-title">{{ pageTitle() }}</h1>
         @if (isShopOwner()) {
-          <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
+          <div class="page-header__actions">
             <button class="btn btn-primary" (click)="openRequestForm('guest')">
               {{ showRequestForm() && requestFormMode() === 'guest' ? 'Cancel' : '+ Request for guest' }}
             </button>
@@ -115,426 +116,218 @@ import { DialogService } from '../../services/dialog.service';
       @if (isShopOwner()) {
         <div class="tabs-nav">
           <div class="tabs-nav__shell">
-          <select
-            class="tab-select view-mobile-only mb-3"
-            aria-label="Reservation section"
-            [value]="ownerMainTab()"
-            (change)="onOwnerMainTabSelect($event)"
-          >
-            <option value="personal">My Reservations</option>
-            <option value="manage">Manage my Shops</option>
-          </select>
-          <div class="tabs tabs--primary view-desktop-only" role="tablist" aria-label="Reservation sections">
-            <button
-              type="button"
-              class="tab"
-              role="tab"
-              [class.active]="ownerMainTab() === 'personal'"
-              [attr.aria-selected]="ownerMainTab() === 'personal'"
-              (click)="ownerMainTab.set('personal')">
-              <span class="tab__label">My Reservations</span>
-            </button>
-            <button
-              type="button"
-              class="tab"
-              role="tab"
-              [class.active]="ownerMainTab() === 'manage'"
-              [attr.aria-selected]="ownerMainTab() === 'manage'"
-              (click)="ownerMainTab.set('manage')">
-              <span class="tab__label">Manage my Shops</span>
-            </button>
-          </div>
+            <nav class="pill-tabs" role="tablist" aria-label="Reservation sections">
+              <button type="button" class="pill-tab" role="tab"
+                [class.pill-tab--active]="ownerMainTab() === 'personal'"
+                [attr.aria-selected]="ownerMainTab() === 'personal'"
+                (click)="ownerMainTab.set('personal')">
+                <span class="pill-tab__label">My Reservations</span>
+              </button>
+              <button type="button" class="pill-tab" role="tab"
+                [class.pill-tab--active]="ownerMainTab() === 'manage'"
+                [attr.aria-selected]="ownerMainTab() === 'manage'"
+                (click)="ownerMainTab.set('manage')">
+                <span class="pill-tab__label">Manage my Shops</span>
+                @if (managedPendingRequests().length > 0) {
+                  <span class="notif-dot" aria-label="Pending reservation requests">{{ managedPendingRequests().length }}</span>
+                }
+              </button>
+            </nav>
 
-          @if (ownerMainTab() === 'personal') {
-            <div class="tabs-nav__panel">
-              <div class="tabs-nav__panel-header">
-                <select
-                  class="tab-select view-mobile-only mb-3"
-                  aria-label="My reservations"
-                  [value]="personalActiveTab()"
-                  (change)="onPersonalActiveTabSelect($event)"
-                >
-                  <option value="requests">Reservation Requests ({{ myPersonalRequests().length }})</option>
-                  <option value="confirmed">Confirmed Reservations ({{ myPersonalReservations().length }})</option>
-                </select>
-                <div class="tabs tabs--sub view-desktop-only" role="tablist" aria-label="My reservations">
-                  <button
-                    type="button"
-                    class="tab"
-                    role="tab"
-                    [class.active]="personalActiveTab() === 'requests'"
-                    [attr.aria-selected]="personalActiveTab() === 'requests'"
-                    (click)="personalActiveTab.set('requests')">
-                    <span class="tab__label">Reservation Requests</span>
-                    <span class="tab__count">{{ myPersonalRequests().length }}</span>
-                  </button>
-                  <button
-                    type="button"
-                    class="tab"
-                    role="tab"
-                    [class.active]="personalActiveTab() === 'confirmed'"
-                    [attr.aria-selected]="personalActiveTab() === 'confirmed'"
-                    (click)="personalActiveTab.set('confirmed')">
-                    <span class="tab__label">Confirmed Reservations</span>
-                    <span class="tab__count">{{ myPersonalReservations().length }}</span>
-                  </button>
+            @if (ownerMainTab() === 'personal') {
+              <div class="tabs-nav__panel">
+                <div class="tabs-nav__panel-header">
+                  <nav class="pill-tabs pill-tabs--sub" role="tablist" aria-label="My reservations">
+                    <button type="button" class="pill-tab pill-tab--sub" role="tab"
+                      [class.pill-tab--active]="personalActiveTab() === 'requests'"
+                      [attr.aria-selected]="personalActiveTab() === 'requests'"
+                      (click)="personalActiveTab.set('requests')">
+                      <span class="pill-tab__label">Requests</span>
+                      <span class="tab__count">{{ myPersonalRequests().length }}</span>
+                    </button>
+                    <button type="button" class="pill-tab pill-tab--sub" role="tab"
+                      [class.pill-tab--active]="personalActiveTab() === 'confirmed'"
+                      [attr.aria-selected]="personalActiveTab() === 'confirmed'"
+                      (click)="personalActiveTab.set('confirmed')">
+                      <span class="pill-tab__label">Confirmed</span>
+                      <span class="tab__count">{{ myPersonalReservations().length }}</span>
+                    </button>
+                  </nav>
                 </div>
-              </div>
-              <div class="tabs-nav__panel-body">
-                @if (personalActiveTab() === 'requests') {
-                  @if (myPersonalRequests().length === 0) {
-                    <div class="empty-state"><p>No reservation requests.</p></div>
-                  } @else {
-                    <div class="view-mobile-only list-card-grid mb-3">
-                      @for (req of myPersonalRequests(); track req.id) {
-                        <article class="list-card">
-                          <div class="list-card__primary">
-                            <span class="list-card__title">{{ req.shop.name }}</span>
-                            <span class="list-card__subtitle">{{ eventLabel(req) }}</span>
-                          </div>
-                          <div class="list-card__meta">
-                            Party {{ req.partySize }} ·
+                <div class="tabs-nav__panel-body">
+                  @if (personalActiveTab() === 'requests') {
+                    @if (myPersonalRequests().length === 0) {
+                      <div class="empty-state"><p>No reservation requests.</p></div>
+                    } @else {
+                      <div class="compact-list">
+                        @for (req of myPersonalRequests(); track req.id) {
+                          <article class="compact-row">
+                            <div class="compact-row__start">
+                              <span class="compact-row__avatar">{{ req.shop.name.charAt(0).toUpperCase() }}</span>
+                              <div class="compact-row__text">
+                                <span class="compact-row__primary">{{ req.shop.name }}</span>
+                                <span class="compact-row__secondary">{{ eventLabel(req) }} &middot; Party {{ req.partySize }}</span>
+                              </div>
+                            </div>
                             <span class="badge"
                               [class.badge-pending]="req.status === 'PENDING'"
                               [class.badge-accepted]="req.status === 'ACCEPTED'"
-                              [class.badge-denied]="req.status === 'DENIED'">
-                              {{ req.status }}
-                            </span>
-                          </div>
-                        </article>
-                      }
-                    </div>
-                    <div class="view-desktop-only">
-                      <div class="table-container">
-                        <table class="data-table">
-                          <thead>
-                            <tr>
-                              <th>Shop</th>
-                              <th>Event</th>
-                              <th>Party Size</th>
-                              <th>Status</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            @for (req of myPersonalRequests(); track req.id) {
-                              <tr>
-                                <td>{{ req.shop.name }}</td>
-                                <td>{{ eventLabel(req) }}</td>
-                                <td>{{ req.partySize }}</td>
-                                <td>
-                                  <span class="badge"
-                                    [class.badge-pending]="req.status === 'PENDING'"
-                                    [class.badge-accepted]="req.status === 'ACCEPTED'"
-                                    [class.badge-denied]="req.status === 'DENIED'">
-                                    {{ req.status }}
-                                  </span>
-                                </td>
-                              </tr>
-                            }
-                          </tbody>
-                        </table>
+                              [class.badge-denied]="req.status === 'DENIED'">{{ req.status }}</span>
+                          </article>
+                        }
                       </div>
-                    </div>
+                    }
                   }
-                }
-
-                @if (personalActiveTab() === 'confirmed') {
-                  @if (myPersonalReservations().length === 0) {
-                    <div class="empty-state"><p>No confirmed reservations.</p></div>
-                  } @else {
-                    <div class="view-mobile-only list-card-grid mb-3">
-                      @for (r of myPersonalReservations(); track r.id) {
-                        <article class="list-card">
-                          <div class="list-card__primary">
-                            <span class="list-card__title">{{ r.shop.name }}</span>
-                            <span class="list-card__subtitle">{{ eventLabel(r) }}</span>
-                          </div>
-                          <div class="list-card__meta">
-                            {{ r.table ? 'Table ' + r.table.number : 'N/A' }} · Party {{ r.partySize }}
-                          </div>
-                        </article>
-                      }
-                    </div>
-                    <div class="view-desktop-only">
-                      <div class="table-container">
-                        <table class="data-table">
-                          <thead>
-                            <tr>
-                              <th>Shop</th>
-                              <th>Event</th>
-                              <th>Table</th>
-                              <th>Party Size</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            @for (r of myPersonalReservations(); track r.id) {
-                              <tr>
-                                <td>{{ r.shop.name }}</td>
-                                <td>{{ eventLabel(r) }}</td>
-                                <td>{{ r.table ? 'Table ' + r.table.number : 'N/A' }}</td>
-                                <td>{{ r.partySize }}</td>
-                              </tr>
-                            }
-                          </tbody>
-                        </table>
+                  @if (personalActiveTab() === 'confirmed') {
+                    @if (myPersonalReservations().length === 0) {
+                      <div class="empty-state"><p>No confirmed reservations.</p></div>
+                    } @else {
+                      <div class="compact-list">
+                        @for (r of myPersonalReservations(); track r.id) {
+                          <article class="compact-row">
+                            <div class="compact-row__start">
+                              <span class="compact-row__avatar">{{ r.shop.name.charAt(0).toUpperCase() }}</span>
+                              <div class="compact-row__text">
+                                <span class="compact-row__primary">{{ r.shop.name }}</span>
+                                <span class="compact-row__secondary">{{ eventLabel(r) }} &middot; {{ r.table ? 'Table ' + r.table.number : 'N/A' }} &middot; Party {{ r.partySize }}</span>
+                              </div>
+                            </div>
+                          </article>
+                        }
                       </div>
-                    </div>
+                    }
                   }
-                }
-              </div>
-            </div>
-          }
-
-          @if (ownerMainTab() === 'manage') {
-            <div class="tabs-nav__panel">
-              <div class="tabs-nav__panel-header">
-                <select
-                  class="tab-select view-mobile-only mb-3"
-                  aria-label="Manage shop reservations"
-                  [value]="ownerSubTab()"
-                  (change)="onOwnerSubTabSelect($event)"
-                >
-                  <option value="pending">Pending ({{ managedPendingRequests().length }})</option>
-                  <option value="approved">Approved ({{ managedReservations().length }})</option>
-                  <option value="denied">Denied ({{ managedDeniedRequests().length }})</option>
-                </select>
-                <div class="tabs tabs--sub view-desktop-only" role="tablist" aria-label="Manage my shops">
-                  <button
-                    type="button"
-                    class="tab"
-                    role="tab"
-                    [class.active]="ownerSubTab() === 'pending'"
-                    [attr.aria-selected]="ownerSubTab() === 'pending'"
-                    (click)="ownerSubTab.set('pending')">
-                    <span class="tab__label">Pending</span>
-                    <span class="tab__count">{{ managedPendingRequests().length }}</span>
-                  </button>
-                  <button
-                    type="button"
-                    class="tab"
-                    role="tab"
-                    [class.active]="ownerSubTab() === 'approved'"
-                    [attr.aria-selected]="ownerSubTab() === 'approved'"
-                    (click)="ownerSubTab.set('approved')">
-                    <span class="tab__label">Approved</span>
-                    <span class="tab__count">{{ managedReservations().length }}</span>
-                  </button>
-                  <button
-                    type="button"
-                    class="tab"
-                    role="tab"
-                    [class.active]="ownerSubTab() === 'denied'"
-                    [attr.aria-selected]="ownerSubTab() === 'denied'"
-                    (click)="ownerSubTab.set('denied')">
-                    <span class="tab__label">Denied</span>
-                    <span class="tab__count">{{ managedDeniedRequests().length }}</span>
-                  </button>
                 </div>
               </div>
-              <div class="tabs-nav__panel-body">
-                @if (ownerSubTab() === 'pending') {
-                  @if (loading()) {
-                    <div class="loading">Loading requests...</div>
-                  } @else if (managedPendingRequests().length === 0) {
-                    <div class="empty-state"><p>No pending reservation requests.</p></div>
-                  } @else {
-                    <div class="view-mobile-only list-card-grid mb-3">
-                      @for (req of managedPendingRequests(); track req.id) {
-                        <article class="list-card">
-                          <div class="list-card__primary">
-                            <span class="list-card__title">{{ req.user?.name ?? '—' }}</span>
-                            <span class="list-card__subtitle">{{ req.shop.name }} · {{ eventLabel(req) }}</span>
-                          </div>
-                          <div class="list-card__meta">
-                            Party {{ req.partySize }} · <span class="badge badge-pending">{{ req.status }}</span>
-                          </div>
-                          <div class="list-card__actions reservation-actions">
-                            <app-form-select
-                              [compact]="true"
-                              placeholder="Select table"
-                              [options]="tableSelectOptionsForRequest(req)"
-                              [ngModel]="tableSelectValue(req.id)"
-                              (ngModelChange)="onTableSelectChange(req.id, $event)"
-                            />
-                            @if (!hasSuitableTablesForRequest(req)) {
-                              <p class="text-muted" role="status">
-                                No table large enough for party of {{ req.partySize }}.
-                              </p>
-                            }
-                            <div class="reservation-actions__buttons">
-                              <button class="btn btn-sm btn-primary" (click)="onAccept(req)">Accept</button>
-                              <button class="btn btn-sm btn-danger" (click)="onDeny(req)">Deny</button>
+            }
+
+            @if (ownerMainTab() === 'manage') {
+              <div class="tabs-nav__panel tabs-nav__panel--overflow-visible">
+                <div class="tabs-nav__panel-header">
+                  <nav class="pill-tabs pill-tabs--sub" role="tablist" aria-label="Manage my shops">
+                    <button type="button" class="pill-tab pill-tab--sub" role="tab"
+                      [class.pill-tab--active]="ownerSubTab() === 'pending'"
+                      [attr.aria-selected]="ownerSubTab() === 'pending'"
+                      (click)="ownerSubTab.set('pending')">
+                      <span class="pill-tab__label">Pending</span>
+                      <span class="tab__count">{{ managedPendingRequests().length }}</span>
+                    </button>
+                    <button type="button" class="pill-tab pill-tab--sub" role="tab"
+                      [class.pill-tab--active]="ownerSubTab() === 'approved'"
+                      [attr.aria-selected]="ownerSubTab() === 'approved'"
+                      (click)="ownerSubTab.set('approved')">
+                      <span class="pill-tab__label">Approved</span>
+                      <span class="tab__count">{{ managedReservations().length }}</span>
+                    </button>
+                    <button type="button" class="pill-tab pill-tab--sub" role="tab"
+                      [class.pill-tab--active]="ownerSubTab() === 'denied'"
+                      [attr.aria-selected]="ownerSubTab() === 'denied'"
+                      (click)="ownerSubTab.set('denied')">
+                      <span class="pill-tab__label">Denied</span>
+                      <span class="tab__count">{{ managedDeniedRequests().length }}</span>
+                    </button>
+                  </nav>
+                </div>
+                <div class="tabs-nav__panel-body">
+                  @if (ownerSubTab() === 'pending') {
+                    @if (loading()) {
+                      <div class="loading">Loading requests...</div>
+                    } @else if (managedPendingRequests().length === 0) {
+                      <div class="empty-state"><p>No pending reservation requests.</p></div>
+                    } @else {
+                      <div class="compact-list">
+                        @for (req of managedPendingRequests(); track req.id) {
+                          <article class="compact-row">
+                            <div class="compact-row__start">
+                              <span class="compact-row__avatar">{{ (req.user?.name ?? '?').charAt(0).toUpperCase() }}</span>
+                              <div class="compact-row__text">
+                                <span class="compact-row__primary">{{ req.user?.name ?? '—' }}</span>
+                                <span class="compact-row__secondary">{{ req.shop.name }} &middot; {{ eventLabel(req) }} &middot; Party {{ req.partySize }}</span>
+                              </div>
                             </div>
-                          </div>
-                        </article>
-                      }
-                    </div>
-                    <div class="view-desktop-only">
-                      <div class="table-container table-container--dropdown-safe">
-                        <table class="data-table">
-                          <thead>
-                            <tr>
-                              <th>Guest</th>
-                              <th>Shop</th>
-                              <th>Event</th>
-                              <th>Party Size</th>
-                              <th>Status</th>
-                              <th>Actions</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            @for (req of managedPendingRequests(); track req.id) {
-                              <tr>
-                                <td>{{ req.user?.name ?? '—' }}</td>
-                                <td>{{ req.shop.name }}</td>
-                                <td>{{ eventLabel(req) }}</td>
-                                <td>{{ req.partySize }}</td>
-                                <td><span class="badge badge-pending">{{ req.status }}</span></td>
-                                <td class="data-table__actions">
-                                  <div class="reservation-actions">
-                                    <app-form-select
-                                      [compact]="true"
-                                      placeholder="Select table"
-                                      [options]="tableSelectOptionsForRequest(req)"
-                                      [ngModel]="tableSelectValue(req.id)"
-                                      (ngModelChange)="onTableSelectChange(req.id, $event)"
-                                    />
-                                    @if (!hasSuitableTablesForRequest(req)) {
-                                      <p class="text-muted" role="status">
-                                        No table large enough for party of {{ req.partySize }}.
-                                      </p>
-                                    }
-                                    <div class="reservation-actions__buttons">
-                                      <button class="btn btn-sm btn-primary" (click)="onAccept(req)">Accept</button>
-                                      <button class="btn btn-sm btn-danger" (click)="onDeny(req)">Deny</button>
-                                    </div>
-                                  </div>
-                                </td>
-                              </tr>
-                            }
-                          </tbody>
-                        </table>
+                            <span class="badge badge-pending">{{ req.status }}</span>
+                            <div class="compact-row__end" style="flex-wrap:wrap">
+                              <app-form-select
+                                [compact]="true"
+                                placeholder="Table"
+                                [options]="tableSelectOptionsForRequest(req)"
+                                [ngModel]="tableSelectValue(req.id)"
+                                (ngModelChange)="onTableSelectChange(req.id, $event)"
+                              />
+                              @if (!hasSuitableTablesForRequest(req)) {
+                                <span class="text-muted" style="font-size:0.6875rem">No table for party of {{ req.partySize }}</span>
+                              }
+                              <button class="btn btn--compact btn-primary" (click)="onAccept(req)">Accept</button>
+                              <button class="btn btn--compact btn-danger" (click)="onDeny(req)">Deny</button>
+                            </div>
+                          </article>
+                        }
                       </div>
-                    </div>
+                    }
                   }
-                }
 
-                @if (ownerSubTab() === 'approved') {
-                  @if (managedReservations().length === 0) {
-                    <div class="empty-state"><p>No confirmed reservations.</p></div>
-                  } @else {
-                    <div class="view-mobile-only list-card-grid mb-3">
-                      @for (r of managedReservations(); track r.id) {
-                        <article class="list-card">
-                          <div class="list-card__primary">
-                            <span class="list-card__title">{{ r.user?.name ?? '—' }}</span>
-                            <span class="list-card__subtitle">{{ r.shop.name }} · {{ eventLabel(r) }}</span>
-                          </div>
-                          <div class="list-card__meta">
-                            {{ r.table ? 'Table ' + r.table.number : 'N/A' }} · Party {{ r.partySize }}
-                          </div>
-                        </article>
-                      }
-                    </div>
-                    <div class="view-desktop-only">
-                      <div class="table-container">
-                        <table class="data-table">
-                          <thead>
-                            <tr>
-                              <th>Guest</th>
-                              <th>Shop</th>
-                              <th>Event</th>
-                              <th>Table</th>
-                              <th>Party Size</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            @for (r of managedReservations(); track r.id) {
-                              <tr>
-                                <td>{{ r.user?.name ?? '—' }}</td>
-                                <td>{{ r.shop.name }}</td>
-                                <td>{{ eventLabel(r) }}</td>
-                                <td>{{ r.table ? 'Table ' + r.table.number : 'N/A' }}</td>
-                                <td>{{ r.partySize }}</td>
-                              </tr>
-                            }
-                          </tbody>
-                        </table>
+                  @if (ownerSubTab() === 'approved') {
+                    @if (managedReservations().length === 0) {
+                      <div class="empty-state"><p>No confirmed reservations.</p></div>
+                    } @else {
+                      <div class="compact-list">
+                        @for (r of managedReservations(); track r.id) {
+                          <article class="compact-row">
+                            <div class="compact-row__start">
+                              <span class="compact-row__avatar">{{ (r.user?.name ?? '?').charAt(0).toUpperCase() }}</span>
+                              <div class="compact-row__text">
+                                <span class="compact-row__primary">{{ r.user?.name ?? '—' }}</span>
+                                <span class="compact-row__secondary">{{ r.shop.name }} &middot; {{ eventLabel(r) }} &middot; {{ r.table ? 'Table ' + r.table.number : 'N/A' }} &middot; Party {{ r.partySize }}</span>
+                              </div>
+                            </div>
+                          </article>
+                        }
                       </div>
-                    </div>
+                    }
                   }
-                }
 
-                @if (ownerSubTab() === 'denied') {
-                  @if (loading()) {
-                    <div class="loading">Loading requests...</div>
-                  } @else if (managedDeniedRequests().length === 0) {
-                    <div class="empty-state"><p>No denied reservation requests.</p></div>
-                  } @else {
-                    <div class="view-mobile-only list-card-grid mb-3">
-                      @for (req of managedDeniedRequests(); track req.id) {
-                        <article class="list-card">
-                          <div class="list-card__primary">
-                            <span class="list-card__title">{{ req.user?.name ?? '—' }}</span>
-                            <span class="list-card__subtitle">{{ req.shop.name }} · {{ eventLabel(req) }}</span>
-                          </div>
-                          <div class="list-card__meta">
-                            Party {{ req.partySize }} · <span class="badge badge-denied">{{ req.status }}</span>
-                          </div>
-                        </article>
-                      }
-                    </div>
-                    <div class="view-desktop-only">
-                      <div class="table-container">
-                        <table class="data-table">
-                          <thead>
-                            <tr>
-                              <th>Guest</th>
-                              <th>Shop</th>
-                              <th>Event</th>
-                              <th>Party Size</th>
-                              <th>Status</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            @for (req of managedDeniedRequests(); track req.id) {
-                              <tr>
-                                <td>{{ req.user?.name ?? '—' }}</td>
-                                <td>{{ req.shop.name }}</td>
-                                <td>{{ eventLabel(req) }}</td>
-                                <td>{{ req.partySize }}</td>
-                                <td><span class="badge badge-denied">{{ req.status }}</span></td>
-                              </tr>
-                            }
-                          </tbody>
-                        </table>
+                  @if (ownerSubTab() === 'denied') {
+                    @if (loading()) {
+                      <div class="loading">Loading requests...</div>
+                    } @else if (managedDeniedRequests().length === 0) {
+                      <div class="empty-state"><p>No denied reservation requests.</p></div>
+                    } @else {
+                      <div class="compact-list">
+                        @for (req of managedDeniedRequests(); track req.id) {
+                          <article class="compact-row">
+                            <div class="compact-row__start">
+                              <span class="compact-row__avatar">{{ (req.user?.name ?? '?').charAt(0).toUpperCase() }}</span>
+                              <div class="compact-row__text">
+                                <span class="compact-row__primary">{{ req.user?.name ?? '—' }}</span>
+                                <span class="compact-row__secondary">{{ req.shop.name }} &middot; {{ eventLabel(req) }} &middot; Party {{ req.partySize }}</span>
+                              </div>
+                            </div>
+                            <span class="badge badge-denied">{{ req.status }}</span>
+                          </article>
+                        }
                       </div>
-                    </div>
+                    }
                   }
-                }
+                </div>
               </div>
-            </div>
-          }
+            }
           </div>
         </div>
       } @else {
-        <select
-          class="tab-select view-mobile-only mb-3"
-          aria-label="Reservations"
-          [value]="activeTab()"
-          (change)="onActiveTabSelect($event)"
-        >
-          <option value="requests">Reservation Requests</option>
-          <option value="confirmed">Confirmed Reservations</option>
-        </select>
-        <div class="tabs view-desktop-only">
-          <button class="tab" [class.active]="activeTab() === 'requests'" (click)="activeTab.set('requests')">
+        <nav class="pill-tabs mb-3" role="tablist" aria-label="Reservations">
+          <button type="button" class="pill-tab" role="tab"
+            [class.pill-tab--active]="activeTab() === 'requests'"
+            [attr.aria-selected]="activeTab() === 'requests'"
+            (click)="activeTab.set('requests')">
             Reservation Requests
           </button>
-          <button class="tab" [class.active]="activeTab() === 'confirmed'" (click)="activeTab.set('confirmed')">
+          <button type="button" class="pill-tab" role="tab"
+            [class.pill-tab--active]="activeTab() === 'confirmed'"
+            [attr.aria-selected]="activeTab() === 'confirmed'"
+            (click)="activeTab.set('confirmed')">
             Confirmed Reservations
           </button>
-        </div>
+        </nav>
 
         @if (activeTab() === 'requests') {
           @if (loading()) {
@@ -542,55 +335,22 @@ import { DialogService } from '../../services/dialog.service';
           } @else if (allRequests().length === 0) {
             <div class="empty-state"><p>No reservation requests.</p></div>
           } @else {
-            <div class="view-mobile-only list-card-grid mb-3">
+            <div class="compact-list">
               @for (req of allRequests(); track req.id) {
-                <article class="list-card">
-                  <div class="list-card__primary">
-                    <span class="list-card__title">{{ req.shop.name }}</span>
-                    <span class="list-card__subtitle">{{ eventLabel(req) }}</span>
+                <article class="compact-row">
+                  <div class="compact-row__start">
+                    <span class="compact-row__avatar">{{ req.shop.name.charAt(0).toUpperCase() }}</span>
+                    <div class="compact-row__text">
+                      <span class="compact-row__primary">{{ req.shop.name }}</span>
+                      <span class="compact-row__secondary">{{ eventLabel(req) }} &middot; Party {{ req.partySize }}</span>
+                    </div>
                   </div>
-                  <div class="list-card__meta">
-                    Party {{ req.partySize }} ·
-                    <span class="badge"
-                      [class.badge-pending]="req.status === 'PENDING'"
-                      [class.badge-accepted]="req.status === 'ACCEPTED'"
-                      [class.badge-denied]="req.status === 'DENIED'">
-                      {{ req.status }}
-                    </span>
-                  </div>
+                  <span class="badge"
+                    [class.badge-pending]="req.status === 'PENDING'"
+                    [class.badge-accepted]="req.status === 'ACCEPTED'"
+                    [class.badge-denied]="req.status === 'DENIED'">{{ req.status }}</span>
                 </article>
               }
-            </div>
-            <div class="view-desktop-only">
-              <div class="table-container">
-                <table class="data-table">
-                  <thead>
-                    <tr>
-                      <th>Shop</th>
-                      <th>Event</th>
-                      <th>Party Size</th>
-                      <th>Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    @for (req of allRequests(); track req.id) {
-                      <tr>
-                        <td>{{ req.shop.name }}</td>
-                        <td>{{ eventLabel(req) }}</td>
-                        <td>{{ req.partySize }}</td>
-                        <td>
-                          <span class="badge"
-                            [class.badge-pending]="req.status === 'PENDING'"
-                            [class.badge-accepted]="req.status === 'ACCEPTED'"
-                            [class.badge-denied]="req.status === 'DENIED'">
-                            {{ req.status }}
-                          </span>
-                        </td>
-                      </tr>
-                    }
-                  </tbody>
-                </table>
-              </div>
             </div>
           }
         }
@@ -599,48 +359,47 @@ import { DialogService } from '../../services/dialog.service';
           @if (myReservations().length === 0) {
             <div class="empty-state"><p>No confirmed reservations.</p></div>
           } @else {
-            <div class="view-mobile-only list-card-grid mb-3">
+            <div class="compact-list">
               @for (r of myReservations(); track r.id) {
-                <article class="list-card">
-                  <div class="list-card__primary">
-                    <span class="list-card__title">{{ r.shop.name }}</span>
-                    <span class="list-card__subtitle">{{ eventLabel(r) }}</span>
-                  </div>
-                  <div class="list-card__meta">
-                    {{ r.table ? 'Table ' + r.table.number : 'N/A' }} · Party {{ r.partySize }}
+                <article class="compact-row">
+                  <div class="compact-row__start">
+                    <span class="compact-row__avatar">{{ r.shop.name.charAt(0).toUpperCase() }}</span>
+                    <div class="compact-row__text">
+                      <span class="compact-row__primary">{{ r.shop.name }}</span>
+                      <span class="compact-row__secondary">{{ eventLabel(r) }} &middot; {{ r.table ? 'Table ' + r.table.number : 'N/A' }} &middot; Party {{ r.partySize }}</span>
+                    </div>
                   </div>
                 </article>
               }
-            </div>
-            <div class="view-desktop-only">
-              <div class="table-container">
-                <table class="data-table">
-                  <thead>
-                    <tr>
-                      <th>Shop</th>
-                      <th>Event</th>
-                      <th>Table</th>
-                      <th>Party Size</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    @for (r of myReservations(); track r.id) {
-                      <tr>
-                        <td>{{ r.shop.name }}</td>
-                        <td>{{ eventLabel(r) }}</td>
-                        <td>{{ r.table ? 'Table ' + r.table.number : 'N/A' }}</td>
-                        <td>{{ r.partySize }}</td>
-                      </tr>
-                    }
-                  </tbody>
-                </table>
-              </div>
             </div>
           }
         }
       }
     </div>
   `,
+  styles: [`
+    :host {
+      display: block;
+    }
+
+    .page-header__actions {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    @media (max-width: 768px) {
+      .page-header__actions {
+        width: 100%;
+        flex-direction: column;
+      }
+
+      .page-header__actions .btn {
+        width: 100%;
+        min-height: 44px;
+      }
+    }
+  `],
 })
 export class ReservationsComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
@@ -810,11 +569,11 @@ export class ReservationsComponent implements OnInit {
   );
 
   readonly shopSelectOptions = computed((): FormSelectOption[] => {
-    const shops =
+    const list =
       this.requestFormMode() === 'guest'
         ? this.shopsForGuestRequest()
         : this.shopsForSelfRequest();
-    return shops.map(s => ({ value: s.id, label: s.name }));
+    return list.map(s => ({ value: s.id, label: s.name }));
   });
 
   readonly eventSelectOptionsForRequest = computed((): FormSelectOption[] =>
@@ -825,7 +584,15 @@ export class ReservationsComponent implements OnInit {
   );
 
   tablesForRequest(req: ReservationRequestResponseDto): TableResponseDto[] {
-    return this.tablesForShop(req.shop.id).filter(t => t.capacity >= req.partySize);
+    const reservedTableIds = new Set(
+      this.allReservations()
+        .filter(r => !req.eventId || r.eventId === req.eventId)
+        .map(r => r.table?.id)
+        .filter(Boolean),
+    );
+    return this.tablesForShop(req.shop.id).filter(t =>
+      !reservedTableIds.has(t.id),
+    );
   }
 
   hasSuitableTablesForRequest(req: ReservationRequestResponseDto): boolean {
@@ -855,26 +622,16 @@ export class ReservationsComponent implements OnInit {
     }
   }
 
-  onOwnerMainTabSelect(event: Event): void {
-    this.ownerMainTab.set((event.target as HTMLSelectElement).value as 'personal' | 'manage');
-  }
-
-  onPersonalActiveTabSelect(event: Event): void {
-    this.personalActiveTab.set((event.target as HTMLSelectElement).value as 'requests' | 'confirmed');
-  }
-
-  onOwnerSubTabSelect(event: Event): void {
-    this.ownerSubTab.set((event.target as HTMLSelectElement).value as 'pending' | 'approved' | 'denied');
-  }
-
-  onActiveTabSelect(event: Event): void {
-    this.activeTab.set((event.target as HTMLSelectElement).value as 'requests' | 'confirmed');
-  }
-
   ngOnInit(): void {
     this.shopService.getAll().subscribe(shops => this.shops.set(shops));
     this.userService.getAll().subscribe(users => this.users.set(users));
-    this.tableService.getAll().subscribe(tables => this.tables.set(tables));
+    this.loadTables();
+    this.router.events
+      .pipe(
+        filter(event => event instanceof NavigationEnd),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe(() => this.loadTables());
     this.requestForm.controls.shopId.valueChanges
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(shopId => this.onShopChange(shopId));
@@ -991,7 +748,12 @@ export class ReservationsComponent implements OnInit {
     return this.tables().filter(t => t.shopId === shopId);
   }
 
+  private loadTables(): void {
+    this.tableService.getAll().subscribe(tables => this.tables.set(tables));
+  }
+
   private loadData(): void {
+    this.loadTables();
     this.loading.set(true);
     this.reservationService.getAll().subscribe(res => this.allReservations.set(res));
     this.requestService.getAll().subscribe({

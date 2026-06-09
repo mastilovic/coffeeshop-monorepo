@@ -16,10 +16,11 @@ import (
 type ReviewHandler struct {
 	db             *gorm.DB
 	currentUserSvc *auth.CurrentUserService
+	authorizer     *auth.ShopAuthorizer
 }
 
-func NewReviewHandler(db *gorm.DB, currentUserSvc *auth.CurrentUserService) *ReviewHandler {
-	return &ReviewHandler{db: db, currentUserSvc: currentUserSvc}
+func NewReviewHandler(db *gorm.DB, currentUserSvc *auth.CurrentUserService, authorizer *auth.ShopAuthorizer) *ReviewHandler {
+	return &ReviewHandler{db: db, currentUserSvc: currentUserSvc, authorizer: authorizer}
 }
 
 type reviewCreateRequest struct {
@@ -118,6 +119,13 @@ func (h *ReviewHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if existing.ShopID != nil && *existing.ShopID != "" {
+		if err := h.authorizer.RequireShopOwnerOrEmployeeOrAdmin(r.Context(), *existing.ShopID); err != nil {
+			apperror.WriteError(w, err)
+			return
+		}
+	}
+
 	var req reviewUpdateRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		apperror.WriteError(w, apperror.BadRequest("Invalid request body"))
@@ -146,6 +154,19 @@ func (h *ReviewHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	}
 
 	id := chi.URLParam(r, "id")
+	var existing model.Review
+	if err := h.db.WithContext(r.Context()).First(&existing, "id = ?", id).Error; err != nil {
+		apperror.WriteError(w, apperror.NotFound("Review not found"))
+		return
+	}
+
+	if existing.ShopID != nil && *existing.ShopID != "" {
+		if err := h.authorizer.RequireShopOwnerOrEmployeeOrAdmin(r.Context(), *existing.ShopID); err != nil {
+			apperror.WriteError(w, err)
+			return
+		}
+	}
+
 	result := h.db.WithContext(r.Context()).Delete(&model.Review{}, "id = ?", id)
 	if result.Error != nil {
 		apperror.WriteError(w, apperror.Internal("Failed to delete review"))

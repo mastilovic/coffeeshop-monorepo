@@ -2,7 +2,7 @@ import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, switchMap, map } from 'rxjs';
 import { environment } from '../../environments/environment';
-import { ShopResponseDto, ShopCreateRequest, ShopSearchParams, ShopListPage } from '../models/shop.model';
+import { ShopResponseDto, ShopCreateRequest, ShopUpdateRequest, ShopSearchParams, ShopListPage } from '../models/shop.model';
 import { ProfileService } from './profile.service';
 
 @Injectable({ providedIn: 'root' })
@@ -38,7 +38,7 @@ export class ShopService {
     return this.http.post<ShopResponseDto>(this.base, req);
   }
 
-  update(id: string, req: ShopCreateRequest): Observable<ShopResponseDto> {
+  update(id: string, req: ShopUpdateRequest): Observable<ShopResponseDto> {
     return this.http.put<ShopResponseDto>(`${this.base}/${id}`, req);
   }
 

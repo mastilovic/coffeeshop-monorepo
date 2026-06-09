@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -11,16 +12,18 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/mastilovic/coffeeshop-go/internal/apperror"
+	"github.com/mastilovic/coffeeshop-go/internal/auth"
 	"github.com/mastilovic/coffeeshop-go/internal/model"
 	"gorm.io/gorm"
 )
 
 type EventHandler struct {
-	db *gorm.DB
+	db         *gorm.DB
+	authorizer *auth.ShopAuthorizer
 }
 
-func NewEventHandler(db *gorm.DB) *EventHandler {
-	return &EventHandler{db: db}
+func NewEventHandler(db *gorm.DB, authorizer *auth.ShopAuthorizer) *EventHandler {
+	return &EventHandler{db: db, authorizer: authorizer}
 }
 
 type eventCreateRequest struct {
@@ -34,6 +37,34 @@ type eventUpdateRequest struct {
 	EventName   string `json:"eventName"`
 	EventDate   string `json:"eventDate"`
 	Description string `json:"description"`
+}
+
+type eventResponse struct {
+	EventID     string `json:"eventId"`
+	EventName   string `json:"eventName"`
+	EventDate   string `json:"eventDate"`
+	Description string `json:"description"`
+	ShopID      string `json:"shopId"`
+	ShopName    string `json:"shopName"`
+	ShopCity    string `json:"shopCity"`
+}
+
+func enrichEvent(ctx context.Context, db *gorm.DB, e model.Event) eventResponse {
+	resp := eventResponse{
+		EventID:     e.EventID,
+		EventName:   e.EventName,
+		EventDate:   e.EventDate,
+		Description: e.Description,
+	}
+	if e.ShopID != nil && *e.ShopID != "" {
+		resp.ShopID = *e.ShopID
+		var shop model.Shop
+		if err := db.WithContext(ctx).First(&shop, "id = ?", *e.ShopID).Error; err == nil {
+			resp.ShopName = shop.Name
+			resp.ShopCity = shop.City
+		}
+	}
+	return resp
 }
 
 func parseDateParam(value, paramName string) (string, error) {
@@ -63,11 +94,15 @@ func (h *EventHandler) listByShop(w http.ResponseWriter, r *http.Request, shopID
 		apperror.WriteError(w, apperror.Internal("Failed to fetch events"))
 		return
 	}
-	if events == nil {
-		events = []model.Event{}
+	results := make([]eventResponse, len(events))
+	for i, e := range events {
+		results[i] = enrichEvent(r.Context(), h.db, e)
+	}
+	if results == nil {
+		results = []eventResponse{}
 	}
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(events)
+	json.NewEncoder(w).Encode(results)
 }
 
 func (h *EventHandler) paginatedSearch(w http.ResponseWriter, r *http.Request) {
@@ -136,9 +171,14 @@ func (h *EventHandler) paginatedSearch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp := model.NewPageResponse(events, page, size, total)
+	enriched := make([]eventResponse, len(events))
+	for i, e := range events {
+		enriched[i] = enrichEvent(r.Context(), h.db, e)
+	}
+	enrichedPage := model.NewPageResponse(enriched, page, size, total)
+
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(resp)
+	json.NewEncoder(w).Encode(enrichedPage)
 }
 
 // GetByID handles GET /event/{eventId}.
@@ -150,7 +190,7 @@ func (h *EventHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(event)
+	json.NewEncoder(w).Encode(enrichEvent(r.Context(), h.db, event))
 }
 
 // Create handles POST /event.
@@ -159,6 +199,13 @@ func (h *EventHandler) Create(w http.ResponseWriter, r *http.Request) {
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		apperror.WriteError(w, apperror.BadRequest("Invalid request body"))
 		return
+	}
+
+	if req.ShopID != nil && *req.ShopID != "" {
+		if err := h.authorizer.RequireShopOwnerOrEmployeeOrAdmin(r.Context(), *req.ShopID); err != nil {
+			apperror.WriteError(w, err)
+			return
+		}
 	}
 
 	event := model.Event{
@@ -176,7 +223,7 @@ func (h *EventHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(event)
+	json.NewEncoder(w).Encode(enrichEvent(r.Context(), h.db, event))
 }
 
 // Update handles PUT /event/{eventId}.
@@ -186,6 +233,13 @@ func (h *EventHandler) Update(w http.ResponseWriter, r *http.Request) {
 	if err := h.db.WithContext(r.Context()).First(&existing, "event_id = ?", id).Error; err != nil {
 		apperror.WriteError(w, apperror.NotFound("Event not found"))
 		return
+	}
+
+	if existing.ShopID != nil && *existing.ShopID != "" {
+		if err := h.authorizer.RequireShopOwnerOrEmployeeOrAdmin(r.Context(), *existing.ShopID); err != nil {
+			apperror.WriteError(w, err)
+			return
+		}
 	}
 
 	var req eventUpdateRequest
@@ -204,12 +258,25 @@ func (h *EventHandler) Update(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(existing)
+	json.NewEncoder(w).Encode(enrichEvent(r.Context(), h.db, existing))
 }
 
 // Delete handles DELETE /event/{eventId}.
 func (h *EventHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "eventId")
+	var existing model.Event
+	if err := h.db.WithContext(r.Context()).First(&existing, "event_id = ?", id).Error; err != nil {
+		apperror.WriteError(w, apperror.NotFound("Event not found"))
+		return
+	}
+
+	if existing.ShopID != nil && *existing.ShopID != "" {
+		if err := h.authorizer.RequireShopOwnerOrEmployeeOrAdmin(r.Context(), *existing.ShopID); err != nil {
+			apperror.WriteError(w, err)
+			return
+		}
+	}
+
 	result := h.db.WithContext(r.Context()).Delete(&model.Event{}, "event_id = ?", id)
 	if result.Error != nil {
 		apperror.WriteError(w, apperror.Internal("Failed to delete event"))

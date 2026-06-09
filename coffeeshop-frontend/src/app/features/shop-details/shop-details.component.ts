@@ -35,6 +35,8 @@ import { CommunityPostResponseDto } from '../../models/community.model';
 import { UserSummaryDto } from '../../models/user.model';
 import { CommunityService } from '../../services/community.service';
 import { StarRatingComponent } from '../../shared/star-rating/star-rating.component';
+import { EmployeeManagementComponent } from '../dashboard/employee-management.component';
+import { ShopEmployeeService } from '../../services/shop-employee.service';
 import { getAcceptReservationErrorMessage } from '../../utils/api-error';
 import {
   canReserveForEvent,
@@ -50,7 +52,7 @@ import {
   normalizeDateTimeLocal,
 } from '../../utils/event-form.utils';
 
-type Tab = 'users' | 'menu' | 'tables' | 'reservations' | 'events' | 'reviews';
+type Tab = 'users' | 'menu' | 'tables' | 'reservations' | 'events' | 'reviews' | 'employees';
 type ReservationSubTab = 'pending' | 'approved' | 'denied';
 
 @Component({
@@ -63,6 +65,7 @@ type ReservationSubTab = 'pending' | 'approved' | 'denied';
     StarRatingComponent,
     FormSelectComponent,
     DateTimePickerComponent,
+    EmployeeManagementComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -72,17 +75,22 @@ type ReservationSubTab = 'pending' | 'approved' | 'denied';
       } @else if (!shop()) {
         <div class="empty-state"><p>Shop not found.</p><a routerLink="/shops">Back to shops</a></div>
       } @else {
+        <nav class="shop-breadcrumb" aria-label="Breadcrumb">
+          <a routerLink="/shops" class="shop-breadcrumb__link">
+            <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3L5 8l5 5" stroke="currentColor" stroke-width="1.5" fill="none"/></svg>
+            Shops
+          </a>
+          <span class="shop-breadcrumb__current">{{ shop()!.name }}</span>
+        </nav>
+
         <div class="page-header">
-          <div>
+          <div class="page-header__title-row">
             <h1 class="page-title">
               {{ shop()!.name }}
               @if (isFavourite()) {
                 <span class="badge badge-joined">Joined</span>
               }
             </h1>
-            <p class="text-muted">{{ shop()!.city }} &middot; {{ shop()!.address }} &middot; {{ shop()!.email }}</p>
-          </div>
-          <div style="display:flex;align-items:center;gap:0.75rem">
             @if (!canManageShop()) {
               <button
                 type="button"
@@ -93,7 +101,7 @@ type ReservationSubTab = 'pending' | 'approved' | 'denied';
                 [title]="isFavourite() ? 'Leave ' + shop()!.name : 'Join ' + shop()!.name"
                 (click)="toggleFavourite()"
               >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                   @if (isFavourite()) {
                     <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
                   } @else {
@@ -102,28 +110,20 @@ type ReservationSubTab = 'pending' | 'approved' | 'denied';
                 </svg>
               </button>
             }
-            <a routerLink="/shops" class="btn btn-secondary">Back</a>
           </div>
+          <p class="text-muted">{{ shop()!.city }} &middot; {{ shop()!.address }} &middot; {{ shop()!.email }}</p>
         </div>
 
-        <select
-          class="tab-select view-mobile-only mb-3"
-          aria-label="Shop section"
-          [value]="activeTab()"
-          (change)="onPrimaryTabSelect($event)"
-        >
+        <nav class="pill-tabs shop-tabs mb-3" role="tablist" aria-label="Shop section">
           @for (t of visibleTabs(); track t.key) {
-            <option [value]="t.key">{{ t.label }}</option>
-          }
-        </select>
-
-        <div class="tabs view-desktop-only">
-          @for (t of visibleTabs(); track t.key) {
-            <button class="tab" [class.active]="activeTab() === t.key" (click)="onTabChange(t.key)">
+            <button type="button" class="pill-tab" role="tab"
+              [class.pill-tab--active]="activeTab() === t.key"
+              [attr.aria-selected]="activeTab() === t.key"
+              (click)="onTabChange(t.key)">
               {{ t.label }}
             </button>
           }
-        </div>
+        </nav>
 
         <!-- COMMUNITY TAB -->
         @if (activeTab() === 'users') {
@@ -154,69 +154,40 @@ type ReservationSubTab = 'pending' | 'approved' | 'denied';
           } @else if (membersTotalElements() === 0) {
             <div class="empty-state mb-3"><p>{{ membersEmptyStateMessage() }}</p></div>
           } @else {
-            <div class="view-mobile-only list-card-grid mb-3">
+            <div class="compact-list">
               @for (u of members(); track u.id) {
-                <article class="list-card">
-                  <div class="list-card__primary">
-                    <span class="list-card__title">{{ u.name }}</span>
-                    <span class="list-card__subtitle">{{ u.username }}</span>
+                <article class="compact-row">
+                  <div class="compact-row__start">
+                    <span class="compact-row__avatar">{{ u.name.charAt(0).toUpperCase() }}</span>
+                    <div class="compact-row__text">
+                      <span class="compact-row__primary">{{ u.name }}</span>
+                      <span class="compact-row__secondary">{{ u.username }}</span>
+                    </div>
                   </div>
                 </article>
               }
-            </div>
-            <div class="view-desktop-only">
-              <div class="table-container mb-3">
-                <table class="data-table">
-                  <thead><tr><th>Name</th><th>Username</th></tr></thead>
-                  <tbody>
-                    @for (u of members(); track u.id) {
-                      <tr><td>{{ u.name }}</td><td>{{ u.username }}</td></tr>
-                    }
-                  </tbody>
-                </table>
-              </div>
             </div>
 
             <div class="pagination-bar mb-3">
               <span class="pagination-summary">{{ membersRangeLabel() }}</span>
               <div class="pagination-controls">
-                <button
-                  class="btn btn-secondary btn-sm"
-                  [disabled]="membersPage() === 0"
-                  (click)="goToMembersPage(membersPage() - 1)"
-                >
-                  Previous
-                </button>
+                <button class="btn btn-secondary btn-sm" [disabled]="membersPage() === 0" (click)="goToMembersPage(membersPage() - 1)">Previous</button>
                 <span class="pagination-page">Page {{ membersPage() + 1 }} of {{ membersTotalPages() }}</span>
-                <button
-                  class="btn btn-secondary btn-sm"
-                  [disabled]="membersPage() >= membersTotalPages() - 1"
-                  (click)="goToMembersPage(membersPage() + 1)"
-                >
-                  Next
-                </button>
+                <button class="btn btn-secondary btn-sm" [disabled]="membersPage() >= membersTotalPages() - 1" (click)="goToMembersPage(membersPage() + 1)">Next</button>
               </div>
             </div>
           }
 
-          @if (isShopOwner()) {
+          @if (canManageShopContent()) {
             <div class="form-card mb-3">
               <h3 class="mb-2">Post announcement</h3>
               <p class="text-muted mb-2" style="font-size:0.875rem">Announcements appear pinned at the top of the feed.</p>
-              <textarea
-                class="form-input"
-                rows="3"
-                placeholder="Share news with your community..."
+              <textarea class="form-input" rows="3" placeholder="Share news with your community..."
                 [value]="announcementDraft()"
                 (input)="announcementDraft.set($any($event.target).value)"></textarea>
-              <button
-                type="button"
-                class="btn btn-primary"
-                style="margin-top:0.5rem"
+              <button type="button" class="btn btn-primary" style="margin-top:0.5rem"
                 [disabled]="!announcementDraft().trim() || postingAnnouncement()"
-                (click)="onAnnouncementSubmit()">
-                Post announcement
-              </button>
+                (click)="onAnnouncementSubmit()">Post announcement</button>
             </div>
           }
 
@@ -232,17 +203,11 @@ type ReservationSubTab = 'pending' | 'approved' | 'denied';
                   <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:0.75rem;margin-bottom:0.5rem">
                     <div>
                       <strong>{{ post.author.name }}</strong>
-                      @if (post.type === 'ANNOUNCEMENT') {
-                        <span class="badge badge-joined" style="margin-left:0.5rem">Announcement</span>
-                      }
-                      @if (post.pinned) {
-                        <span class="badge" style="margin-left:0.5rem;background:#4a3728;color:#f5d0a0">Pinned</span>
-                      }
+                      @if (post.type === 'ANNOUNCEMENT') { <span class="badge badge-joined" style="margin-left:0.5rem">Announcement</span> }
+                      @if (post.pinned) { <span class="badge" style="margin-left:0.5rem;background:#4a3728;color:#f5d0a0">Pinned</span> }
                       <p class="text-muted" style="font-size:0.8rem;margin:0.25rem 0 0">{{ formatPostDate(post.createdAt) }}</p>
                     </div>
-                    @if (canDeletePost(post)) {
-                      <button type="button" class="btn btn-sm btn-danger" (click)="onDeletePost(post)">Delete</button>
-                    }
+                    @if (canDeletePost(post)) { <button type="button" class="btn btn-sm btn-danger" (click)="onDeletePost(post)">Delete</button> }
                   </div>
                   <p style="margin:0;white-space:pre-wrap">{{ post.body }}</p>
                 </div>
@@ -258,129 +223,87 @@ type ReservationSubTab = 'pending' | 'approved' | 'denied';
 
         <!-- MENU TAB -->
         @if (activeTab() === 'menu') {
-          @if (canManageShop()) {
-            <div class="mb-3">
-              <button class="btn btn-secondary" (click)="onCreateMenu()">+ New Menu</button>
-            </div>
+          @if (canManageShopContent()) {
+            <div class="mb-3"><button class="btn btn-secondary" (click)="onCreateMenu()">+ New Menu</button></div>
           }
 
           <h3 class="mb-2">Current menu</h3>
           @if (!shop()!.currentMenu) {
-            <div class="empty-state">
-              <p>No menu yet.</p>
-              @if (canManageShop()) {
-                <p class="text-muted">Create a menu to start adding items.</p>
-              }
+            <div class="empty-state"><p>No menu yet.</p>
+              @if (canManageShopContent()) { <p class="text-muted">Create a menu to start adding items.</p> }
             </div>
           } @else {
-            @if (shop()!.currentMenu!.label) {
-              <p class="text-muted mb-2">{{ shop()!.currentMenu!.label }}</p>
-            }
-            @if (canManageShop()) {
-              @if (showMenuForm()) {
-            <div class="form-card mb-3">
-              <form [formGroup]="menuForm" (ngSubmit)="onMenuSubmit()">
-                <div class="form-row">
-                  <div class="form-group">
-                    <label>Name</label>
-                    <input class="form-input" formControlName="name" />
-                  </div>
-                  <div class="form-group">
-                    <label>Price</label>
-                    <input class="form-input" type="number" step="0.01" formControlName="price" />
-                  </div>
-                </div>
-                <div class="form-row">
-                  <div class="form-group">
-                    <label>Currency</label>
-                    <app-form-select
-                      formControlName="priceCurrency"
-                      placeholder="Currency"
-                      [options]="menuCurrencySelectOptions"
-                    />
-                  </div>
-                  <div class="form-group">
-                    <label>Image URL</label>
-                    <input class="form-input" formControlName="imageUrl" />
-                  </div>
-                </div>
-                <div class="form-group">
-                  <label>Description</label>
-                  <input class="form-input" formControlName="description" />
-                </div>
-                <div class="form-group">
-                  <label>Type</label>
-                  <app-form-select
-                    formControlName="itemType"
-                    placeholder="Item type"
-                    [options]="menuItemTypeSelectOptions"
-                  />
-                </div>
-                <div class="form-actions">
-                  <button type="submit" class="btn btn-primary" [disabled]="menuForm.invalid">
-                    {{ editingMenuItemId() ? 'Update' : 'Add' }}
-                  </button>
-                  <button type="button" class="btn btn-secondary" (click)="showMenuForm.set(false); editingMenuItemId.set(null)">Cancel</button>
-                </div>
-              </form>
-            </div>
-          } @else {
-            <button class="btn btn-primary mb-2" (click)="showMenuForm.set(true)">+ Add Item</button>
-          }
-          }
+            @if (shop()!.currentMenu!.label) { <p class="text-muted mb-2">{{ shop()!.currentMenu!.label }}</p> }
 
-            @if (shop()!.currentMenu!.items.length === 0) {
-              <div class="empty-state"><p>No menu items.</p></div>
-            } @else {
-            <div class="view-mobile-only list-card-grid mb-3">
-              @for (item of shop()!.currentMenu!.items; track item.id) {
-                <article class="list-card">
-                  <div class="list-card__primary">
-                    <span class="list-card__title">{{ item.name }}</span>
-                    <span class="list-card__subtitle">{{ item.price }} {{ item.priceCurrency }}</span>
-                  </div>
-                  <div class="list-card__meta list-card__meta--clamp">
-                    {{ formatMenuItemType(item.itemType) }} · {{ item.description }}
-                  </div>
-                  @if (canManageShop()) {
-                    <div class="list-card__actions">
-                      <button class="btn btn-sm btn-secondary" (click)="onEditMenuItem(item)">Edit</button>
-                      <button class="btn btn-sm btn-danger" (click)="onDeleteMenuItem(item)">Delete</button>
+            @if (shop()!.currentMenu!.items.length > 0) {
+              <nav class="pill-tabs pill-tabs--filter mb-2" aria-label="Filter menu items">
+                <button type="button" class="pill-tab pill-tab--filter"
+                  [class.pill-tab--active]="menuTypeFilter() === 'ALL'"
+                  (click)="menuTypeFilter.set('ALL')">All</button>
+                <button type="button" class="pill-tab pill-tab--filter"
+                  [class.pill-tab--active]="menuTypeFilter() === 'DRINK'"
+                  (click)="menuTypeFilter.set('DRINK')">Drinks</button>
+                <button type="button" class="pill-tab pill-tab--filter"
+                  [class.pill-tab--active]="menuTypeFilter() === 'FOOD'"
+                  (click)="menuTypeFilter.set('FOOD')">Food</button>
+                <button type="button" class="pill-tab pill-tab--filter"
+                  [class.pill-tab--active]="menuTypeFilter() === 'DESSERT'"
+                  (click)="menuTypeFilter.set('DESSERT')">Desserts</button>
+                <button type="button" class="pill-tab pill-tab--filter"
+                  [class.pill-tab--active]="menuTypeFilter() === 'OTHER'"
+                  (click)="menuTypeFilter.set('OTHER')">Other</button>
+              </nav>
+            }
+
+            @if (canManageShopContent()) {
+              @if (showMenuForm()) {
+                <div class="form-card mb-3">
+                  <form [formGroup]="menuForm" (ngSubmit)="onMenuSubmit()">
+                    <div class="form-row">
+                      <div class="form-group"><label>Name</label><input class="form-input" formControlName="name" /></div>
+                      <div class="form-group"><label>Price</label><input class="form-input" type="number" step="0.01" formControlName="price" /></div>
                     </div>
-                  }
-                </article>
+                    <div class="form-row">
+                      <div class="form-group"><label>Currency</label><app-form-select formControlName="priceCurrency" placeholder="Currency" [options]="menuCurrencySelectOptions" /></div>
+                      <div class="form-group"><label>Image URL</label><input class="form-input" formControlName="imageUrl" /></div>
+                    </div>
+                    <div class="form-group"><label>Description</label><input class="form-input" formControlName="description" /></div>
+                    <div class="form-group"><label>Type</label><app-form-select formControlName="itemType" placeholder="Item type" [options]="menuItemTypeSelectOptions" /></div>
+                    <div class="form-actions">
+                      <button type="submit" class="btn btn-primary" [disabled]="menuForm.invalid">{{ editingMenuItemId() ? 'Update' : 'Add' }}</button>
+                      <button type="button" class="btn btn-secondary" (click)="showMenuForm.set(false); editingMenuItemId.set(null)">Cancel</button>
+                    </div>
+                  </form>
+                </div>
+              } @else {
+                <button class="btn btn-primary mb-2" (click)="showMenuForm.set(true)">+ Add Item</button>
               }
-            </div>
-            <div class="view-desktop-only">
-              <div class="table-container">
-                <table class="data-table">
-                  <thead>
-                    <tr>
-                      <th>Name</th><th>Type</th><th>Description</th><th>Price</th>
-                      @if (canManageShop()) { <th>Actions</th> }
-                    </tr>
-                  </thead>
-                  <tbody>
-                    @for (item of shop()!.currentMenu!.items; track item.id) {
-                      <tr>
-                        <td>{{ item.name }}</td>
-                        <td>{{ formatMenuItemType(item.itemType) }}</td>
-                        <td>{{ item.description }}</td>
-                        <td>{{ item.price }} {{ item.priceCurrency }}</td>
-                        @if (canManageShop()) {
-                          <td class="data-table__actions">
-                            <div style="display:flex;gap:0.5rem">
-                              <button class="btn btn-sm btn-secondary" (click)="onEditMenuItem(item)">Edit</button>
-                              <button class="btn btn-sm btn-danger" (click)="onDeleteMenuItem(item)">Delete</button>
-                            </div>
-                          </td>
-                        }
-                      </tr>
-                    }
-                  </tbody>
-                </table>
+            }
+
+            @if (filteredMenuItems().length === 0) {
+              <div class="empty-state">
+                <p>@if (menuTypeFilter() === 'ALL') { No menu items. } @else { No items match this filter. }</p>
               </div>
-            </div>
+            } @else {
+              <div class="compact-list">
+                @for (item of filteredMenuItems(); track item.id) {
+                  <article class="compact-row">
+                    <div class="compact-row__start">
+                      <div class="compact-row__text">
+                        <span class="compact-row__primary">{{ item.name }}</span>
+                        <span class="compact-row__secondary">{{ formatMenuItemType(item.itemType) }} &middot; {{ item.description }}</span>
+                      </div>
+                    </div>
+                    <span class="compact-row__meta compact-row__meta--accent">{{ item.price }} {{ item.priceCurrency }}</span>
+                    @if (canManageShopContent()) {
+                      <div class="compact-row__end">
+                        <button class="btn btn--compact btn-secondary" (click)="onEditMenuItem(item)">Edit</button>
+                        <button class="btn btn--compact btn-danger" (click)="onDeleteMenuItem(item)">Del</button>
+                      </div>
+                    }
+                  </article>
+                }
+              </div>
             }
           }
 
@@ -390,44 +313,23 @@ type ReservationSubTab = 'pending' | 'approved' | 'denied';
               <details class="form-card mb-2">
                 <summary style="cursor:pointer;font-weight:600">
                   {{ historical.label || 'Menu' }}
-                  @if (historical.createdAt) {
-                    <span class="text-muted"> — {{ formatMenuDate(historical.createdAt) }}</span>
-                  }
+                  @if (historical.createdAt) { <span class="text-muted"> — {{ formatMenuDate(historical.createdAt) }}</span> }
                 </summary>
                 @if (historical.items.length === 0) {
                   <p class="text-muted mt-2">No items.</p>
                 } @else {
-                  <div class="view-mobile-only list-card-grid mt-2">
+                  <div class="compact-list mt-2">
                     @for (item of historical.items; track item.id) {
-                      <article class="list-card">
-                        <div class="list-card__primary">
-                          <span class="list-card__title">{{ item.name }}</span>
-                          <span class="list-card__subtitle">{{ item.price }} {{ item.priceCurrency }}</span>
+                      <article class="compact-row">
+                        <div class="compact-row__start">
+                          <div class="compact-row__text">
+                            <span class="compact-row__primary">{{ item.name }}</span>
+                            <span class="compact-row__secondary">{{ formatMenuItemType(item.itemType) }} &middot; {{ item.description }}</span>
+                          </div>
                         </div>
-                        <div class="list-card__meta list-card__meta--clamp">
-                          {{ formatMenuItemType(item.itemType) }} · {{ item.description }}
-                        </div>
+                        <span class="compact-row__meta compact-row__meta--accent">{{ item.price }} {{ item.priceCurrency }}</span>
                       </article>
                     }
-                  </div>
-                  <div class="view-desktop-only">
-                    <div class="table-container mt-2">
-                      <table class="data-table">
-                        <thead>
-                          <tr><th>Name</th><th>Type</th><th>Description</th><th>Price</th></tr>
-                        </thead>
-                        <tbody>
-                          @for (item of historical.items; track item.id) {
-                            <tr>
-                              <td>{{ item.name }}</td>
-                              <td>{{ formatMenuItemType(item.itemType) }}</td>
-                              <td>{{ item.description }}</td>
-                              <td>{{ item.price }} {{ item.priceCurrency }}</td>
-                            </tr>
-                          }
-                        </tbody>
-                      </table>
-                    </div>
                   </div>
                 }
               </details>
@@ -437,215 +339,115 @@ type ReservationSubTab = 'pending' | 'approved' | 'denied';
 
         <!-- TABLES TAB -->
         @if (activeTab() === 'tables') {
-          @if (canManageShop()) {
-          @if (showTableForm()) {
-            <div class="form-card mb-3">
-              <form [formGroup]="tableForm" (ngSubmit)="onTableSubmit()">
-                <div class="form-row">
-                  <div class="form-group">
-                    <label>Table Number</label>
-                    <input class="form-input" type="number" formControlName="number" />
+          @if (canManageShopContent()) {
+            @if (showTableForm()) {
+              <div class="form-card mb-3">
+                <form [formGroup]="tableForm" (ngSubmit)="onTableSubmit()">
+                  <div class="form-row">
+                    <div class="form-group"><label>Table Number</label><input class="form-input" type="number" formControlName="number" /></div>
+                    <div class="form-group"><label>Capacity</label><input class="form-input" type="number" formControlName="capacity" /></div>
                   </div>
-                  <div class="form-group">
-                    <label>Capacity</label>
-                    <input class="form-input" type="number" formControlName="capacity" />
+                  <div class="form-actions">
+                    <button type="submit" class="btn btn-primary" [disabled]="tableForm.invalid">{{ editingTableId() ? 'Update' : 'Add' }}</button>
+                    <button type="button" class="btn btn-secondary" (click)="showTableForm.set(false); editingTableId.set(null)">Cancel</button>
                   </div>
-                </div>
-                <div class="form-actions">
-                  <button type="submit" class="btn btn-primary" [disabled]="tableForm.invalid">
-                    {{ editingTableId() ? 'Update' : 'Add' }}
-                  </button>
-                  <button type="button" class="btn btn-secondary" (click)="showTableForm.set(false); editingTableId.set(null)">Cancel</button>
-                </div>
-              </form>
-            </div>
-          } @else {
-            <button class="btn btn-primary mb-2" (click)="openAddTableForm()">+ Add Table</button>
-          }
+                </form>
+              </div>
+            } @else {
+              <button class="btn btn-primary mb-2" (click)="openAddTableForm()">+ Add Table</button>
+            }
           }
 
           @if (shop()!.tables.length === 0) {
             <div class="empty-state"><p>No tables.</p></div>
           } @else {
-            <div class="view-mobile-only list-card-grid mb-3">
+            <div class="compact-list">
               @for (t of shop()!.tables; track t.id) {
-                <article class="list-card">
-                  <div class="list-card__primary">
-                    <span class="list-card__title">Table {{ t.number }}</span>
-                    <span class="list-card__subtitle">Capacity {{ t.capacity }}</span>
+                <article class="compact-row">
+                  <div class="compact-row__start">
+                    <span class="compact-row__avatar" style="font-size:0.75rem">T{{ t.number }}</span>
+                    <div class="compact-row__text">
+                      <span class="compact-row__primary">Table {{ t.number }}</span>
+                      <span class="compact-row__secondary">Capacity {{ t.capacity }}</span>
+                    </div>
                   </div>
-                  @if (canManageShop()) {
-                    <div class="list-card__actions">
-                      <button class="btn btn-sm btn-secondary" (click)="onEditTable(t)">Edit</button>
-                      <button class="btn btn-sm btn-danger" (click)="onDeleteTable(t)">Delete</button>
+                  @if (canManageShopContent()) {
+                    <div class="compact-row__end">
+                      <button class="btn btn--compact btn-secondary" (click)="onEditTable(t)">Edit</button>
+                      <button class="btn btn--compact btn-danger" (click)="onDeleteTable(t)">Del</button>
                     </div>
                   }
                 </article>
               }
-            </div>
-            <div class="view-desktop-only">
-              <div class="table-container">
-                <table class="data-table">
-                  <thead>
-                    <tr>
-                      <th>#</th><th>Capacity</th>
-                      @if (canManageShop()) { <th>Actions</th> }
-                    </tr>
-                  </thead>
-                  <tbody>
-                    @for (t of shop()!.tables; track t.id) {
-                      <tr>
-                        <td>{{ t.number }}</td>
-                        <td>{{ t.capacity }}</td>
-                        @if (canManageShop()) {
-                          <td class="data-table__actions">
-                            <div style="display:flex;gap:0.5rem">
-                              <button class="btn btn-sm btn-secondary" (click)="onEditTable(t)">Edit</button>
-                              <button class="btn btn-sm btn-danger" (click)="onDeleteTable(t)">Delete</button>
-                            </div>
-                          </td>
-                        }
-                      </tr>
-                    }
-                  </tbody>
-                </table>
-              </div>
             </div>
           }
         }
 
         <!-- RESERVATIONS TAB -->
         @if (activeTab() === 'reservations') {
-          <select
-            class="tab-select view-mobile-only mb-3"
-            aria-label="Reservation status"
-            [value]="reservationSubTab()"
-            (change)="onReservationSubTabSelect($event)"
-          >
-            <option value="pending">Pending ({{ pendingRequests().length }})</option>
-            <option value="approved">Approved ({{ reservations().length }})</option>
-            <option value="denied">Denied ({{ deniedRequests().length }})</option>
-          </select>
-          <div class="tabs tabs--sub view-desktop-only">
-            <button
-              class="tab"
-              [class.active]="reservationSubTab() === 'pending'"
+          <nav class="pill-tabs pill-tabs--sub mb-3" role="tablist" aria-label="Reservation status">
+            <button type="button" class="pill-tab pill-tab--sub" role="tab"
+              [class.pill-tab--active]="reservationSubTab() === 'pending'"
+              [attr.aria-selected]="reservationSubTab() === 'pending'"
               (click)="reservationSubTab.set('pending')">
-              Pending ({{ pendingRequests().length }})
+              Pending <span class="tab__count">{{ pendingRequests().length }}</span>
             </button>
-            <button
-              class="tab"
-              [class.active]="reservationSubTab() === 'approved'"
+            <button type="button" class="pill-tab pill-tab--sub" role="tab"
+              [class.pill-tab--active]="reservationSubTab() === 'approved'"
+              [attr.aria-selected]="reservationSubTab() === 'approved'"
               (click)="reservationSubTab.set('approved')">
-              Approved ({{ reservations().length }})
+              Approved <span class="tab__count">{{ reservations().length }}</span>
             </button>
-            <button
-              class="tab"
-              [class.active]="reservationSubTab() === 'denied'"
+            <button type="button" class="pill-tab pill-tab--sub" role="tab"
+              [class.pill-tab--active]="reservationSubTab() === 'denied'"
+              [attr.aria-selected]="reservationSubTab() === 'denied'"
               (click)="reservationSubTab.set('denied')">
-              Denied ({{ deniedRequests().length }})
+              Denied <span class="tab__count">{{ deniedRequests().length }}</span>
             </button>
-          </div>
+          </nav>
 
           @if (reservationSubTab() === 'pending') {
             @if (pendingRequests().length === 0) {
               <div class="empty-state"><p>No pending reservation requests.</p></div>
-            } @else if (canManageShop()) {
-              <div class="view-mobile-only list-card-grid mb-3">
+            } @else if (canManageShopContent()) {
+              <div class="compact-list">
                 @for (req of pendingRequests(); track req.id) {
-                  <article class="list-card">
-                    <div class="list-card__primary">
-                      <span class="list-card__title">{{ req.user?.name ?? '—' }}</span>
-                      <span class="list-card__subtitle">{{ eventLabel(req) }}</span>
-                    </div>
-                    <div class="list-card__meta">
-                      Party {{ req.partySize }} · <span class="badge badge-pending">{{ req.status }}</span>
-                    </div>
-                    <div class="list-card__actions reservation-actions">
-                      <app-form-select
-                        [compact]="true"
-                        placeholder="Select table"
-                        [options]="tableSelectOptionsForRequest(req)"
-                        [ngModel]="tableSelectValue(req.id)"
-                        (ngModelChange)="onTableSelectChange(req.id, $event)"
-                      />
-                      @if (!hasSuitableTablesForRequest(req)) {
-                        <p class="text-muted" role="status">No table large enough for party of {{ req.partySize }}.</p>
-                      }
-                      <div class="reservation-actions__buttons">
-                        <button class="btn btn-sm btn-primary" (click)="onAcceptRequest(req)">Accept</button>
-                        <button class="btn btn-sm btn-danger" (click)="onDenyRequest(req)">Deny</button>
+                  <article class="compact-row">
+                    <div class="compact-row__start">
+                      <span class="compact-row__avatar">{{ (req.user?.name ?? '?').charAt(0).toUpperCase() }}</span>
+                      <div class="compact-row__text">
+                        <span class="compact-row__primary">{{ req.user?.name ?? '—' }}</span>
+                        <span class="compact-row__secondary">{{ eventLabel(req) }} &middot; Party {{ req.partySize }}</span>
                       </div>
                     </div>
+                    <span class="badge badge-pending">{{ req.status }}</span>
+                    <div class="compact-row__end" style="flex-wrap:wrap">
+                      <app-form-select [compact]="true" placeholder="Table"
+                        [options]="tableSelectOptionsForRequest(req)"
+                        [ngModel]="tableSelectValue(req.id)"
+                        (ngModelChange)="onTableSelectChange(req.id, $event)" />
+                      @if (!hasSuitableTablesForRequest(req)) {
+                        <span class="text-muted" style="font-size:0.6875rem">No table for party of {{ req.partySize }}</span>
+                      }
+                      <button class="btn btn--compact btn-primary" (click)="onAcceptRequest(req)">Accept</button>
+                      <button class="btn btn--compact btn-danger" (click)="onDenyRequest(req)">Deny</button>
+                    </div>
                   </article>
                 }
-              </div>
-              <div class="view-desktop-only">
-                <div class="table-container table-container--dropdown-safe">
-                  <table class="data-table">
-                    <thead>
-                      <tr><th>Guest</th><th>Event</th><th>Party Size</th><th>Status</th><th>Actions</th></tr>
-                    </thead>
-                    <tbody>
-                      @for (req of pendingRequests(); track req.id) {
-                        <tr>
-                          <td>{{ req.user?.name ?? '—' }}</td>
-                          <td>{{ eventLabel(req) }}</td>
-                          <td>{{ req.partySize }}</td>
-                          <td><span class="badge badge-pending">{{ req.status }}</span></td>
-                          <td class="data-table__actions">
-                            <div class="reservation-actions">
-                              <app-form-select
-                                [compact]="true"
-                                placeholder="Select table"
-                                [options]="tableSelectOptionsForRequest(req)"
-                                [ngModel]="tableSelectValue(req.id)"
-                                (ngModelChange)="onTableSelectChange(req.id, $event)"
-                              />
-                              @if (!hasSuitableTablesForRequest(req)) {
-                                <p class="text-muted" role="status">
-                                  No table large enough for party of {{ req.partySize }}.
-                                </p>
-                              }
-                              <div class="reservation-actions__buttons">
-                                <button class="btn btn-sm btn-primary" (click)="onAcceptRequest(req)">Accept</button>
-                                <button class="btn btn-sm btn-danger" (click)="onDenyRequest(req)">Deny</button>
-                              </div>
-                            </div>
-                          </td>
-                        </tr>
-                      }
-                    </tbody>
-                  </table>
-                </div>
               </div>
             } @else if (canSelfReserveAtShop()) {
-              <div class="view-mobile-only list-card-grid mb-3">
+              <div class="compact-list">
                 @for (req of pendingRequests(); track req.id) {
-                  <article class="list-card">
-                    <div class="list-card__primary">
-                      <span class="list-card__title">{{ eventLabel(req) }}</span>
-                      <span class="list-card__subtitle">Party {{ req.partySize }}</span>
+                  <article class="compact-row">
+                    <div class="compact-row__start">
+                      <div class="compact-row__text">
+                        <span class="compact-row__primary">{{ eventLabel(req) }}</span>
+                        <span class="compact-row__secondary">Party {{ req.partySize }}</span>
+                      </div>
                     </div>
-                    <div class="list-card__meta"><span class="badge badge-pending">{{ req.status }}</span></div>
+                    <span class="badge badge-pending">{{ req.status }}</span>
                   </article>
                 }
-              </div>
-              <div class="view-desktop-only">
-                <div class="table-container">
-                  <table class="data-table">
-                    <thead><tr><th>Event</th><th>Party Size</th><th>Status</th></tr></thead>
-                    <tbody>
-                      @for (req of pendingRequests(); track req.id) {
-                        <tr>
-                          <td>{{ eventLabel(req) }}</td>
-                          <td>{{ req.partySize }}</td>
-                          <td><span class="badge badge-pending">{{ req.status }}</span></td>
-                        </tr>
-                      }
-                    </tbody>
-                  </table>
-                </div>
               </div>
             }
           }
@@ -654,42 +456,17 @@ type ReservationSubTab = 'pending' | 'approved' | 'denied';
             @if (reservations().length === 0) {
               <div class="empty-state"><p>{{ canSelfReserveAtShop() ? 'No confirmed reservations for this shop.' : 'No approved reservations for this shop.' }}</p></div>
             } @else {
-              <div class="view-mobile-only list-card-grid mb-3">
+              <div class="compact-list">
                 @for (r of reservations(); track r.id) {
-                  <article class="list-card">
-                    <div class="list-card__primary">
-                      @if (canManageShop()) {
-                        <span class="list-card__title">{{ r.user.name }}</span>
-                      }
-                      <span class="list-card__subtitle">{{ eventLabel(r) }}</span>
-                    </div>
-                    <div class="list-card__meta">
-                      {{ r.table ? 'Table ' + r.table.number : 'N/A' }} · Party {{ r.partySize }}
+                  <article class="compact-row">
+                    <div class="compact-row__start">
+                      <div class="compact-row__text">
+                        @if (canManageShopContent()) { <span class="compact-row__primary">{{ r.user.name }}</span> }
+                        <span class="compact-row__secondary">{{ eventLabel(r) }} &middot; {{ r.table ? 'Table ' + r.table.number : 'N/A' }} &middot; Party {{ r.partySize }}</span>
+                      </div>
                     </div>
                   </article>
                 }
-              </div>
-              <div class="view-desktop-only">
-                <div class="table-container">
-                  <table class="data-table">
-                    <thead>
-                      <tr>
-                        @if (canManageShop()) { <th>Guest</th> }
-                        <th>Event</th><th>Table</th><th>Party Size</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      @for (r of reservations(); track r.id) {
-                        <tr>
-                          @if (canManageShop()) { <td>{{ r.user.name }}</td> }
-                          <td>{{ eventLabel(r) }}</td>
-                          <td>{{ r.table ? 'Table ' + r.table.number : 'N/A' }}</td>
-                          <td>{{ r.partySize }}</td>
-                        </tr>
-                      }
-                    </tbody>
-                  </table>
-                </div>
               </div>
             }
           }
@@ -698,42 +475,18 @@ type ReservationSubTab = 'pending' | 'approved' | 'denied';
             @if (deniedRequests().length === 0) {
               <div class="empty-state"><p>No denied reservation requests.</p></div>
             } @else {
-              <div class="view-mobile-only list-card-grid mb-3">
+              <div class="compact-list">
                 @for (req of deniedRequests(); track req.id) {
-                  <article class="list-card">
-                    <div class="list-card__primary">
-                      @if (canManageShop()) {
-                        <span class="list-card__title">{{ req.user?.name ?? '—' }}</span>
-                      }
-                      <span class="list-card__subtitle">{{ eventLabel(req) }}</span>
+                  <article class="compact-row">
+                    <div class="compact-row__start">
+                      <div class="compact-row__text">
+                        @if (canManageShopContent()) { <span class="compact-row__primary">{{ req.user?.name ?? '—' }}</span> }
+                        <span class="compact-row__secondary">{{ eventLabel(req) }} &middot; Party {{ req.partySize }}</span>
+                      </div>
                     </div>
-                    <div class="list-card__meta">
-                      Party {{ req.partySize }} · <span class="badge badge-denied">{{ req.status }}</span>
-                    </div>
+                    <span class="badge badge-denied">{{ req.status }}</span>
                   </article>
                 }
-              </div>
-              <div class="view-desktop-only">
-                <div class="table-container">
-                  <table class="data-table">
-                    <thead>
-                      <tr>
-                        @if (canManageShop()) { <th>Guest</th> }
-                        <th>Event</th><th>Party Size</th><th>Status</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      @for (req of deniedRequests(); track req.id) {
-                        <tr>
-                          @if (canManageShop()) { <td>{{ req.user?.name ?? '—' }}</td> }
-                          <td>{{ eventLabel(req) }}</td>
-                          <td>{{ req.partySize }}</td>
-                          <td><span class="badge badge-denied">{{ req.status }}</span></td>
-                        </tr>
-                      }
-                    </tbody>
-                  </table>
-                </div>
               </div>
             }
           }
@@ -741,34 +494,20 @@ type ReservationSubTab = 'pending' | 'approved' | 'denied';
 
         <!-- EVENTS TAB -->
         @if (activeTab() === 'events') {
-          @if (canManageShop()) {
+          @if (canManageShopContent()) {
             @if (showEventForm()) {
               <div class="form-card mb-3">
                 <form [formGroup]="eventForm" (ngSubmit)="onEventSubmit()">
                   <div class="form-row">
-                    <div class="form-group">
-                      <label>Event Name</label>
-                      <input class="form-input" formControlName="eventName" placeholder="Event name" />
-                    </div>
-                    <div class="form-group">
-                      <label>Event Date</label>
-                      <app-date-time-picker
-                        formControlName="eventDate"
-                        [minDate]="editingEventId() ? null : todayIsoValue()"
-                      />
-                      @if (eventForm.controls.eventDate.touched && eventForm.controls.eventDate.hasError('pastDate')) {
-                        <span class="form-error">Event date must be in the future.</span>
-                      }
+                    <div class="form-group"><label>Event Name</label><input class="form-input" formControlName="eventName" placeholder="Event name" /></div>
+                    <div class="form-group"><label>Event Date</label>
+                      <app-date-time-picker formControlName="eventDate" [minDate]="editingEventId() ? null : todayIsoValue()" />
+                      @if (eventForm.controls.eventDate.touched && eventForm.controls.eventDate.hasError('pastDate')) { <span class="form-error">Event date must be in the future.</span> }
                     </div>
                   </div>
-                  <div class="form-group">
-                    <label>Description</label>
-                    <input class="form-input" formControlName="description" placeholder="Event description" />
-                  </div>
+                  <div class="form-group"><label>Description</label><input class="form-input" formControlName="description" placeholder="Event description" /></div>
                   <div class="form-actions">
-                    <button type="submit" class="btn btn-primary" [disabled]="eventForm.invalid">
-                      {{ editingEventId() ? 'Update' : 'Create' }}
-                    </button>
+                    <button type="submit" class="btn btn-primary" [disabled]="eventForm.invalid">{{ editingEventId() ? 'Update' : 'Create' }}</button>
                     <button type="button" class="btn btn-secondary" (click)="cancelEventForm()">Cancel</button>
                   </div>
                 </form>
@@ -779,87 +518,35 @@ type ReservationSubTab = 'pending' | 'approved' | 'denied';
           }
 
           @if (shop()!.events.length === 0) {
-            <div class="empty-state">
-              <p>No events.</p>
-              @if (canManageShop()) {
-                <p class="text-muted">Add an event for customers to reserve.</p>
-              }
+            <div class="empty-state"><p>No events.</p>
+              @if (canManageShopContent()) { <p class="text-muted">Add an event for customers to reserve.</p> }
             </div>
           } @else {
-            <div class="view-mobile-only list-card-grid mb-3">
+            <div class="compact-list">
               @for (e of shop()!.events; track e.eventId) {
-                <article class="list-card">
-                  <div class="list-card__primary">
-                    <span class="list-card__title">{{ e.eventName }}</span>
-                    <span class="list-card__subtitle">{{ e.eventDate }}</span>
+                <article class="compact-row">
+                  <div class="compact-row__start">
+                    <div class="compact-row__text">
+                      <span class="compact-row__primary">{{ e.eventName }}</span>
+                      <span class="compact-row__secondary">{{ e.eventDate }} &middot; {{ eventAvailabilityLabel(e) }}@if (e.description) { &middot; {{ e.description }} }</span>
+                    </div>
                   </div>
-                  <div class="list-card__meta list-card__meta--clamp">
-                    {{ e.description }} · {{ eventAvailabilityLabel(e) }}
-                  </div>
-                  @if (canSelfReserveAtShop() || canManageShop()) {
-                    <div class="list-card__actions">
+                  @if (canSelfReserveAtShop() || canManageShopContent()) {
+                    <div class="compact-row__end">
                       @if (canSelfReserveAtShop()) {
-                        <button
-                          type="button"
-                          class="btn btn-sm btn-primary"
+                        <button type="button" class="btn btn--compact btn-primary"
                           [disabled]="!canShowReserveButton(e)"
                           [title]="reserveTooltip(e)"
-                          (click)="onReserveEventClick(e)"
-                        >
-                          Reserve
-                        </button>
+                          (click)="onReserveEventClick(e)">Reserve</button>
                       }
-                      @if (canManageShop()) {
-                        <button class="btn btn-sm btn-secondary" (click)="onEditEvent(e)">Edit</button>
-                        <button class="btn btn-sm btn-danger" (click)="onDeleteEvent(e)">Delete</button>
+                      @if (canManageShopContent()) {
+                        <button class="btn btn--compact btn-secondary" (click)="onEditEvent(e)">Edit</button>
+                        <button class="btn btn--compact btn-danger" (click)="onDeleteEvent(e)">Del</button>
                       }
                     </div>
                   }
                 </article>
               }
-            </div>
-            <div class="view-desktop-only">
-              <div class="table-container">
-                <table class="data-table">
-                  <thead>
-                    <tr>
-                      <th>Name</th><th>Date</th><th>Description</th><th>Availability</th>
-                      @if (canSelfReserveAtShop() || canManageShop()) { <th>Actions</th> }
-                    </tr>
-                  </thead>
-                  <tbody>
-                    @for (e of shop()!.events; track e.eventId) {
-                      <tr>
-                        <td>{{ e.eventName }}</td>
-                        <td>{{ e.eventDate }}</td>
-                        <td>{{ e.description }}</td>
-                        <td>{{ eventAvailabilityLabel(e) }}</td>
-                        @if (canSelfReserveAtShop() || canManageShop()) {
-                          <td class="data-table__actions">
-                            @if (canSelfReserveAtShop()) {
-                              <button
-                                type="button"
-                                class="btn btn-sm btn-primary"
-                                [disabled]="!canShowReserveButton(e)"
-                                [title]="reserveTooltip(e)"
-                                (click)="onReserveEventClick(e)"
-                              >
-                                Reserve
-                              </button>
-                            }
-                            @if (canManageShop()) {
-                              <div style="display:flex;gap:0.5rem">
-                                <button class="btn btn-sm btn-secondary" (click)="onEditEvent(e)">Edit</button>
-                                <button class="btn btn-sm btn-danger" (click)="onDeleteEvent(e)">Delete</button>
-                              </div>
-                            }
-                          </td>
-                        }
-                      </tr>
-                    }
-                  </tbody>
-                </table>
-              </div>
             </div>
           }
 
@@ -868,14 +555,9 @@ type ReservationSubTab = 'pending' | 'approved' | 'denied';
               <h3 class="mb-2">Request reservation</h3>
               <p class="text-muted mb-2">{{ event.eventName }} &middot; {{ event.eventDate }}</p>
               <form [formGroup]="eventRequestForm" (ngSubmit)="onSubmitEventRequest()">
-                <div class="form-group">
-                  <label>Party size</label>
-                  <input class="form-input" type="number" formControlName="partySize" min="1" />
-                </div>
+                <div class="form-group"><label>Party size</label><input class="form-input" type="number" formControlName="partySize" min="1" /></div>
                 <div class="form-actions">
-                  <button type="submit" class="btn btn-primary" [disabled]="eventRequestForm.invalid || !canSubmitEventRequest()">
-                    Submit request
-                  </button>
+                  <button type="submit" class="btn btn-primary" [disabled]="eventRequestForm.invalid || !canSubmitEventRequest()">Submit request</button>
                   <button type="button" class="btn btn-secondary" (click)="cancelEventRequest()">Cancel</button>
                 </div>
               </form>
@@ -890,10 +572,7 @@ type ReservationSubTab = 'pending' | 'approved' | 'denied';
               <div class="stat-card">
                 <div class="stat-value">{{ formatAverageRating(shop()!) }}</div>
                 <div class="stat-label">Average rating</div>
-                <app-star-rating
-                  style="margin-top:0.5rem"
-                  [rating]="roundedAverageRating(shop()!)"
-                  [readonly]="true" />
+                <app-star-rating style="margin-top:0.5rem" [rating]="roundedAverageRating(shop()!)" [readonly]="true" />
               </div>
               <div class="stat-card">
                 <div class="stat-value">{{ shop()!.reviewCount }}</div>
@@ -903,35 +582,20 @@ type ReservationSubTab = 'pending' | 'approved' | 'denied';
           }
 
           @if (canLeaveReview() && !showReviewForm()) {
-            <button type="button" class="btn btn-primary mb-2" (click)="showReviewForm.set(true)">
-              Leave review
-            </button>
+            <button type="button" class="btn btn-primary mb-2" (click)="showReviewForm.set(true)">Leave review</button>
           }
 
           @if (showReviewForm()) {
             <form class="form-card mb-3" [formGroup]="reviewForm" (ngSubmit)="onReviewSubmit()">
               <h3 class="mb-2">Leave a review</h3>
-              <div class="form-group">
-                <label>Rating</label>
-                <app-star-rating formControlName="rating" />
-                @if (reviewForm.controls.rating.touched && reviewForm.controls.rating.invalid) {
-                  <p class="text-muted" style="font-size:0.75rem;margin-top:0.25rem">Rating must be between 1 and 5.</p>
-                }
+              <div class="form-group"><label>Rating</label><app-star-rating formControlName="rating" />
+                @if (reviewForm.controls.rating.touched && reviewForm.controls.rating.invalid) { <p class="text-muted" style="font-size:0.75rem;margin-top:0.25rem">Rating must be between 1 and 5.</p> }
               </div>
-              <div class="form-group">
-                <label for="review-description">Description</label>
-                <textarea
-                  id="review-description"
-                  class="form-input"
-                  rows="4"
-                  formControlName="description"
-                  placeholder="Share your experience"></textarea>
-              </div>
+              <div class="form-group"><label for="review-description">Description</label><textarea id="review-description" class="form-input" rows="4" formControlName="description" placeholder="Share your experience"></textarea></div>
               <div class="form-group form-group--toggle">
                 <span class="form-label" id="review-comments-enabled-label">Allow comments on this review</span>
                 <label class="toggle-switch" aria-labelledby="review-comments-enabled-label">
-                  <input type="checkbox" formControlName="commentsEnabled" />
-                  <span class="toggle-slider" aria-hidden="true"></span>
+                  <input type="checkbox" formControlName="commentsEnabled" /><span class="toggle-slider" aria-hidden="true"></span>
                   <span class="sr-only">Allow comments on this review</span>
                 </label>
               </div>
@@ -948,23 +612,15 @@ type ReservationSubTab = 'pending' | 'approved' | 'denied';
             <div class="card-grid">
               @for (r of shop()!.reviews; track r.id) {
                 <div class="card">
-                  <div style="margin-bottom:0.5rem">
-                    <app-star-rating [rating]="r.rating" [readonly]="true" />
-                  </div>
+                  <div style="margin-bottom:0.5rem"><app-star-rating [rating]="r.rating" [readonly]="true" /></div>
                   <p class="text-muted" style="font-size:0.875rem">{{ r.description }}</p>
                   <p class="text-muted" style="font-size:0.75rem;margin-top:0.5rem">By {{ r.user.name }}</p>
-
                   @if (isReviewAuthor(r)) {
                     <label class="toggle-switch" style="margin-top:0.75rem;font-size:0.875rem">
-                      <input
-                        type="checkbox"
-                        [checked]="r.commentsEnabled"
-                        (change)="onCommentsEnabledChange(r, $any($event.target).checked)" />
-                      <span class="toggle-slider" aria-hidden="true"></span>
-                      <span>Allow comments</span>
+                      <input type="checkbox" [checked]="r.commentsEnabled" (change)="onCommentsEnabledChange(r, $any($event.target).checked)" />
+                      <span class="toggle-slider" aria-hidden="true"></span><span>Allow comments</span>
                     </label>
                   }
-
                   <div style="margin-top:1rem;padding-top:0.75rem;border-top:1px solid #374151">
                     <p style="font-size:0.875rem;color:#fff;margin-bottom:0.5rem">Comments</p>
                     @if (!r.commentsEnabled) {
@@ -976,28 +632,18 @@ type ReservationSubTab = 'pending' | 'approved' | 'denied';
                         <div style="display:flex;flex-direction:column;gap:0.5rem;margin-bottom:0.75rem">
                           @for (c of r.comments; track c.id) {
                             <div style="background:#1f2937;border-radius:0.375rem;padding:0.5rem 0.75rem">
-                              <p style="font-size:0.75rem;color:#9ca3af;margin-bottom:0.25rem">
-                                {{ c.user.name }} · {{ formatCommentDate(c.createdAt) }}
-                              </p>
+                              <p style="font-size:0.75rem;color:#9ca3af;margin-bottom:0.25rem">{{ c.user.name }} · {{ formatCommentDate(c.createdAt) }}</p>
                               <p style="font-size:0.875rem;color:#e5e7eb">{{ c.body }}</p>
                             </div>
                           }
                         </div>
                       }
-                      <textarea
-                        class="form-input"
-                        rows="2"
-                        placeholder="Write a comment..."
+                      <textarea class="form-input" rows="2" placeholder="Write a comment..."
                         [value]="commentDraft(r.id)"
                         (input)="updateCommentDraft(r.id, $any($event.target).value)"></textarea>
-                      <button
-                        type="button"
-                        class="btn btn-secondary"
-                        style="margin-top:0.5rem"
+                      <button type="button" class="btn btn-secondary" style="margin-top:0.5rem"
                         [disabled]="!commentDraft(r.id).trim()"
-                        (click)="onCommentSubmit(r.id)">
-                        Post comment
-                      </button>
+                        (click)="onCommentSubmit(r.id)">Post comment</button>
                     }
                   </div>
                 </div>
@@ -1005,10 +651,77 @@ type ReservationSubTab = 'pending' | 'approved' | 'denied';
             </div>
           }
         }
-      }
 
+        <!-- Employees tab -->
+        @if (activeTab() === 'employees') {
+          <app-employee-management [shopId]="shop()!.id" />
+        }
+      }
     </div>
   `,
+  styles: [`
+    :host {
+      display: block;
+    }
+
+    .shop-breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.75rem;
+      font-size: 0.875rem;
+    }
+
+    .shop-breadcrumb__link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.375rem;
+      color: #888;
+      text-decoration: none;
+      transition: color 0.15s;
+    }
+
+    .shop-breadcrumb__link:hover {
+      color: #d4a574;
+    }
+
+    .shop-breadcrumb__current {
+      color: #aaa;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .page-header__title-row {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .page-header__title-row .page-title {
+      margin-bottom: 0;
+    }
+
+    .pill-tabs.shop-tabs {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+
+    .pill-tabs.shop-tabs::-webkit-scrollbar {
+      display: none;
+    }
+
+    .pill-tabs.shop-tabs .pill-tab {
+      flex-shrink: 0;
+    }
+
+    @media (max-width: 768px) {
+      .page-header__title-row {
+        flex-wrap: wrap;
+      }
+    }
+  `],
 })
 export class ShopDetailsComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
@@ -1027,6 +740,7 @@ export class ShopDetailsComponent implements OnInit {
   private readonly communityService = inject(CommunityService);
   private readonly eventService = inject(EventService);
   private readonly dialog = inject(DialogService);
+  private readonly shopEmployeeService = inject(ShopEmployeeService);
 
   readonly shop = signal<ShopResponseDto | null>(null);
   readonly loading = signal(true);
@@ -1040,6 +754,15 @@ export class ShopDetailsComponent implements OnInit {
   readonly selectedEventForRequest = signal<EventResponseDto | null>(null);
   readonly submittingEventRequest = signal(false);
 
+  readonly menuTypeFilter = signal<MenuItemType | 'ALL'>('ALL');
+
+  readonly filteredMenuItems = computed(() => {
+    const items = this.shop()?.currentMenu?.items ?? [];
+    const filter = this.menuTypeFilter();
+    if (filter === 'ALL') return items;
+    return items.filter(item => item.itemType === filter);
+  });
+
   readonly pendingRequests = computed(() =>
     this.allShopRequests().filter(req => req.status === 'PENDING'),
   );
@@ -1048,7 +771,7 @@ export class ShopDetailsComponent implements OnInit {
     this.allShopRequests().filter(req => req.status === 'DENIED'),
   );
 
-  readonly canManageShop = computed(() => {
+  readonly canManageShop = computed<boolean>(() => {
     const shop = this.shop();
     const profile = this.profileService.currentUser();
     if (!shop || !profile) return false;
@@ -1056,16 +779,28 @@ export class ShopDetailsComponent implements OnInit {
     return shop.createdBy?.id === profile.id;
   });
 
-  readonly isCustomer = computed(() => {
-    const profile = this.profileService.currentUser();
-    return !!profile && profile.userType === 'CUSTOMER' && !this.canManageShop();
+  readonly employeeShopIds = signal<string[]>([]);
+
+  readonly canManageShopContent = computed<boolean>(() => {
+    if (this.canManageShop()) return true;
+    const shop = this.shop();
+    return !!shop && this.employeeShopIds().includes(shop.id);
   });
 
-  readonly canSelfReserveAtShop = computed(() => !this.canManageShop());
+  readonly isCustomer = computed(() => {
+    const profile = this.profileService.currentUser();
+    return !!profile && profile.userType === 'CUSTOMER' && !this.canManageShopContent();
+  });
 
-  readonly visibleTabs = computed(() =>
-    this.isCustomer() ? this.tabs.filter(t => t.key !== 'tables') : this.tabs,
-  );
+  readonly canSelfReserveAtShop = computed(() => !this.canManageShopContent());
+
+  readonly visibleTabs = computed(() => {
+    let tabs = this.isCustomer() ? this.tabs.filter(t => t.key !== 'tables') : this.tabs;
+    if (!this.canManageShop()) {
+      tabs = tabs.filter(t => t.key !== 'employees');
+    }
+    return tabs;
+  });
 
   readonly blockedEventIdsForCurrentUser = computed(() => {
     const profile = this.profileService.currentUser();
@@ -1077,84 +812,76 @@ export class ShopDetailsComponent implements OnInit {
     );
   });
 
-  readonly isShopOwner = computed(() => {
-    const shop = this.shop();
-    const profile = this.profileService.currentUser();
-    return !!shop && !!profile && shop.createdBy?.id === profile.id;
+  readonly canSubmitEventRequest = computed(() => {
+    const event = this.selectedEventForRequest();
+    if (!event) return false;
+    return this.selectableEventsForUser().some(e => e.eventId === event.eventId);
   });
 
-  readonly canLeaveReview = computed(() => {
-    const profile = this.profileService.currentUser();
+  readonly selectableEventsForUser = computed(() => {
     const shop = this.shop();
-    if (!profile || !shop) return false;
-    if (profile.userType !== 'CUSTOMER') return false;
-    if (this.canManageShop()) return false;
-    const alreadyReviewed = shop.reviews.some(r => r.user.id === profile.id);
-    return !alreadyReviewed;
+    if (!shop) return [];
+    return shop.events.filter(e =>
+      canReserveForEvent(e)
+      && (this.canSelfReserveAtShop()
+        ? !this.blockedEventIdsForCurrentUser().has(e.eventId)
+        : true),
+    );
   });
 
+  readonly togglingFavourite = signal(false);
   readonly showMenuForm = signal(false);
   readonly editingMenuItemId = signal<string | null>(null);
   readonly showTableForm = signal(false);
   readonly editingTableId = signal<string | null>(null);
+  readonly showReviewForm = signal(false);
   readonly showEventForm = signal(false);
   readonly editingEventId = signal<string | null>(null);
-  readonly todayIsoValue = todayIso;
-  readonly showReviewForm = signal(false);
-  readonly togglingFavourite = signal(false);
+
+  readonly members = signal<UserSummaryDto[]>([]);
+  readonly membersTotalElements = signal(0);
+  readonly membersTotalPages = signal(1);
+  readonly membersPage = signal(0);
+  readonly membersLoading = signal(false);
+  readonly membersSearchInput = signal('');
+
   readonly communityPosts = signal<CommunityPostResponseDto[]>([]);
-  readonly communityLoading = signal(false);
   readonly communityPage = signal(0);
-  readonly communityTotalPages = signal(0);
+  readonly communityHasMore = signal(false);
+  readonly communityLoading = signal(false);
   readonly announcementDraft = signal('');
   readonly postingAnnouncement = signal(false);
 
-  readonly communityHasMore = computed(
-    () => this.communityPage() + 1 < this.communityTotalPages(),
-  );
-
-  readonly members = signal<UserSummaryDto[]>([]);
-  readonly membersSearchInput = signal('');
-  readonly membersPage = signal(0);
-  readonly membersPageSize = 10;
-  readonly membersTotalElements = signal(0);
-  readonly membersTotalPages = signal(1);
-  readonly membersLoading = signal(false);
-
-  readonly isFavourite = computed(() => {
-    const shop = this.shop();
-    const profile = this.profileService.currentUser();
-    if (!shop || !profile) return false;
-    return profile.favouriteShops?.some(s => s.id === shop.id) ?? false;
-  });
+  readonly commentDrafts = signal<Record<string, string>>({});
 
   readonly tabs: { key: Tab; label: string }[] = [
-    { key: 'users', label: 'Community' },
+    { key: 'users', label: 'Users' },
     { key: 'menu', label: 'Menu' },
     { key: 'tables', label: 'Tables' },
     { key: 'reservations', label: 'Reservations' },
     { key: 'events', label: 'Events' },
     { key: 'reviews', label: 'Reviews' },
+    { key: 'employees', label: 'Employees' },
   ];
 
-  readonly menuItemTypes = MENU_ITEM_TYPES;
+  readonly menuForm = this.fb.nonNullable.group({
+    name: ['', Validators.required],
+    price: [0, [Validators.required, Validators.min(0.01)]],
+    priceCurrency: ['' as MenuCurrency, Validators.required],
+    description: [''],
+    imageUrl: [''],
+    itemType: ['' as MenuItemType, Validators.required],
+  });
+
   readonly menuItemTypeSelectOptions: FormSelectOption[] = MENU_ITEM_TYPES.map(t => ({
     value: t.value,
     label: t.label,
   }));
+
   readonly menuCurrencySelectOptions: FormSelectOption[] = MENU_CURRENCIES.map(c => ({
     value: c.value,
     label: c.label,
   }));
-
-  readonly menuForm = this.fb.nonNullable.group({
-    name: ['', Validators.required],
-    description: [''],
-    price: [0, [Validators.required, Validators.min(0)]],
-    priceCurrency: ['RSD' as MenuCurrency, Validators.required],
-    imageUrl: [''],
-    itemType: ['FOOD' as MenuItemType, Validators.required],
-  });
 
   readonly tableForm = this.fb.nonNullable.group({
     number: [1, [Validators.required, Validators.min(1)]],
@@ -1167,272 +894,226 @@ export class ShopDetailsComponent implements OnInit {
     commentsEnabled: [true],
   });
 
-  readonly eventRequestForm = this.fb.nonNullable.group({
-    partySize: [1, [Validators.required, Validators.min(1)]],
-  });
-
   readonly eventForm = this.fb.nonNullable.group({
     eventName: ['', Validators.required],
     eventDate: ['', Validators.required],
     description: [''],
   });
 
-  readonly commentDrafts = signal<Record<string, string>>({});
+  readonly eventRequestForm = this.fb.nonNullable.group({
+    partySize: [1, [Validators.required, Validators.min(1)]],
+  });
 
-  private shopId = '';
-
-  constructor() {
-    toObservable(this.membersSearchInput, { injector: this.injector })
-      .pipe(skip(1), debounceTime(300), distinctUntilChanged(), takeUntilDestroyed())
-      .subscribe(() => {
-        if (this.activeTab() === 'users') {
-          this.loadMembers(true);
-        }
-      });
-  }
+  readonly todayIsoValue = todayIso;
 
   ngOnInit(): void {
-    this.shopId = this.route.snapshot.paramMap.get('id') ?? '';
-    this.loadShop();
+    const id = this.route.snapshot.paramMap.get('id');
+    if (!id) {
+      this.loading.set(false);
+      return;
+    }
+    this.shopService.getById(id).subscribe(shop => {
+      this.shop.set(shop);
+      this.loading.set(false);
+    });
+    this.loadShopData(id);
+    if (this.profileService.currentUser()) {
+      this.shopEmployeeService.getMyEmployeeShops().subscribe(shops => {
+      this.employeeShopIds.set(shops.map(s => s.id));
+    });
+    }
   }
 
-  private loadShop(): void {
-    this.shopService.getById(this.shopId).subscribe({
-      next: (shop) => {
-        this.shop.set(shop);
-        this.loading.set(false);
-        if (this.isCustomer() && this.activeTab() === 'tables') {
-          this.activeTab.set('menu');
-        }
-        this.loadReservations();
-        if (this.activeTab() === 'users') {
-          this.loadMembers(true);
-          this.loadCommunityPosts(true);
-        }
-      },
-      error: () => this.loading.set(false),
-    });
+  private loadShopData(shopId: string): void {
+    this.reservationService.getAll().subscribe(res => this.allUserReservations.set(res));
+    this.requestService.getAll().subscribe(req => this.allUserRequests.set(req));
+    this.requestService.getAll(shopId).subscribe(req => this.allShopRequests.set(req));
+    this.reservationService.getAll().subscribe(res => this.reservations.set(res.filter(r => r.shop?.id === shopId)));
+    this.loadMembers(shopId);
+    this.loadCommunity(shopId);
+  }
+
+  onTabChange(tab: Tab): void {
+    this.activeTab.set(tab);
+    if (tab === 'reservations') {
+      this.reservationSubTab.set('pending');
+    }
+  }
+
+  isFavourite(): boolean {
+    const shop = this.shop();
+    if (!shop) return false;
+    if (shop.favouriteByCurrentUser !== undefined) {
+      return shop.favouriteByCurrentUser;
+    }
+    const profile = this.profileService.currentUser();
+    if (!profile) return false;
+    return profile.favouriteShops?.some(s => s.id === shop.id) ?? false;
   }
 
   toggleFavourite(): void {
     const shop = this.shop();
-    if (!shop || this.canManageShop() || this.togglingFavourite()) return;
-
+    if (!shop) return;
+    const wasFavourite = this.isFavourite();
+    this.shop.update(s => s ? { ...s, favouriteByCurrentUser: !wasFavourite } : s);
     this.togglingFavourite.set(true);
-    const op = this.isFavourite()
+    const op = wasFavourite
       ? this.shopService.removeFavourite(shop.id)
       : this.shopService.addFavourite(shop.id);
-
     op.subscribe({
-      next: updated => {
-        this.shop.set(updated);
+      next: updatedShop => {
+        this.shop.update(s => s ? {
+          ...s,
+          ...updatedShop,
+          favouriteByCurrentUser: updatedShop.favouriteByCurrentUser ?? !wasFavourite,
+        } : s);
         this.togglingFavourite.set(false);
-        if (this.activeTab() === 'users') {
-          this.loadMembers(true);
-          this.loadCommunityPosts(true);
-        }
       },
-      error: () => this.togglingFavourite.set(false),
+      error: () => {
+        this.shop.update(s => s ? { ...s, favouriteByCurrentUser: wasFavourite } : s);
+        this.togglingFavourite.set(false);
+      },
     });
   }
 
-  onTabChange(tab: Tab): void {
-    if (this.isCustomer() && tab === 'tables') {
-      this.activeTab.set('menu');
-      return;
-    }
-    this.activeTab.set(tab);
-    if (tab === 'users') {
-      this.loadMembers(true);
-      this.loadCommunityPosts(true);
-    }
-    if (tab !== 'events') {
-      this.selectedEventForRequest.set(null);
-      this.cancelEventForm();
-    }
+  // --- Menu ---
+  formatMenuItemType(type: MenuItemType): string {
+    const map: Record<MenuItemType, string> = {
+      FOOD: 'Food',
+      DRINK: 'Drink',
+      DESSERT: 'Dessert',
+      OTHER: 'Other',
+    };
+    return map[type] ?? type;
   }
 
-  onPrimaryTabSelect(event: Event): void {
-    const value = (event.target as HTMLSelectElement).value as Tab;
-    this.onTabChange(value);
+  formatMenuDate(date: string): string {
+    return new Date(date).toLocaleDateString();
   }
 
-  onReservationSubTabSelect(event: Event): void {
-    const value = (event.target as HTMLSelectElement).value as 'pending' | 'approved' | 'denied';
-    this.reservationSubTab.set(value);
-  }
-
-  membersEmptyStateMessage(): string {
-    if (this.membersSearchInput().trim()) return 'No members match your search.';
-    return 'No community members yet. Be the first to join!';
-  }
-
-  onMembersSearchInput(inputEvent: Event): void {
-    const value = (inputEvent.target as HTMLInputElement).value;
-    this.membersSearchInput.set(value);
-  }
-
-  loadMembers(resetPage = false): void {
-    if (!this.shopId) return;
-    if (resetPage) {
-      this.membersPage.set(0);
-    }
-    this.membersLoading.set(true);
-    const q = this.membersSearchInput().trim();
-    this.communityService
-      .getMembers(this.shopId, this.membersPage(), this.membersPageSize, q || undefined)
-      .subscribe({
-        next: page => {
-          this.members.set(page.content);
-          this.membersTotalElements.set(page.totalElements);
-          this.membersTotalPages.set(Math.max(1, page.totalPages));
-          this.membersLoading.set(false);
-        },
-        error: () => this.membersLoading.set(false),
+  onCreateMenu(): void {
+    if (!this.shop()?.currentMenu) {
+      const shop = this.shop();
+      if (!shop) return;
+      this.menuService.createForShop(shop.id).subscribe(menu => {
+        this.shop.update(s => s ? { ...s, currentMenu: menu } : s);
       });
-  }
-
-  goToMembersPage(page: number): void {
-    if (page < 0 || page >= this.membersTotalPages()) return;
-    this.membersPage.set(page);
-    this.loadMembers();
-  }
-
-  membersRangeLabel(): string {
-    const total = this.membersTotalElements();
-    if (total === 0) return '';
-    const start = this.membersPage() * this.membersPageSize + 1;
-    const end = Math.min((this.membersPage() + 1) * this.membersPageSize, total);
-    return `Showing ${start}–${end} of ${total}`;
-  }
-
-  loadCommunityPosts(reset = false): void {
-    if (!this.shopId) return;
-    const page = reset ? 0 : this.communityPage() + 1;
-    if (reset) {
-      this.communityPosts.set([]);
-      this.communityPage.set(0);
-      this.communityTotalPages.set(0);
     }
-    this.communityLoading.set(true);
-    this.communityService.getPosts(this.shopId, page, 20).subscribe({
-      next: result => {
-        this.communityPosts.update(existing =>
-          reset ? result.content : [...existing, ...result.content],
-        );
-        this.communityPage.set(result.page);
-        this.communityTotalPages.set(result.totalPages);
-        this.communityLoading.set(false);
-      },
-      error: () => this.communityLoading.set(false),
+  }
+
+  onMenuSubmit(): void {
+    if (this.menuForm.invalid || !this.shop()?.currentMenu) return;
+    const menuId = this.shop()!.currentMenu!.id;
+    const val = this.menuForm.getRawValue();
+    const id = this.editingMenuItemId();
+
+    const op = id
+      ? this.menuItemService.update(id, { ...val, menuId })
+      : this.menuItemService.create({ ...val, menuId });
+
+    op.subscribe(item => {
+      this.shop.update(s => {
+        if (!s?.currentMenu) return s;
+        const items = id
+          ? s.currentMenu.items.map(i => i.id === id ? item : i)
+          : [...s.currentMenu.items, item];
+        return { ...s, currentMenu: { ...s.currentMenu, items } };
+      });
+      this.showMenuForm.set(false);
+      this.editingMenuItemId.set(null);
+      this.menuForm.reset({ name: '', price: 0, priceCurrency: '' as MenuCurrency, description: '', imageUrl: '', itemType: '' as MenuItemType });
     });
   }
 
-  loadMoreCommunityPosts(): void {
-    this.loadCommunityPosts(false);
-  }
-
-  onAnnouncementSubmit(): void {
-    const body = this.announcementDraft().trim();
-    if (!body || this.postingAnnouncement()) return;
-    this.postingAnnouncement.set(true);
-    this.communityService.createAnnouncement(this.shopId, { body }).subscribe({
-      next: () => {
-        this.announcementDraft.set('');
-        this.postingAnnouncement.set(false);
-        this.loadCommunityPosts(true);
-      },
-      error: () => this.postingAnnouncement.set(false),
+  onEditMenuItem(item: MenuItemResponseDto): void {
+    this.editingMenuItemId.set(item.id);
+    this.showMenuForm.set(true);
+    this.menuForm.patchValue({
+      name: item.name,
+      price: item.price,
+      priceCurrency: item.priceCurrency,
+      description: item.description,
+      imageUrl: item.imageUrl ?? '',
+      itemType: item.itemType,
     });
   }
 
-  onDeletePost(post: CommunityPostResponseDto): void {
-    void this.dialog
-      .confirm('Delete this post?', { confirmLabel: 'Delete', confirmVariant: 'danger' })
-      .then(ok => {
-        if (!ok) return;
-        this.communityService.deletePost(this.shopId, post.id).subscribe({
-          next: () => this.loadCommunityPosts(true),
+  onDeleteMenuItem(item: MenuItemResponseDto): void {
+    void this.dialog.confirm(`Delete "${item.name}"?`, { confirmLabel: 'Delete', confirmVariant: 'danger' }).then(ok => {
+      if (!ok) return;
+      this.menuItemService.delete(item.id).subscribe(() => {
+        this.shop.update(s => {
+          if (!s?.currentMenu) return s;
+          return { ...s, currentMenu: { ...s.currentMenu, items: s.currentMenu.items.filter(i => i.id !== item.id) } };
         });
       });
-  }
-
-  canDeletePost(post: CommunityPostResponseDto): boolean {
-    const profile = this.profileService.currentUser();
-    if (!profile) return false;
-    if (this.isShopOwner()) return true;
-    return post.author.id === profile.id;
-  }
-
-  formatPostDate(iso: string): string {
-    return new Date(iso).toLocaleString(undefined, {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
     });
   }
 
-  private loadReservations(): void {
-    const profile = this.profileService.currentUser();
-    if (!this.canManageShop() && profile) {
-      this.reservationService.getAll().subscribe(all => {
-        this.allUserReservations.set(all.filter(r => r.user?.id === profile.id));
-        this.reservations.set(
-          all.filter(r => r.shop?.id === this.shopId && r.user?.id === profile.id),
-        );
+  // --- Tables ---
+  openAddTableForm(): void {
+    this.showTableForm.set(true);
+    this.editingTableId.set(null);
+    this.tableForm.reset({ number: 1, capacity: 2 });
+  }
+
+  onTableSubmit(): void {
+    if (this.tableForm.invalid || !this.shop()) return;
+    const shopId = this.shop()!.id;
+    const val = this.tableForm.getRawValue();
+    const id = this.editingTableId();
+
+    const op = id
+      ? this.tableService.update(id, { ...val, shopId })
+      : this.tableService.create({ ...val, shopId });
+
+    op.subscribe(table => {
+      this.shop.update(s => {
+        if (!s) return s;
+        const tables = id
+          ? s.tables.map(t => t.id === id ? table : t)
+          : [...s.tables, table];
+        return { ...s, tables };
       });
-      this.requestService.getAll().subscribe(all => {
-        this.allUserRequests.set(all);
-        this.allShopRequests.set(
-          all.filter(r => r.shop?.id === this.shopId && r.user?.id === profile.id),
-        );
-      });
-      return;
-    }
-
-    this.reservationService.getAll().subscribe(all => {
-      this.reservations.set(all.filter(r => r.shop?.id === this.shopId));
-    });
-    this.requestService.getAll(this.shopId).subscribe(requests => {
-      this.allShopRequests.set(requests);
+      this.showTableForm.set(false);
+      this.editingTableId.set(null);
     });
   }
 
-  onAcceptRequest(req: ReservationRequestResponseDto): void {
-    const sel = this.selectedTableForRequest();
-    if (!sel || sel.reqId !== req.id || !sel.tableId) {
-      void this.dialog.alert('Please select a table first.');
-      return;
-    }
-    const table = (this.shop()?.tables ?? []).find(t => t.id === sel.tableId);
-    this.requestService.accept(req.id, { tableId: sel.tableId }).subscribe({
-      next: () => this.loadReservations(),
-      error: err =>
-        void this.dialog.alert(
-          getAcceptReservationErrorMessage(err, {
-            partySize: req.partySize,
-            tableCapacity: table?.capacity,
-          }),
-        ),
+  onEditTable(t: TableResponseDto): void {
+    this.editingTableId.set(t.id);
+    this.showTableForm.set(true);
+    this.tableForm.patchValue({ number: t.number, capacity: t.capacity });
+  }
+
+  onDeleteTable(t: TableResponseDto): void {
+    void this.dialog.confirm(`Delete table ${t.number}?`, { confirmLabel: 'Delete', confirmVariant: 'danger' }).then(ok => {
+      if (!ok) return;
+      this.tableService.delete(t.id).subscribe(() => {
+        this.shop.update(s => s ? { ...s, tables: s.tables.filter(tb => tb.id !== t.id) } : s);
+      });
     });
   }
 
-  onDenyRequest(req: ReservationRequestResponseDto): void {
-    void this.dialog
-      .confirm('Deny this reservation request?', {
-        confirmLabel: 'Deny',
-        confirmVariant: 'danger',
-      })
-      .then(ok => {
-        if (!ok) return;
-        this.requestService.deny(req.id).subscribe(() => this.loadReservations());
-      });
+  // --- Reservations ---
+  eventLabel(item: { eventName?: string; eventId?: string }): string {
+    return item.eventName ?? item.eventId ?? '—';
+  }
+
+  eventAvailabilityLabel(e: EventResponseDto): string {
+    return formatEventAvailability(e);
   }
 
   tablesForRequest(req: ReservationRequestResponseDto): TableResponseDto[] {
-    return (this.shop()?.tables ?? []).filter(t => t.capacity >= req.partySize);
+    const shop = this.shop();
+    if (!shop) return [];
+    const reservedTableIds = new Set(
+      this.reservations()
+        .filter(r => !req.eventId || r.eventId === req.eventId)
+        .map(r => r.table?.id)
+        .filter(Boolean),
+    );
+    return shop.tables.filter(t => !reservedTableIds.has(t.id));
   }
 
   hasSuitableTablesForRequest(req: ReservationRequestResponseDto): boolean {
@@ -1462,260 +1143,93 @@ export class ShopDetailsComponent implements OnInit {
     }
   }
 
-  eventLabel(item: { eventName?: string; eventId?: string }): string {
-    if (item.eventName) {
-      return item.eventName;
-    }
-    return item.eventId ?? '—';
-  }
-
-  eventAvailabilityLabel(event: EventResponseDto): string {
-    return formatEventAvailability(event);
-  }
-
-  isEventBlockedForCurrentUser(eventId: string): boolean {
-    return this.blockedEventIdsForCurrentUser().has(eventId);
-  }
-
-  canShowReserveButton(event: EventResponseDto): boolean {
-    return canReserveForEvent(event) && !this.isEventBlockedForCurrentUser(event.eventId);
-  }
-
-  reserveTooltip(event: EventResponseDto): string {
-    if (isEventFull(event)) return 'No tables left for this event';
-    if (this.isEventBlockedForCurrentUser(event.eventId)) {
-      return 'You already have a reservation request or reservation for this event';
-    }
-    return canReserveForEvent(event)
-      ? `Reserve for ${event.eventName}`
-      : 'This event has already passed';
-  }
-
-  onReserveEventClick(event: EventResponseDto): void {
-    if (!this.canShowReserveButton(event)) return;
-    this.selectedEventForRequest.set(event);
-    this.eventRequestForm.reset({ partySize: 1 });
-  }
-
-  cancelEventRequest(): void {
-    this.selectedEventForRequest.set(null);
-    this.eventRequestForm.reset({ partySize: 1 });
-  }
-
-  canSubmitEventRequest(): boolean {
-    const event = this.selectedEventForRequest();
-    if (!event) return false;
-    return this.canShowReserveButton(event);
-  }
-
-  onSubmitEventRequest(): void {
-    if (this.eventRequestForm.invalid || !this.canSubmitEventRequest() || this.submittingEventRequest()) {
+  onAcceptRequest(req: ReservationRequestResponseDto): void {
+    const sel = this.selectedTableForRequest();
+    if (!sel || sel.reqId !== req.id || !sel.tableId) {
+      void this.dialog.alert('Please select a table first.');
       return;
     }
-    const profile = this.profileService.currentUser();
-    const event = this.selectedEventForRequest();
-    if (!profile || !event) return;
-
-    this.submittingEventRequest.set(true);
-    const partySize = this.eventRequestForm.controls.partySize.value;
-    this.requestService
-      .create({
-        userId: profile.id,
-        shopId: this.shopId,
-        eventId: event.eventId,
-        partySize,
-      })
-      .subscribe({
-        next: () => {
-          this.submittingEventRequest.set(false);
-          this.cancelEventRequest();
-          this.loadReservations();
-          this.reservationSubTab.set('pending');
-          void this.dialog.alert('Reservation request submitted.');
-        },
-        error: err => {
-          this.submittingEventRequest.set(false);
-          if (err instanceof HttpErrorResponse && err.status === 409) {
-            void this.dialog.alert(
-              'You already have a reservation for this event or there are no tables left.',
-            );
-          }
-        },
+    const table = this.shop()?.tables.find(t => t.id === sel.tableId);
+    this.requestService.accept(req.id, { tableId: sel.tableId }).subscribe({
+      next: () => {
+        const shopId = this.shop()?.id;
+        if (shopId) {
+          this.requestService.getAll(shopId).subscribe(reqs => this.allShopRequests.set(reqs));
+          this.reservationService.getAll().subscribe(res => {
+        this.reservations.set(res.filter(r => r.shop?.id === shopId));
       });
+        }
+      },
+      error: err => void this.dialog.alert(getAcceptReservationErrorMessage(err, { partySize: req.partySize, tableCapacity: table?.capacity })),
+    });
   }
 
-  onCreateMenu(): void {
-    if (!this.shop()?.currentMenu) {
-      this.executeCreateMenu();
-      return;
-    }
-    void this.dialog
-      .confirm('Create a new menu? The current menu will become read-only history.', {
-        confirmLabel: 'Yes',
-        cancelLabel: 'No',
-      })
-      .then(ok => {
-        if (ok) this.executeCreateMenu();
+  onDenyRequest(req: ReservationRequestResponseDto): void {
+    void this.dialog.confirm('Deny this reservation request?', { confirmLabel: 'Deny', confirmVariant: 'danger' }).then(ok => {
+      if (!ok) return;
+      this.requestService.deny(req.id).subscribe(() => {
+        const shopId = this.shop()?.id;
+        if (shopId) {
+          this.requestService.getAll(shopId).subscribe(reqs => this.allShopRequests.set(reqs));
+        }
       });
-  }
-
-  private executeCreateMenu(): void {
-    this.menuService.createForShop(this.shopId).subscribe({
-      next: () => this.loadShop(),
-      error: () =>
-        void this.dialog.alert('Could not create menu. Only the shop owner can create menus.'),
     });
   }
 
-  formatMenuDate(iso: string): string {
-    return new Date(iso).toLocaleDateString(undefined, {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
-  }
-
-  formatMenuItemType(type: MenuItemType | undefined): string {
-    if (!type) return '—';
-    return this.menuItemTypes.find(t => t.value === type)?.label ?? type;
-  }
-
-  onMenuSubmit(): void {
-    if (this.menuForm.invalid) return;
-    const shop = this.shop();
-    if (!shop?.currentMenu) {
-      void this.dialog.alert('Create a menu before adding items.');
-      return;
-    }
-
-    const val = { ...this.menuForm.getRawValue(), menuId: shop.currentMenu.id };
-    const id = this.editingMenuItemId();
-    const op = id
-      ? this.menuItemService.update(id, val)
-      : this.menuItemService.create(val);
-
-    op.subscribe(() => {
-      this.showMenuForm.set(false);
-      this.editingMenuItemId.set(null);
-      this.menuForm.reset({ name: '', description: '', price: 0, priceCurrency: 'RSD', imageUrl: '', itemType: 'FOOD' });
-      this.loadShop();
-    });
-  }
-
-  onEditMenuItem(item: MenuItemResponseDto): void {
-    this.editingMenuItemId.set(item.id);
-    this.showMenuForm.set(true);
-    this.menuForm.patchValue({
-      name: item.name,
-      description: item.description,
-      price: item.price,
-      priceCurrency: item.priceCurrency,
-      imageUrl: item.imageUrl,
-      itemType: item.itemType ?? 'FOOD',
-    });
-  }
-
-  onDeleteMenuItem(item: MenuItemResponseDto): void {
-    void this.dialog
-      .confirm(`Delete "${item.name}"?`, { confirmLabel: 'Delete', confirmVariant: 'danger' })
-      .then(ok => {
-        if (!ok) return;
-        this.menuItemService.delete(item.id).subscribe(() => this.loadShop());
-      });
-  }
-
-  private nextTableNumber(): number {
-    const tables = this.shop()?.tables ?? [];
-    if (tables.length === 0) return 1;
-    return Math.max(...tables.map(t => t.number)) + 1;
-  }
-
-  openAddTableForm(): void {
-    this.editingTableId.set(null);
-    this.tableForm.reset({ number: this.nextTableNumber(), capacity: 2 });
-    this.showTableForm.set(true);
-  }
-
-  onTableSubmit(): void {
-    if (this.tableForm.invalid) return;
-    const val = { ...this.tableForm.getRawValue(), shopId: this.shopId };
-    const id = this.editingTableId();
-    const op = id
-      ? this.tableService.update(id, val)
-      : this.tableService.create(val);
-
-    op.subscribe(() => {
-      this.showTableForm.set(false);
-      this.editingTableId.set(null);
-      this.tableForm.reset({ number: this.nextTableNumber(), capacity: 2 });
-      this.loadShop();
-    });
-  }
-
-  onEditTable(t: TableResponseDto): void {
-    this.editingTableId.set(t.id);
-    this.showTableForm.set(true);
-    this.tableForm.patchValue({ number: t.number, capacity: t.capacity });
-  }
-
-  onDeleteTable(t: TableResponseDto): void {
-    void this.dialog
-      .confirm(`Delete table #${t.number}?`, { confirmLabel: 'Delete', confirmVariant: 'danger' })
-      .then(ok => {
-        if (!ok) return;
-        this.tableService.delete(t.id).subscribe(() => this.loadShop());
-      });
-  }
-
+  // --- Events ---
   openAddEventForm(): void {
     this.editingEventId.set(null);
+    this.showEventForm.set(true);
+    this.applyEventDateValidators();
     this.eventForm.reset({ eventName: '', eventDate: '', description: '' });
-    this.applyEventDateValidatorsForMode();
-    this.showEventForm.set(true);
-  }
-
-  onEditEvent(event: EventResponseDto): void {
-    this.editingEventId.set(event.eventId);
-    this.applyEventDateValidatorsForMode();
-    this.showEventForm.set(true);
-    this.eventForm.patchValue({
-      eventName: event.eventName,
-      eventDate: normalizeDateTimeLocal(event.eventDate),
-      description: event.description,
-    });
   }
 
   onEventSubmit(): void {
-    if (this.eventForm.invalid) return;
-    if (!this.editingEventId() && this.eventForm.controls.eventDate.hasError('pastDate')) return;
-
-    const val = { ...this.eventForm.getRawValue(), shopId: this.shopId };
+    if (this.eventForm.invalid || !this.shop()) return;
+    const shopId = this.shop()!.id;
+    const val = this.eventForm.getRawValue();
     const id = this.editingEventId();
-    const op = id ? this.eventService.update(id, val) : this.eventService.create(val);
 
-    op.subscribe(() => {
-      this.cancelEventForm();
-      this.loadShop();
+    const op = id
+      ? this.eventService.update(id, { ...val, shopId })
+      : this.eventService.create({ ...val, shopId });
+
+    op.subscribe(event => {
+      this.shop.update(s => {
+        if (!s) return s;
+        const events = id
+          ? s.events.map(e => e.eventId === id ? event : e)
+          : [...s.events, event];
+        return { ...s, events };
+      });
+      this.showEventForm.set(false);
+      this.editingEventId.set(null);
     });
   }
 
-  onDeleteEvent(event: EventResponseDto): void {
-    void this.dialog
-      .confirm(`Delete "${event.eventName}"?`, { confirmLabel: 'Delete', confirmVariant: 'danger' })
-      .then(ok => {
-        if (!ok) return;
-        this.eventService.delete(event.eventId).subscribe(() => this.loadShop());
+  onEditEvent(e: EventResponseDto): void {
+    this.editingEventId.set(e.eventId);
+    this.applyEventDateValidators();
+    this.showEventForm.set(true);
+    this.eventForm.patchValue({ eventName: e.eventName, eventDate: normalizeDateTimeLocal(e.eventDate), description: e.description });
+  }
+
+  onDeleteEvent(e: EventResponseDto): void {
+    void this.dialog.confirm(`Delete "${e.eventName}"?`, { confirmLabel: 'Delete', confirmVariant: 'danger' }).then(ok => {
+      if (!ok) return;
+      this.eventService.delete(e.eventId).subscribe(() => {
+        this.shop.update(s => s ? { ...s, events: s.events.filter(ev => ev.eventId !== e.eventId) } : s);
       });
+    });
   }
 
   cancelEventForm(): void {
-    this.editingEventId.set(null);
     this.showEventForm.set(false);
+    this.editingEventId.set(null);
     this.eventForm.reset({ eventName: '', eventDate: '', description: '' });
-    this.applyEventDateValidatorsForMode();
   }
 
-  private applyEventDateValidatorsForMode(): void {
+  private applyEventDateValidators(): void {
     const dateControl = this.eventForm.controls.eventDate;
     if (this.editingEventId()) {
       dateControl.setValidators([Validators.required]);
@@ -1725,17 +1239,98 @@ export class ShopDetailsComponent implements OnInit {
     dateControl.updateValueAndValidity();
   }
 
-  toggleReviewForm(): void {
-    const next = !this.showReviewForm();
-    this.showReviewForm.set(next);
-    if (!next) {
-      this.reviewForm.reset({ rating: 0, description: '', commentsEnabled: true });
-    }
+  canShowReserveButton(e: EventResponseDto): boolean {
+    if (!canReserveForEvent(e)) return false;
+    return !this.blockedEventIdsForCurrentUser().has(e.eventId);
   }
 
-  isReviewAuthor(review: ReviewResponseDto): boolean {
+  reserveTooltip(e: EventResponseDto): string {
+    if (isEventFull(e)) return 'No tables left for this event';
+    if (this.blockedEventIdsForCurrentUser().has(e.eventId)) return 'You already have a reservation request or reservation for this event';
+    return `Reserve for ${e.eventName}`;
+  }
+
+  onReserveEventClick(e: EventResponseDto): void {
+    this.selectedEventForRequest.set(e);
+    this.eventRequestForm.patchValue({ partySize: 1 });
+  }
+
+  cancelEventRequest(): void {
+    this.selectedEventForRequest.set(null);
+    this.eventRequestForm.reset({ partySize: 1 });
+  }
+
+  onSubmitEventRequest(): void {
+    if (this.eventRequestForm.invalid || !this.canSubmitEventRequest()) return;
     const profile = this.profileService.currentUser();
-    return !!profile && profile.id === review.user.id;
+    if (!profile) return;
+    const event = this.selectedEventForRequest();
+    if (!event) return;
+    const val = this.eventRequestForm.getRawValue();
+
+    this.submittingEventRequest.set(true);
+    this.requestService.create({ userId: profile.id, shopId: event.shopId, eventId: event.eventId, partySize: val.partySize }).subscribe({
+      next: () => {
+        this.submittingEventRequest.set(false);
+        this.cancelEventRequest();
+        this.activeTab.set('reservations');
+        this.reservationSubTab.set('pending');
+        const shopId = this.shop()?.id;
+        if (shopId) this.requestService.getAll(shopId).subscribe(reqs => this.allShopRequests.set(reqs));
+      },
+      error: err => {
+        this.submittingEventRequest.set(false);
+        if (err instanceof HttpErrorResponse && err.status === 409) {
+          void this.dialog.alert('You already have a reservation for this event or there are no tables left.');
+        }
+      },
+    });
+  }
+
+  // --- Reviews ---
+  canLeaveReview(): boolean {
+    const profile = this.profileService.currentUser();
+    if (!profile || !this.shop()) return false;
+    if (this.canManageShopContent()) return false;
+    return true;
+  }
+
+  toggleReviewForm(): void {
+    this.showReviewForm.set(false);
+    this.reviewForm.reset({ rating: 0, description: '', commentsEnabled: true });
+  }
+
+  onReviewSubmit(): void {
+    if (this.reviewForm.invalid || !this.shop()) return;
+    const shopId = this.shop()!.id;
+    const val = this.reviewForm.getRawValue();
+    this.reviewService.create({ ...val, shopId }).subscribe(review => {
+      this.shop.update(s => s ? { ...s, reviews: [review, ...s.reviews], reviewCount: s.reviewCount + 1 } : s);
+      this.toggleReviewForm();
+    });
+  }
+
+  isReviewAuthor(r: ReviewResponseDto): boolean {
+    const profile = this.profileService.currentUser();
+    return !!profile && r.user.id === profile.id;
+  }
+
+  onCommentsEnabledChange(r: ReviewResponseDto, enabled: boolean): void {
+    this.reviewService.update(r.id, { ...r, commentsEnabled: enabled }).subscribe(updated => {
+      this.shop.update(s => s ? { ...s, reviews: s.reviews.map(rv => rv.id === updated.id ? updated : rv) } : s);
+    });
+  }
+
+  formatAverageRating(shop: ShopResponseDto): string {
+    return shop.averageRating?.toFixed(1) ?? '—';
+  }
+
+  roundedAverageRating(shop: ShopResponseDto): number {
+    return Math.round(shop.averageRating ?? 0);
+  }
+
+  formatCommentDate(date: string): string {
+    return new Date(date).toLocaleDateString();
   }
 
   commentDraft(reviewId: string): string {
@@ -1743,69 +1338,131 @@ export class ShopDetailsComponent implements OnInit {
   }
 
   updateCommentDraft(reviewId: string, value: string): void {
-    this.commentDrafts.update(drafts => ({ ...drafts, [reviewId]: value }));
-  }
-
-  formatAverageRating(shop: ShopResponseDto): string {
-    return shop.averageRating != null ? shop.averageRating.toFixed(1) : '—';
-  }
-
-  roundedAverageRating(shop: ShopResponseDto): number {
-    return Math.round(shop.averageRating ?? 0);
-  }
-
-  formatCommentDate(iso: string): string {
-    return new Date(iso).toLocaleString(undefined, {
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  }
-
-  onCommentsEnabledChange(review: ReviewResponseDto, enabled: boolean): void {
-    this.reviewService.update(review.id, { commentsEnabled: enabled }).subscribe({
-      next: () => this.loadShop(),
-      error: () => void this.dialog.alert('Could not update comment settings.'),
-    });
+    this.commentDrafts.update(prev => ({ ...prev, [reviewId]: value }));
   }
 
   onCommentSubmit(reviewId: string): void {
     const body = this.commentDraft(reviewId).trim();
     if (!body) return;
-
-    this.reviewCommentService.create(reviewId, { body }).subscribe({
-      next: () => {
-        this.commentDrafts.update(drafts => ({ ...drafts, [reviewId]: '' }));
-        this.loadShop();
-      },
-      error: () =>
-        void this.dialog.alert('Could not post comment. Comments may be disabled for this review.'),
+    this.reviewCommentService.create(reviewId, { body }).subscribe(comment => {
+      this.shop.update(s => {
+        if (!s) return s;
+        return {
+          ...s,
+          reviews: s.reviews.map(r => r.id === reviewId ? { ...r, comments: [...(r.comments ?? []), comment] } : r),
+        };
+      });
+      this.updateCommentDraft(reviewId, '');
     });
   }
 
-  onReviewSubmit(): void {
-    if (this.reviewForm.invalid) {
-      this.reviewForm.markAllAsTouched();
-      return;
-    }
+  // --- Community ---
+  private loadMembers(shopId: string): void {
+    this.membersLoading.set(true);
+    this.communityService.getMembers(
+      shopId,
+      this.membersPage(),
+      10,
+      this.membersSearchInput().trim() || undefined,
+    ).subscribe({
+      next: page => {
+        this.members.set(page.content);
+        this.membersTotalElements.set(page.totalElements);
+        this.membersTotalPages.set(Math.max(1, page.totalPages));
+        this.membersLoading.set(false);
+      },
+      error: () => this.membersLoading.set(false),
+    });
+  }
 
-    const val = this.reviewForm.getRawValue();
-    this.reviewService
-      .create({
-        description: val.description,
-        rating: val.rating,
-        shopId: this.shopId,
-        commentsEnabled: val.commentsEnabled,
-      })
-      .subscribe({
-        next: () => {
-          this.showReviewForm.set(false);
-          this.reviewForm.reset({ rating: 0, description: '', commentsEnabled: true });
-          this.loadShop();
-        },
-        error: () =>
-          void this.dialog.alert('Could not submit review. You may have already reviewed this shop.'),
+  onMembersSearchInput(inputEvent: Event): void {
+    const value = (inputEvent.target as HTMLInputElement).value;
+    this.membersSearchInput.set(value);
+    const shopId = this.shop()?.id;
+    if (shopId) {
+      this.membersPage.set(0);
+      this.loadMembers(shopId);
+    }
+  }
+
+  goToMembersPage(page: number): void {
+    const shopId = this.shop()?.id;
+    if (!shopId || page < 0 || page >= this.membersTotalPages()) return;
+    this.membersPage.set(page);
+    this.loadMembers(shopId);
+  }
+
+  membersRangeLabel(): string {
+    const total = this.membersTotalElements();
+    if (total === 0) return '';
+    const start = this.membersPage() * 10 + 1;
+    const end = Math.min((this.membersPage() + 1) * 10, total);
+    return `Showing ${start}–${end} of ${total}`;
+  }
+
+  membersEmptyStateMessage(): string {
+    if (this.membersSearchInput().trim()) return 'No members match your search.';
+    return 'No members yet.';
+  }
+
+  private loadCommunity(shopId: string): void {
+    this.communityLoading.set(true);
+    this.communityService.getPosts(shopId, 0, 5).subscribe({
+      next: page => {
+        this.communityPosts.set(page.content);
+        this.communityHasMore.set(page.totalPages > 1);
+        this.communityLoading.set(false);
+      },
+      error: () => this.communityLoading.set(false),
+    });
+  }
+
+  loadMoreCommunityPosts(): void {
+    const shopId = this.shop()?.id;
+    const currentPage = this.communityPage();
+    if (!shopId || this.communityLoading()) return;
+    this.communityLoading.set(true);
+    this.communityService.getPosts(shopId, currentPage + 1, 5).subscribe({
+      next: page => {
+        this.communityPosts.update(prev => [...prev, ...page.content]);
+        this.communityPage.update(p => p + 1);
+        this.communityHasMore.set(this.communityPage() < page.totalPages - 1);
+        this.communityLoading.set(false);
+      },
+      error: () => this.communityLoading.set(false),
+    });
+  }
+
+  onAnnouncementSubmit(): void {
+    const shopId = this.shop()?.id;
+    const body = this.announcementDraft().trim();
+    if (!shopId || !body) return;
+    this.postingAnnouncement.set(true);
+    this.communityService.createAnnouncement(shopId, { body }).subscribe({
+      next: (post: CommunityPostResponseDto) => {
+        this.communityPosts.update(prev => [post, ...prev]);
+        this.announcementDraft.set('');
+        this.postingAnnouncement.set(false);
+      },
+      error: () => this.postingAnnouncement.set(false),
+    });
+  }
+
+  canDeletePost(post: CommunityPostResponseDto): boolean {
+    const profile = this.profileService.currentUser();
+    return this.canManageShopContent() || (!!profile && post.author.id === profile.id);
+  }
+
+  onDeletePost(post: CommunityPostResponseDto): void {
+    void this.dialog.confirm('Delete this post?', { confirmLabel: 'Delete', confirmVariant: 'danger' }).then(ok => {
+      if (!ok) return;
+      this.communityService.deletePost(post.shopId, post.id).subscribe(() => {
+        this.communityPosts.update(prev => prev.filter(p => p.id !== post.id));
       });
+    });
+  }
+
+  formatPostDate(date: string): string {
+    return new Date(date).toLocaleString();
   }
 }

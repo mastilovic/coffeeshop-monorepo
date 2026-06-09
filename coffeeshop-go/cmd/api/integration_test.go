@@ -655,6 +655,109 @@ func TestProfile_WithValidToken_ReturnsUser(t *testing.T) {
 	if profile["id"] != ownerID {
 		t.Errorf("expected profile id=%s, got %v", ownerID, profile["id"])
 	}
+	if _, ok := profile["favouriteShops"]; !ok {
+		t.Error("expected favouriteShops in profile response")
+	}
+	if _, ok := profile["reviews"]; !ok {
+		t.Error("expected reviews in profile response")
+	}
+	if _, ok := profile["reservations"]; !ok {
+		t.Error("expected reservations in profile response")
+	}
+}
+
+func TestShopFavourite_AddAndRemove_UpdatesProfileAndResponse(t *testing.T) {
+	h := setupTestHarness(t)
+	ownerID := h.createUser(t, "Fav Owner", "fav-owner@example.com", "SHOP_OWNER")
+	customerID := h.createUser(t, "Fav Customer", "fav-customer@example.com", "CUSTOMER")
+	ownerToken := h.tokenForUser(ownerID, []string{"SHOP_OWNER"})
+	customerToken := h.tokenForUser(customerID, []string{"CUSTOMER"})
+
+	shopW := h.doJSON(http.MethodPost, "/api/v2/shop", map[string]interface{}{
+		"name": "Favourite Test Shop", "address": "1 St", "city": "Beograd", "phoneNumber": "123",
+		"ownerUserId": ownerID,
+	}, ownerToken)
+	if shopW.Code != http.StatusCreated {
+		t.Fatalf("create shop: expected 201, got %d; body: %s", shopW.Code, shopW.Body.String())
+	}
+	var shop map[string]interface{}
+	json.Unmarshal(shopW.Body.Bytes(), &shop)
+	shopID := shop["id"].(string)
+
+	favW := h.doJSON(http.MethodPost, "/api/v2/shop/"+shopID+"/favourite", nil, customerToken)
+	if favW.Code != http.StatusOK {
+		t.Fatalf("add favourite: expected 200, got %d; body: %s", favW.Code, favW.Body.String())
+	}
+	var favShop map[string]interface{}
+	json.Unmarshal(favW.Body.Bytes(), &favShop)
+	if favShop["favouriteByCurrentUser"] != true {
+		t.Errorf("expected favouriteByCurrentUser=true, got %v", favShop["favouriteByCurrentUser"])
+	}
+
+	profileW := h.doJSON(http.MethodGet, "/api/v2/profile", nil, customerToken)
+	if profileW.Code != http.StatusOK {
+		t.Fatalf("profile: expected 200, got %d; body: %s", profileW.Code, profileW.Body.String())
+	}
+	var profile map[string]interface{}
+	json.Unmarshal(profileW.Body.Bytes(), &profile)
+	favouriteShops, ok := profile["favouriteShops"].([]interface{})
+	if !ok || len(favouriteShops) != 1 {
+		t.Fatalf("expected 1 favourite shop in profile, got %v", profile["favouriteShops"])
+	}
+	if favouriteShops[0].(map[string]interface{})["id"] != shopID {
+		t.Errorf("expected favourite shop id=%s, got %v", shopID, favouriteShops[0].(map[string]interface{})["id"])
+	}
+
+	removeW := h.doJSON(http.MethodDelete, "/api/v2/shop/"+shopID+"/favourite", nil, customerToken)
+	if removeW.Code != http.StatusOK {
+		t.Fatalf("remove favourite: expected 200, got %d; body: %s", removeW.Code, removeW.Body.String())
+	}
+	var unfavShop map[string]interface{}
+	json.Unmarshal(removeW.Body.Bytes(), &unfavShop)
+	if unfavShop["favouriteByCurrentUser"] != false {
+		t.Errorf("expected favouriteByCurrentUser=false, got %v", unfavShop["favouriteByCurrentUser"])
+	}
+
+	profileW2 := h.doJSON(http.MethodGet, "/api/v2/profile", nil, customerToken)
+	json.Unmarshal(profileW2.Body.Bytes(), &profile)
+	favouriteShops2, ok := profile["favouriteShops"].([]interface{})
+	if !ok || len(favouriteShops2) != 0 {
+		t.Errorf("expected empty favouriteShops after remove, got %v", profile["favouriteShops"])
+	}
+
+	// Idempotent: second add should still return 200 without duplicating rows.
+	favW2 := h.doJSON(http.MethodPost, "/api/v2/shop/"+shopID+"/favourite", nil, customerToken)
+	if favW2.Code != http.StatusOK {
+		t.Fatalf("second add favourite: expected 200, got %d; body: %s", favW2.Code, favW2.Body.String())
+	}
+	profileW3 := h.doJSON(http.MethodGet, "/api/v2/profile", nil, customerToken)
+	json.Unmarshal(profileW3.Body.Bytes(), &profile)
+	favouriteShops3, ok := profile["favouriteShops"].([]interface{})
+	if !ok || len(favouriteShops3) != 1 {
+		t.Errorf("expected exactly 1 favourite shop after idempotent add, got %v", profile["favouriteShops"])
+	}
+}
+
+func TestShopFavourite_OwnerCannotFavouriteOwnShop(t *testing.T) {
+	h := setupTestHarness(t)
+	ownerID := h.createUser(t, "Self Fav Owner", "self-fav-owner@example.com", "SHOP_OWNER")
+	ownerToken := h.tokenForUser(ownerID, []string{"SHOP_OWNER"})
+
+	shopW := h.doJSON(http.MethodPost, "/api/v2/shop", map[string]interface{}{
+		"name": "Owner Shop", "address": "1 St", "city": "Beograd", "phoneNumber": "123",
+		"ownerUserId": ownerID,
+	}, ownerToken)
+	if shopW.Code != http.StatusCreated {
+		t.Fatalf("create shop: expected 201, got %d", shopW.Code)
+	}
+	var shop map[string]interface{}
+	json.Unmarshal(shopW.Body.Bytes(), &shop)
+	shopID := shop["id"].(string)
+
+	favW := h.doJSON(http.MethodPost, "/api/v2/shop/"+shopID+"/favourite", nil, ownerToken)
+	if favW.Code != http.StatusConflict {
+		t.Errorf("expected 409 when owner favourites own shop, got %d; body: %s", favW.Code, favW.Body.String())
+	}
 }
 
 // ===== Table CRUD Tests =====

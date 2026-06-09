@@ -90,6 +90,12 @@ type Shop struct {
 
 func (Shop) TableName() string { return "shop" }
 
+const (
+	RelationshipTypeOwner    = "OWNER"
+	RelationshipTypeEmployee = "EMPLOYEE"
+	RelationshipTypeFavourite = "FAVOURITE"
+)
+
 type UserShop struct {
 	ID               string `gorm:"column:id;primaryKey" json:"id"`
 	UserID           string `gorm:"column:user_id" json:"userId"`

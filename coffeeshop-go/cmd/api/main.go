@@ -153,8 +153,9 @@ func setupRouter(db *gorm.DB, cfgs ...config.Config) *chi.Mux {
 	tokenClient := auth.NewKeycloakTokenClient(resolvedCfg)
 	adminClient := auth.NewKeycloakAdminClient(resolvedCfg)
 	currentUserSvc := auth.NewCurrentUserService(db)
+	shopAuthorizer := auth.NewShopAuthorizer(db, currentUserSvc)
 	authHandler := handler.NewAuthHandler(tokenClient, adminClient, db)
-	profileHandler := handler.NewProfileHandler(currentUserSvc)
+	profileHandler := handler.NewProfileHandler(db, currentUserSvc)
 
 	r.Route("/api/v2", func(v2 chi.Router) {
 		v2.Use(middleware.PublicBearerSkip(jwtMw))
@@ -197,14 +198,14 @@ func setupRouter(db *gorm.DB, cfgs ...config.Config) *chi.Mux {
 		v2.Put("/loyalty-plan/{id}", loyaltyPlanHandler.Update)
 		v2.Delete("/loyalty-plan/{id}", loyaltyPlanHandler.Delete)
 
-		menuHandler := handler.NewMenuHandler(db)
+		menuHandler := handler.NewMenuHandler(db, shopAuthorizer)
 		v2.Get("/menu", menuHandler.GetAll)
 		v2.Get("/menu/{id}", menuHandler.GetByID)
 		v2.Post("/menu", menuHandler.Create)
 		v2.Put("/menu/{id}", menuHandler.Update)
 		v2.Delete("/menu/{id}", menuHandler.Delete)
 
-		menuItemHandler := handler.NewMenuItemHandler(db)
+		menuItemHandler := handler.NewMenuItemHandler(db, shopAuthorizer)
 		v2.Get("/menu-item", menuItemHandler.GetAll)
 		v2.Get("/menu-item/{id}", menuItemHandler.GetByID)
 		v2.Post("/menu-item", menuItemHandler.Create)
@@ -218,7 +219,7 @@ func setupRouter(db *gorm.DB, cfgs ...config.Config) *chi.Mux {
 		v2.Put("/user/{id}", userHandler.Update)
 		v2.Delete("/user/{id}", userHandler.Delete)
 
-		shopHandler := handler.NewShopHandler(db, currentUserSvc)
+		shopHandler := handler.NewShopHandler(db, currentUserSvc, shopAuthorizer)
 		v2.Get("/shop/mine", shopHandler.GetMine)
 		v2.Get("/shop", shopHandler.GetShops)
 		v2.Get("/shop/{id}", shopHandler.GetByID)
@@ -229,27 +230,27 @@ func setupRouter(db *gorm.DB, cfgs ...config.Config) *chi.Mux {
 		v2.Delete("/shop/{shopId}/favourite", shopHandler.RemoveFavourite)
 		v2.Get("/shop/{shopId}/menus", shopHandler.GetMenus)
 		v2.Post("/shop/{shopId}/menus", shopHandler.CreateMenu)
-		eventHandler := handler.NewEventHandler(db)
+		eventHandler := handler.NewEventHandler(db, shopAuthorizer)
 		v2.Get("/event", eventHandler.GetAll)
 		v2.Get("/event/{eventId}", eventHandler.GetByID)
 		v2.Post("/event", eventHandler.Create)
 		v2.Put("/event/{eventId}", eventHandler.Update)
 		v2.Delete("/event/{eventId}", eventHandler.Delete)
 
-		reservationHandler := handler.NewReservationHandler(db)
+		reservationHandler := handler.NewReservationHandler(db, shopAuthorizer)
 		v2.Get("/reservation", reservationHandler.GetAll)
 		v2.Get("/reservation/{id}", reservationHandler.GetByID)
 		v2.Post("/reservation", reservationHandler.Create)
 		v2.Put("/reservation/{id}", reservationHandler.Update)
 		v2.Delete("/reservation/{id}", reservationHandler.Delete)
 
-		reservationRequestHandler := handler.NewReservationRequestHandler(db, currentUserSvc)
+		reservationRequestHandler := handler.NewReservationRequestHandler(db, currentUserSvc, shopAuthorizer)
 		v2.Get("/reservation-request", reservationRequestHandler.List)
 		v2.Post("/reservation-request", reservationRequestHandler.Create)
 		v2.Post("/reservation-request/{id}/accept", reservationRequestHandler.Accept)
 		v2.Post("/reservation-request/{id}/deny", reservationRequestHandler.Deny)
 
-		reviewHandler := handler.NewReviewHandler(db, currentUserSvc)
+		reviewHandler := handler.NewReviewHandler(db, currentUserSvc, shopAuthorizer)
 		v2.Get("/review", reviewHandler.GetAll)
 		v2.Get("/review/{id}", reviewHandler.GetByID)
 		v2.Post("/review", reviewHandler.Create)
@@ -263,6 +264,15 @@ func setupRouter(db *gorm.DB, cfgs ...config.Config) *chi.Mux {
 		v2.Get("/shop/{shopId}/community/members", communityHandler.GetMembers)
 		v2.Post("/shop/{shopId}/community/announcements", communityHandler.CreateAnnouncement)
 		v2.Delete("/shop/{shopId}/community/posts/{postId}", communityHandler.DeletePost)
+
+		shopEmployeeHandler := handler.NewShopEmployeeHandler(db, shopAuthorizer, currentUserSvc)
+		v2.Post("/shop-employees", shopEmployeeHandler.Assign)
+		v2.Delete("/shop-employees", shopEmployeeHandler.Remove)
+		v2.Get("/shop/{shopId}/employees", shopEmployeeHandler.List)
+		v2.Get("/shop-employees/me", shopEmployeeHandler.GetMyEmployeeShops)
+
+		dashboardHandler := handler.NewDashboardHandler(db, currentUserSvc, shopAuthorizer)
+		v2.Get("/dashboard/activity", dashboardHandler.GetActivity)
 	})
 
 	return r

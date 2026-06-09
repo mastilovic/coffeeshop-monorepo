@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/google/uuid"
 	"github.com/mastilovic/coffeeshop-go/internal/apperror"
 	"github.com/mastilovic/coffeeshop-go/internal/auth"
 	"gorm.io/gorm"
@@ -151,6 +152,7 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	}
 
 	user := auth.User{
+		ID:              uuid.New().String(),
 		Name:            req.Name,
 		Username:        req.Username,
 		Email:           req.Email,
