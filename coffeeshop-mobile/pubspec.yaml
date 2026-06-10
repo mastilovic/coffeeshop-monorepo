@@ -57,6 +57,7 @@ dev_dependencies:
 
   # Linting
   flutter_lints: ^5.0.0
+  coverage: ^1.15.1
 
 flutter:
   uses-material-design: true

@@ -4,43 +4,43 @@ overview: Build a Flutter mobile app (iOS + Android) with full feature parity to
 todos:
   - id: phase1-foundation
     content: "flutter-apply-architecture-best-practices: Phase 1: Scaffold Flutter project with all dependencies, folder structure, and environment configs"
-    status: pending
+    status: completed
   - id: phase2-core-infra
     content: "flutter-setup-declarative-routing, flutter-use-http-package: Phase 2: Implement auth (Keycloak OIDC), networking (Dio + interceptor), routing (go_router), and error handling"
-    status: pending
+    status: completed
   - id: phase3-data-layer
     content: "flutter-implement-json-serialization, dart-use-pattern-matching: Phase 3: Generate all 14+ model classes (freezed), 17+ API services (Dio), and repository interfaces"
-    status: pending
+    status: completed
   - id: phase4-design-system
     content: "flutter-build-responsive-layout, flutter-add-widget-preview: Phase 4: Build Material Design 3 theme, 15+ reusable widgets, and navigation shell"
-    status: pending
+    status: completed
   - id: phase5-auth-screens
     content: "(consume Phase 2 infra) + flutter-fix-layout-issues (as needed): Phase 5: Implement Login and Register screens with Keycloak OIDC + backend registration"
-    status: pending
+    status: completed
   - id: phase6-dashboard
     content: "flutter-add-widget-preview (new widgets) + flutter-build-responsive-layout: Phase 6: Implement Dashboard screen with stats, activity feed, top shops, and widgets"
-    status: pending
+    status: completed
   - id: phase7-shops
     content: "flutter-add-widget-preview (new widgets) + flutter-build-responsive-layout: Phase 7: Implement Shop List (grid+search+paginate) and Shop Detail (7 sub-tabs)"
-    status: pending
+    status: completed
   - id: phase8-events
     content: "flutter-add-widget-preview (new widgets) + flutter-build-responsive-layout: Phase 8: Implement Event List, Event Form, and event reservation flow"
-    status: pending
+    status: completed
   - id: phase9-reservations
     content: "flutter-add-widget-preview (new widgets) + flutter-build-responsive-layout: Phase 9: Implement Reservations with role-aware tabs, request management, and confirmation flow"
-    status: pending
+    status: completed
   - id: phase10-users
     content: "flutter-add-widget-preview (new widgets) + flutter-build-responsive-layout: Phase 10: Implement User List (admin) with search, edit, and delete"
-    status: pending
+    status: completed
   - id: phase11-profile
     content: "flutter-add-widget-preview (new widgets) + flutter-build-responsive-layout: Phase 11: Implement Profile screen with view/edit toggle and connected shops/activity"
-    status: pending
+    status: completed
   - id: phase12-testing
     content: "dart-add-unit-test, dart-generate-test-mocks, flutter-add-widget-test, flutter-add-integration-test, dart-collect-coverage: Phase 12: Write unit tests, widget tests, and critical-path integration tests"
-    status: pending
+    status: completed
   - id: phase13-cicd-polish
     content: "dart-run-static-analysis, dart-resolve-package-conflicts (as needed), flutter-setup-localization (optional): Phase 13: Set up CI/CD pipeline, app icons, splash screen, performance polish, and accessibility"
-    status: pending
+    status: completed
 isProject: false
 ---
 

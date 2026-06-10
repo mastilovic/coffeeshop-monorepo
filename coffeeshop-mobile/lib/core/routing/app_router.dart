@@ -5,7 +5,12 @@ import 'package:go_router/go_router.dart';
 import '../../features/auth/login_screen.dart';
 import '../../features/auth/register_screen.dart';
 import '../../features/dashboard/dashboard_screen.dart';
+import '../../features/events/event_list_screen.dart';
 import '../../features/profile/profile_screen.dart';
+import '../../features/reservations/reservation_list_screen.dart';
+import '../../features/shop_details/shop_detail_screen.dart';
+import '../../features/shops/shop_list_screen.dart';
+import '../../features/users/user_list_screen.dart';
 import '../../shared/widgets/app_scaffold.dart';
 import '../auth/auth_notifier.dart';
 import '../auth/auth_service.dart';
@@ -17,7 +22,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     initialLocation: '/dashboard',
     redirect: (BuildContext context, GoRouterState state) {
       final bool isAuthenticated =
-          authState.status == AuthStatus.authenticated; 
+          authState.status == AuthStatus.authenticated;
       final bool isAuthRoute = state.matchedLocation == '/login' ||
           state.matchedLocation == '/register';
 
@@ -57,22 +62,19 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: '/events',
-                builder: (context, state) => const Scaffold(
-                  body: Center(child: Text('Events')),
-                ),
+                builder: (context, state) => const EventListScreen(),
                 routes: [
                   GoRoute(
                     path: 'new',
                     builder: (context, state) => const Scaffold(
-                      body: Center(child: Text('New Event')),
+                      body: Center(child: Text('Create Event - Coming Soon')),
                     ),
                   ),
                   GoRoute(
                     path: ':id',
                     builder: (context, state) => Scaffold(
                       body: Center(
-                        child: Text(
-                            'Event ${state.pathParameters['id']}'),
+                        child: Text('Event ${state.pathParameters['id']}'),
                       ),
                     ),
                   ),
@@ -84,18 +86,20 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: '/shops',
-                builder: (context, state) => const Scaffold(
-                  body: Center(child: Text('Shops')),
-                ),
+                builder: (context, state) => const ShopListScreen(),
                 routes: [
                   GoRoute(
-                    path: ':id',
-                    builder: (context, state) => Scaffold(
-                      body: Center(
-                        child:
-                            Text('Shop ${state.pathParameters['id']}'),
-                      ),
+                    path: 'new',
+                    builder: (context, state) => const Scaffold(
+                      body: Center(child: Text('Create Shop - Coming Soon')),
                     ),
+                  ),
+                  GoRoute(
+                    path: ':id',
+                    builder: (context, state) {
+                      final id = state.pathParameters['id']!;
+                      return ShopDetailScreen(shopId: id);
+                    },
                   ),
                 ],
               ),
@@ -105,9 +109,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: '/reservations',
-                builder: (context, state) => const Scaffold(
-                  body: Center(child: Text('Reservations')),
-                ),
+                builder: (context, state) => const ReservationListScreen(),
               ),
             ],
           ),
@@ -123,9 +125,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/users',
-        builder: (context, state) => const Scaffold(
-          body: Center(child: Text('Users')),
-        ),
+        builder: (context, state) => const UserListScreen(),
       ),
     ],
     errorBuilder: (context, state) => Scaffold(
