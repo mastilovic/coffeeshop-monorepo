@@ -19,19 +19,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   final AuthService _authService;
 
-  Future<void> loginWithKeycloak() async {
-    state = state.copyWith(status: AuthStatus.unauthenticated, clearUser: true);
-    try {
-      await _authService.loginWithKeycloak();
-    } catch (_) {
-      state = const AuthState(status: AuthStatus.unauthenticated);
-    }
-  }
-
   Future<void> login(String email, String password) async {
     state = state.copyWith(status: AuthStatus.unauthenticated, clearUser: true);
     try {
-      await _authService.loginWithCredentials(email, password);
+      await _authService.login(email, password);
     } catch (_) {
       state = const AuthState(status: AuthStatus.unauthenticated);
       rethrow;
@@ -43,12 +34,14 @@ class AuthNotifier extends StateNotifier<AuthState> {
     required String username,
     required String email,
     required String password,
+    required String role,
   }) async {
     await _authService.register(
       name: name,
       username: username,
       email: email,
       password: password,
+      role: role,
     );
   }
 
@@ -56,7 +49,4 @@ class AuthNotifier extends StateNotifier<AuthState> {
     await _authService.logout();
   }
 
-  Future<void> handleAuthCallback(Uri redirectUri) async {
-    // This is handled internally by openid_client Authenticator
-  }
 }

@@ -120,7 +120,7 @@ func setupRouter(db *gorm.DB, cfgs ...config.Config) *chi.Mux {
 		resolvedCfg = cfgs[0]
 	} else {
 		resolvedCfg = config.Config{
-			CORSAllowedOrigins:    "http://localhost:4200",
+			CORSAllowedOrigins:    "*",
 			KeycloakJWTIssuerURI:  "http://localhost:8080/realms/coffeeshop",
 			KeycloakBaseURL:       "http://localhost:8080",
 			KeycloakRealm:         "coffeeshop",

@@ -28,6 +28,7 @@ class AuthApiService {
     required String username,
     required String email,
     required String password,
+    required String role,
   }) async {
     await _dioClient.post<Map<String, dynamic>>(
       '/api/v2/auth/register',
@@ -36,6 +37,7 @@ class AuthApiService {
         username: username,
         email: email,
         password: password,
+        role: role,
       ).toJson(),
     );
   }

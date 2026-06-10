@@ -1,12 +1,8 @@
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:openid_client/openid_client_io.dart';
-import 'package:url_launcher/url_launcher.dart';
-
 import '../../data/models/user_response_dto.dart';
 import '../../data/services/auth_api_service.dart';
-import '../config/api_config.dart';
 import 'token_storage.dart';
 
 enum AuthStatus { unknown, authenticated, unauthenticated }
@@ -54,45 +50,7 @@ class AuthService {
 
   Stream<AuthState> get authStateChanges => _authStateController.stream;
 
-  Future<Credential> loginWithKeycloak() async {
-    final uri = Uri.parse(ApiConfig.keycloakBaseUrl);
-    final issuer = await Issuer.discover(uri);
-    final client = Client(
-      issuer,
-      ApiConfig.keycloakClientId,
-    );
-
-    final authenticator = Authenticator(
-      client,
-      scopes: ['openid', 'profile', 'email', 'offline_access'],
-      urlLancher: (String url) async {
-        final parsedUrl = Uri.parse(url);
-        if (await canLaunchUrl(parsedUrl)) {
-          await launchUrl(parsedUrl, mode: LaunchMode.externalApplication);
-        }
-      },
-    );
-
-    final credential = await authenticator.authorize();
-
-    final response = credential.response;
-    if (response != null) {
-      await _tokenStorage.saveTokens(
-        accessToken: (response['access_token'] as String?) ?? '',
-        refreshToken: (response['refresh_token'] as String?) ?? '',
-        idToken: (response['id_token'] as String?)?.toString(),
-        expiry: DateTime.now().add(
-          Duration(seconds: (response['expires_in'] as int?) ?? 3600),
-        ),
-      );
-
-      await _loadUserProfile();
-    }
-
-    return credential;
-  }
-
-  Future<void> loginWithCredentials(String email, String password) async {
+  Future<void> login(String email, String password) async {
     try {
       final tokenResponse = await _authApiService.login(email, password);
       await _tokenStorage.saveTokens(
@@ -112,13 +70,23 @@ class AuthService {
     required String username,
     required String email,
     required String password,
+    required String role,
   }) async {
     await _authApiService.register(
       name: name,
       username: username,
       email: email,
       password: password,
+      role: role,
     );
+
+    final tokenResponse = await _authApiService.login(email, password);
+    await _tokenStorage.saveTokens(
+      accessToken: tokenResponse.accessToken,
+      refreshToken: tokenResponse.refreshToken,
+      expiry: DateTime.now().add(Duration(seconds: tokenResponse.expiresIn)),
+    );
+    await _loadUserProfile();
   }
 
   Future<void> _loadUserProfile() async {

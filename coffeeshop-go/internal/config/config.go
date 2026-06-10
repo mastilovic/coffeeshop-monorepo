@@ -12,7 +12,7 @@ type Config struct {
 	KeycloakJWTIssuerURI  string `env:"KEYCLOAK_JWT_ISSUER_URI" envDefault:"http://localhost:8080/realms/coffeeshop"`
 	KeycloakAdminUser     string `env:"KEYCLOAK_ADMIN_USER" envDefault:"admin"`
 	KeycloakAdminPassword string `env:"KEYCLOAK_ADMIN_PASSWORD" envDefault:"admin"`
-	CORSAllowedOrigins    string `env:"CORS_ALLOWED_ORIGINS" envDefault:"http://localhost:4200"`
+	CORSAllowedOrigins    string `env:"CORS_ALLOWED_ORIGINS" envDefault:"*"`
 	SentryDSN             string `env:"SENTRY_DSN" envDefault:""`
 	RunMigrations         bool   `env:"RUN_MIGRATIONS" envDefault:"false"`
 	MigrationsPath        string `env:"MIGRATIONS_PATH" envDefault:"migrations"`

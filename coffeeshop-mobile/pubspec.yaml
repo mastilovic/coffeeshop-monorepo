@@ -21,7 +21,6 @@ dependencies:
   dio: ^5.7.0
 
   # Auth
-  openid_client: ^0.4.10
   flutter_secure_storage: ^9.2.4
 
   # Serialization
@@ -33,9 +32,6 @@ dependencies:
   cached_network_image: ^3.4.1
   shimmer: ^3.0.0
   material_design_icons_flutter: ^7.0.1
-
-  # Utilities
-  url_launcher: ^6.3.1
 
   # The following adds the Cupertino Icons font to your application.
   cupertino_icons: ^1.0.8

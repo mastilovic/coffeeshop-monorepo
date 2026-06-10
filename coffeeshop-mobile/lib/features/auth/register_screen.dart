@@ -3,6 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/auth/auth_service.dart';
+import '../../shared/widgets/form_select.dart';
+
+const _roleOptions = ['customer', 'shop_owner'];
+
+const _roleLabels = {
+  'customer': 'Customer',
+  'shop_owner': 'Shop Owner',
+};
 
 class RegisterScreen extends ConsumerStatefulWidget {
   const RegisterScreen({super.key});
@@ -19,6 +27,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   final _passwordController = TextEditingController();
 
   bool _isLoading = false;
+  String _selectedRole = 'customer';
 
   @override
   void dispose() {
@@ -41,13 +50,13 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
         username: _usernameController.text.trim(),
         email: _emailController.text.trim(),
         password: _passwordController.text,
+        role: _selectedRole,
       );
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Registration successful!')),
+          const SnackBar(content: Text('Account created! Logging you in...')),
         );
-        context.go('/login');
       }
     } catch (e) {
       if (mounted) {
@@ -139,6 +148,19 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                       return 'Password must be at least 6 characters';
                     }
                     return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+                FormSelect<String>(
+                  label: 'Account Type',
+                  value: _selectedRole,
+                  items: _roleOptions,
+                  itemLabel: (role) => _roleLabels[role] ?? role,
+                  prefixIcon: Icons.badge_outlined,
+                  onChanged: (value) {
+                    if (value != null) {
+                      setState(() => _selectedRole = value);
+                    }
                   },
                 ),
                 const SizedBox(height: 32),
