@@ -12,9 +12,9 @@ class CommunityPostResponseDto with _$CommunityPostResponseDto {
     required String body,
     @Default('POST') String type,
     @Default(false) bool pinned,
-    @JsonKey(name: 'created_at') String? createdAt,
-    @JsonKey(name: 'shop_id') String? shopId,
-    @JsonKey(name: 'author_id') String? authorId,
+    String? createdAt,
+    String? shopId,
+    String? authorId,
     Map<String, dynamic>? author,
   }) = _CommunityPostResponseDto;
 

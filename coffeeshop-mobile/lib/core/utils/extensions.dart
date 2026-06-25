@@ -16,6 +16,19 @@ extension DateTimeExtension on DateTime {
   }
 }
 
+String normalizeUserType(String raw) {
+  switch (raw.toUpperCase()) {
+    case 'CUSTOMER':
+      return 'customer';
+    case 'SHOP_OWNER':
+      return 'shop_owner';
+    case 'ADMIN':
+      return 'admin';
+    default:
+      return raw.toLowerCase();
+  }
+}
+
 extension StringExtension on String {
   String get initials {
     final parts = trim().split(RegExp(r'\s+'));

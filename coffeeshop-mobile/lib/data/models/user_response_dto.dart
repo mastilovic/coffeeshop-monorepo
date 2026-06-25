@@ -12,10 +12,7 @@ class UserResponseDto with _$UserResponseDto {
     required String name,
     required String username,
     required String email,
-    @JsonKey(name: 'user_type') required String userType,
-    @JsonKey(name: 'is_active') required bool isActive,
-    @JsonKey(name: 'created_at') required DateTime createdAt,
-    @JsonKey(name: 'updated_at') required DateTime updatedAt,
+    required String userType,
   }) = _UserResponseDto;
 
   factory UserResponseDto.fromJson(Map<String, dynamic> json) =>

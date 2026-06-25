@@ -1,9 +1,10 @@
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../data/models/user_response_dto.dart';
+import '../../data/models/user_profile_response_dto.dart';
 import '../../data/services/auth_api_service.dart';
 import 'token_storage.dart';
+import 'user_role.dart';
 
 enum AuthStatus { unknown, authenticated, unauthenticated }
 
@@ -14,11 +15,16 @@ class AuthState {
   });
 
   final AuthStatus status;
-  final UserResponseDto? user;
+  final UserProfileResponseDto? user;
+
+  UserRole? get role {
+    if (user == null) return null;
+    return UserRole.fromString(user!.userType);
+  }
 
   AuthState copyWith({
     AuthStatus? status,
-    UserResponseDto? user,
+    UserProfileResponseDto? user,
     bool clearUser = false,
   }) {
     return AuthState(
@@ -89,9 +95,16 @@ class AuthService {
     await _loadUserProfile();
   }
 
+  Future<void> refreshProfile() async {
+    await _loadUserProfile();
+  }
+
   Future<void> _loadUserProfile() async {
     try {
-      final user = await _authApiService.getProfile();
+      final profile = await _authApiService.getProfile();
+      final user = profile.copyWith(
+        userType: UserRole.fromString(profile.userType).name,
+      );
       _updateState(AuthState(status: AuthStatus.authenticated, user: user));
     } catch (e) {
       _updateState(const AuthState(status: AuthStatus.unauthenticated));

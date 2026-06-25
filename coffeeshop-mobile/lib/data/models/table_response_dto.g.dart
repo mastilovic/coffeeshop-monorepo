@@ -12,7 +12,7 @@ _$TableResponseDtoImpl _$$TableResponseDtoImplFromJson(
   id: json['id'] as String,
   number: (json['number'] as num).toInt(),
   capacity: (json['capacity'] as num).toInt(),
-  shopId: json['shop_id'] as String?,
+  shopId: json['shopId'] as String?,
   reservations:
       (json['reservations'] as List<dynamic>?)
           ?.map((e) => e as Map<String, dynamic>)
@@ -26,7 +26,7 @@ Map<String, dynamic> _$$TableResponseDtoImplToJson(
   'id': instance.id,
   'number': instance.number,
   'capacity': instance.capacity,
-  'shop_id': instance.shopId,
+  'shopId': instance.shopId,
   'reservations': instance.reservations,
 };
 
@@ -51,7 +51,7 @@ _$TableCreateRequestImpl _$$TableCreateRequestImplFromJson(
 ) => _$TableCreateRequestImpl(
   number: (json['number'] as num).toInt(),
   capacity: (json['capacity'] as num).toInt(),
-  shopId: json['shop_id'] as String,
+  shopId: json['shopId'] as String,
 );
 
 Map<String, dynamic> _$$TableCreateRequestImplToJson(
@@ -59,5 +59,5 @@ Map<String, dynamic> _$$TableCreateRequestImplToJson(
 ) => <String, dynamic>{
   'number': instance.number,
   'capacity': instance.capacity,
-  'shop_id': instance.shopId,
+  'shopId': instance.shopId,
 };

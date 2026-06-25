@@ -615,6 +615,11 @@ func (h *ShopHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if err := h.authorizer.RequireCanCreateShop(r.Context()); err != nil {
+		apperror.WriteError(w, err)
+		return
+	}
+
 	var req shopCreateRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		apperror.WriteError(w, apperror.BadRequest("Invalid request body"))

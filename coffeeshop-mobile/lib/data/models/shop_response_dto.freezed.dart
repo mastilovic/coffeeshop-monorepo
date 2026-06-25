@@ -25,16 +25,11 @@ mixin _$ShopResponseDto {
   String get name => throw _privateConstructorUsedError;
   String get address => throw _privateConstructorUsedError;
   String get city => throw _privateConstructorUsedError;
-  @JsonKey(name: 'phone_number')
   String? get phoneNumber => throw _privateConstructorUsedError;
   String? get email => throw _privateConstructorUsedError;
-  @JsonKey(name: 'average_rating')
   double? get averageRating => throw _privateConstructorUsedError;
-  @JsonKey(name: 'review_count')
   int get reviewCount => throw _privateConstructorUsedError;
-  @JsonKey(name: 'member_count')
   int get memberCount => throw _privateConstructorUsedError;
-  @JsonKey(name: 'favourite_by_current_user')
   bool get favouriteByCurrentUser => throw _privateConstructorUsedError;
   List<Map<String, dynamic>>? get events => throw _privateConstructorUsedError;
   List<Map<String, dynamic>>? get tables => throw _privateConstructorUsedError;
@@ -66,12 +61,12 @@ abstract class $ShopResponseDtoCopyWith<$Res> {
     String name,
     String address,
     String city,
-    @JsonKey(name: 'phone_number') String? phoneNumber,
+    String? phoneNumber,
     String? email,
-    @JsonKey(name: 'average_rating') double? averageRating,
-    @JsonKey(name: 'review_count') int reviewCount,
-    @JsonKey(name: 'member_count') int memberCount,
-    @JsonKey(name: 'favourite_by_current_user') bool favouriteByCurrentUser,
+    double? averageRating,
+    int reviewCount,
+    int memberCount,
+    bool favouriteByCurrentUser,
     List<Map<String, dynamic>>? events,
     List<Map<String, dynamic>>? tables,
     List<Map<String, dynamic>>? reviews,
@@ -199,12 +194,12 @@ abstract class _$$ShopResponseDtoImplCopyWith<$Res>
     String name,
     String address,
     String city,
-    @JsonKey(name: 'phone_number') String? phoneNumber,
+    String? phoneNumber,
     String? email,
-    @JsonKey(name: 'average_rating') double? averageRating,
-    @JsonKey(name: 'review_count') int reviewCount,
-    @JsonKey(name: 'member_count') int memberCount,
-    @JsonKey(name: 'favourite_by_current_user') bool favouriteByCurrentUser,
+    double? averageRating,
+    int reviewCount,
+    int memberCount,
+    bool favouriteByCurrentUser,
     List<Map<String, dynamic>>? events,
     List<Map<String, dynamic>>? tables,
     List<Map<String, dynamic>>? reviews,
@@ -324,12 +319,11 @@ class _$ShopResponseDtoImpl implements _ShopResponseDto {
     required this.name,
     required this.address,
     required this.city,
-    @JsonKey(name: 'phone_number') this.phoneNumber,
+    this.phoneNumber,
     this.email,
-    @JsonKey(name: 'average_rating') this.averageRating,
-    @JsonKey(name: 'review_count') this.reviewCount = 0,
-    @JsonKey(name: 'member_count') this.memberCount = 0,
-    @JsonKey(name: 'favourite_by_current_user')
+    this.averageRating,
+    this.reviewCount = 0,
+    this.memberCount = 0,
     this.favouriteByCurrentUser = false,
     final List<Map<String, dynamic>>? events,
     final List<Map<String, dynamic>>? tables,
@@ -356,21 +350,19 @@ class _$ShopResponseDtoImpl implements _ShopResponseDto {
   @override
   final String city;
   @override
-  @JsonKey(name: 'phone_number')
   final String? phoneNumber;
   @override
   final String? email;
   @override
-  @JsonKey(name: 'average_rating')
   final double? averageRating;
   @override
-  @JsonKey(name: 'review_count')
+  @JsonKey()
   final int reviewCount;
   @override
-  @JsonKey(name: 'member_count')
+  @JsonKey()
   final int memberCount;
   @override
-  @JsonKey(name: 'favourite_by_current_user')
+  @JsonKey()
   final bool favouriteByCurrentUser;
   final List<Map<String, dynamic>>? _events;
   @override
@@ -516,12 +508,11 @@ abstract class _ShopResponseDto implements ShopResponseDto {
     required final String name,
     required final String address,
     required final String city,
-    @JsonKey(name: 'phone_number') final String? phoneNumber,
+    final String? phoneNumber,
     final String? email,
-    @JsonKey(name: 'average_rating') final double? averageRating,
-    @JsonKey(name: 'review_count') final int reviewCount,
-    @JsonKey(name: 'member_count') final int memberCount,
-    @JsonKey(name: 'favourite_by_current_user')
+    final double? averageRating,
+    final int reviewCount,
+    final int memberCount,
     final bool favouriteByCurrentUser,
     final List<Map<String, dynamic>>? events,
     final List<Map<String, dynamic>>? tables,
@@ -543,21 +534,16 @@ abstract class _ShopResponseDto implements ShopResponseDto {
   @override
   String get city;
   @override
-  @JsonKey(name: 'phone_number')
   String? get phoneNumber;
   @override
   String? get email;
   @override
-  @JsonKey(name: 'average_rating')
   double? get averageRating;
   @override
-  @JsonKey(name: 'review_count')
   int get reviewCount;
   @override
-  @JsonKey(name: 'member_count')
   int get memberCount;
   @override
-  @JsonKey(name: 'favourite_by_current_user')
   bool get favouriteByCurrentUser;
   @override
   List<Map<String, dynamic>>? get events;
@@ -590,7 +576,6 @@ mixin _$ShopSummaryDto {
   String get name => throw _privateConstructorUsedError;
   String? get address => throw _privateConstructorUsedError;
   String? get city => throw _privateConstructorUsedError;
-  @JsonKey(name: 'phone_number')
   String? get phoneNumber => throw _privateConstructorUsedError;
   String? get email => throw _privateConstructorUsedError;
 
@@ -616,7 +601,7 @@ abstract class $ShopSummaryDtoCopyWith<$Res> {
     String name,
     String? address,
     String? city,
-    @JsonKey(name: 'phone_number') String? phoneNumber,
+    String? phoneNumber,
     String? email,
   });
 }
@@ -689,7 +674,7 @@ abstract class _$$ShopSummaryDtoImplCopyWith<$Res>
     String name,
     String? address,
     String? city,
-    @JsonKey(name: 'phone_number') String? phoneNumber,
+    String? phoneNumber,
     String? email,
   });
 }
@@ -754,7 +739,7 @@ class _$ShopSummaryDtoImpl implements _ShopSummaryDto {
     required this.name,
     this.address,
     this.city,
-    @JsonKey(name: 'phone_number') this.phoneNumber,
+    this.phoneNumber,
     this.email,
   });
 
@@ -770,7 +755,6 @@ class _$ShopSummaryDtoImpl implements _ShopSummaryDto {
   @override
   final String? city;
   @override
-  @JsonKey(name: 'phone_number')
   final String? phoneNumber;
   @override
   final String? email;
@@ -822,7 +806,7 @@ abstract class _ShopSummaryDto implements ShopSummaryDto {
     required final String name,
     final String? address,
     final String? city,
-    @JsonKey(name: 'phone_number') final String? phoneNumber,
+    final String? phoneNumber,
     final String? email,
   }) = _$ShopSummaryDtoImpl;
 
@@ -838,7 +822,6 @@ abstract class _ShopSummaryDto implements ShopSummaryDto {
   @override
   String? get city;
   @override
-  @JsonKey(name: 'phone_number')
   String? get phoneNumber;
   @override
   String? get email;
@@ -860,12 +843,9 @@ mixin _$ShopCreateRequest {
   String get name => throw _privateConstructorUsedError;
   String get address => throw _privateConstructorUsedError;
   String get city => throw _privateConstructorUsedError;
-  @JsonKey(name: 'phone_number')
   String? get phoneNumber => throw _privateConstructorUsedError;
   String? get email => throw _privateConstructorUsedError;
-  @JsonKey(name: 'owner_user_id')
   String? get ownerUserId => throw _privateConstructorUsedError;
-  @JsonKey(name: 'loyalty_plan_id')
   String? get loyaltyPlanId => throw _privateConstructorUsedError;
 
   /// Serializes this ShopCreateRequest to a JSON map.
@@ -889,10 +869,10 @@ abstract class $ShopCreateRequestCopyWith<$Res> {
     String name,
     String address,
     String city,
-    @JsonKey(name: 'phone_number') String? phoneNumber,
+    String? phoneNumber,
     String? email,
-    @JsonKey(name: 'owner_user_id') String? ownerUserId,
-    @JsonKey(name: 'loyalty_plan_id') String? loyaltyPlanId,
+    String? ownerUserId,
+    String? loyaltyPlanId,
   });
 }
 
@@ -968,10 +948,10 @@ abstract class _$$ShopCreateRequestImplCopyWith<$Res>
     String name,
     String address,
     String city,
-    @JsonKey(name: 'phone_number') String? phoneNumber,
+    String? phoneNumber,
     String? email,
-    @JsonKey(name: 'owner_user_id') String? ownerUserId,
-    @JsonKey(name: 'loyalty_plan_id') String? loyaltyPlanId,
+    String? ownerUserId,
+    String? loyaltyPlanId,
   });
 }
 
@@ -1039,10 +1019,10 @@ class _$ShopCreateRequestImpl implements _ShopCreateRequest {
     required this.name,
     required this.address,
     required this.city,
-    @JsonKey(name: 'phone_number') this.phoneNumber,
+    this.phoneNumber,
     this.email,
-    @JsonKey(name: 'owner_user_id') this.ownerUserId,
-    @JsonKey(name: 'loyalty_plan_id') this.loyaltyPlanId,
+    this.ownerUserId,
+    this.loyaltyPlanId,
   });
 
   factory _$ShopCreateRequestImpl.fromJson(Map<String, dynamic> json) =>
@@ -1055,15 +1035,12 @@ class _$ShopCreateRequestImpl implements _ShopCreateRequest {
   @override
   final String city;
   @override
-  @JsonKey(name: 'phone_number')
   final String? phoneNumber;
   @override
   final String? email;
   @override
-  @JsonKey(name: 'owner_user_id')
   final String? ownerUserId;
   @override
-  @JsonKey(name: 'loyalty_plan_id')
   final String? loyaltyPlanId;
 
   @override
@@ -1123,10 +1100,10 @@ abstract class _ShopCreateRequest implements ShopCreateRequest {
     required final String name,
     required final String address,
     required final String city,
-    @JsonKey(name: 'phone_number') final String? phoneNumber,
+    final String? phoneNumber,
     final String? email,
-    @JsonKey(name: 'owner_user_id') final String? ownerUserId,
-    @JsonKey(name: 'loyalty_plan_id') final String? loyaltyPlanId,
+    final String? ownerUserId,
+    final String? loyaltyPlanId,
   }) = _$ShopCreateRequestImpl;
 
   factory _ShopCreateRequest.fromJson(Map<String, dynamic> json) =
@@ -1139,15 +1116,12 @@ abstract class _ShopCreateRequest implements ShopCreateRequest {
   @override
   String get city;
   @override
-  @JsonKey(name: 'phone_number')
   String? get phoneNumber;
   @override
   String? get email;
   @override
-  @JsonKey(name: 'owner_user_id')
   String? get ownerUserId;
   @override
-  @JsonKey(name: 'loyalty_plan_id')
   String? get loyaltyPlanId;
 
   /// Create a copy of ShopCreateRequest
@@ -1167,12 +1141,9 @@ mixin _$ShopUpdateRequest {
   String? get name => throw _privateConstructorUsedError;
   String? get address => throw _privateConstructorUsedError;
   String? get city => throw _privateConstructorUsedError;
-  @JsonKey(name: 'phone_number')
   String? get phoneNumber => throw _privateConstructorUsedError;
   String? get email => throw _privateConstructorUsedError;
-  @JsonKey(name: 'new_owner_user_id')
   String? get newOwnerUserId => throw _privateConstructorUsedError;
-  @JsonKey(name: 'loyalty_plan_id')
   String? get loyaltyPlanId => throw _privateConstructorUsedError;
 
   /// Serializes this ShopUpdateRequest to a JSON map.
@@ -1196,10 +1167,10 @@ abstract class $ShopUpdateRequestCopyWith<$Res> {
     String? name,
     String? address,
     String? city,
-    @JsonKey(name: 'phone_number') String? phoneNumber,
+    String? phoneNumber,
     String? email,
-    @JsonKey(name: 'new_owner_user_id') String? newOwnerUserId,
-    @JsonKey(name: 'loyalty_plan_id') String? loyaltyPlanId,
+    String? newOwnerUserId,
+    String? loyaltyPlanId,
   });
 }
 
@@ -1275,10 +1246,10 @@ abstract class _$$ShopUpdateRequestImplCopyWith<$Res>
     String? name,
     String? address,
     String? city,
-    @JsonKey(name: 'phone_number') String? phoneNumber,
+    String? phoneNumber,
     String? email,
-    @JsonKey(name: 'new_owner_user_id') String? newOwnerUserId,
-    @JsonKey(name: 'loyalty_plan_id') String? loyaltyPlanId,
+    String? newOwnerUserId,
+    String? loyaltyPlanId,
   });
 }
 
@@ -1346,10 +1317,10 @@ class _$ShopUpdateRequestImpl implements _ShopUpdateRequest {
     this.name,
     this.address,
     this.city,
-    @JsonKey(name: 'phone_number') this.phoneNumber,
+    this.phoneNumber,
     this.email,
-    @JsonKey(name: 'new_owner_user_id') this.newOwnerUserId,
-    @JsonKey(name: 'loyalty_plan_id') this.loyaltyPlanId,
+    this.newOwnerUserId,
+    this.loyaltyPlanId,
   });
 
   factory _$ShopUpdateRequestImpl.fromJson(Map<String, dynamic> json) =>
@@ -1362,15 +1333,12 @@ class _$ShopUpdateRequestImpl implements _ShopUpdateRequest {
   @override
   final String? city;
   @override
-  @JsonKey(name: 'phone_number')
   final String? phoneNumber;
   @override
   final String? email;
   @override
-  @JsonKey(name: 'new_owner_user_id')
   final String? newOwnerUserId;
   @override
-  @JsonKey(name: 'loyalty_plan_id')
   final String? loyaltyPlanId;
 
   @override
@@ -1430,10 +1398,10 @@ abstract class _ShopUpdateRequest implements ShopUpdateRequest {
     final String? name,
     final String? address,
     final String? city,
-    @JsonKey(name: 'phone_number') final String? phoneNumber,
+    final String? phoneNumber,
     final String? email,
-    @JsonKey(name: 'new_owner_user_id') final String? newOwnerUserId,
-    @JsonKey(name: 'loyalty_plan_id') final String? loyaltyPlanId,
+    final String? newOwnerUserId,
+    final String? loyaltyPlanId,
   }) = _$ShopUpdateRequestImpl;
 
   factory _ShopUpdateRequest.fromJson(Map<String, dynamic> json) =
@@ -1446,15 +1414,12 @@ abstract class _ShopUpdateRequest implements ShopUpdateRequest {
   @override
   String? get city;
   @override
-  @JsonKey(name: 'phone_number')
   String? get phoneNumber;
   @override
   String? get email;
   @override
-  @JsonKey(name: 'new_owner_user_id')
   String? get newOwnerUserId;
   @override
-  @JsonKey(name: 'loyalty_plan_id')
   String? get loyaltyPlanId;
 
   /// Create a copy of ShopUpdateRequest

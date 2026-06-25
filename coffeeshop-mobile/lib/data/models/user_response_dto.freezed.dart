@@ -25,14 +25,7 @@ mixin _$UserResponseDto {
   String get name => throw _privateConstructorUsedError;
   String get username => throw _privateConstructorUsedError;
   String get email => throw _privateConstructorUsedError;
-  @JsonKey(name: 'user_type')
   String get userType => throw _privateConstructorUsedError;
-  @JsonKey(name: 'is_active')
-  bool get isActive => throw _privateConstructorUsedError;
-  @JsonKey(name: 'created_at')
-  DateTime get createdAt => throw _privateConstructorUsedError;
-  @JsonKey(name: 'updated_at')
-  DateTime get updatedAt => throw _privateConstructorUsedError;
 
   /// Serializes this UserResponseDto to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -56,10 +49,7 @@ abstract class $UserResponseDtoCopyWith<$Res> {
     String name,
     String username,
     String email,
-    @JsonKey(name: 'user_type') String userType,
-    @JsonKey(name: 'is_active') bool isActive,
-    @JsonKey(name: 'created_at') DateTime createdAt,
-    @JsonKey(name: 'updated_at') DateTime updatedAt,
+    String userType,
   });
 }
 
@@ -83,9 +73,6 @@ class _$UserResponseDtoCopyWithImpl<$Res, $Val extends UserResponseDto>
     Object? username = null,
     Object? email = null,
     Object? userType = null,
-    Object? isActive = null,
-    Object? createdAt = null,
-    Object? updatedAt = null,
   }) {
     return _then(
       _value.copyWith(
@@ -109,18 +96,6 @@ class _$UserResponseDtoCopyWithImpl<$Res, $Val extends UserResponseDto>
                 ? _value.userType
                 : userType // ignore: cast_nullable_to_non_nullable
                       as String,
-            isActive: null == isActive
-                ? _value.isActive
-                : isActive // ignore: cast_nullable_to_non_nullable
-                      as bool,
-            createdAt: null == createdAt
-                ? _value.createdAt
-                : createdAt // ignore: cast_nullable_to_non_nullable
-                      as DateTime,
-            updatedAt: null == updatedAt
-                ? _value.updatedAt
-                : updatedAt // ignore: cast_nullable_to_non_nullable
-                      as DateTime,
           )
           as $Val,
     );
@@ -141,10 +116,7 @@ abstract class _$$UserResponseDtoImplCopyWith<$Res>
     String name,
     String username,
     String email,
-    @JsonKey(name: 'user_type') String userType,
-    @JsonKey(name: 'is_active') bool isActive,
-    @JsonKey(name: 'created_at') DateTime createdAt,
-    @JsonKey(name: 'updated_at') DateTime updatedAt,
+    String userType,
   });
 }
 
@@ -167,9 +139,6 @@ class __$$UserResponseDtoImplCopyWithImpl<$Res>
     Object? username = null,
     Object? email = null,
     Object? userType = null,
-    Object? isActive = null,
-    Object? createdAt = null,
-    Object? updatedAt = null,
   }) {
     return _then(
       _$UserResponseDtoImpl(
@@ -193,18 +162,6 @@ class __$$UserResponseDtoImplCopyWithImpl<$Res>
             ? _value.userType
             : userType // ignore: cast_nullable_to_non_nullable
                   as String,
-        isActive: null == isActive
-            ? _value.isActive
-            : isActive // ignore: cast_nullable_to_non_nullable
-                  as bool,
-        createdAt: null == createdAt
-            ? _value.createdAt
-            : createdAt // ignore: cast_nullable_to_non_nullable
-                  as DateTime,
-        updatedAt: null == updatedAt
-            ? _value.updatedAt
-            : updatedAt // ignore: cast_nullable_to_non_nullable
-                  as DateTime,
       ),
     );
   }
@@ -218,10 +175,7 @@ class _$UserResponseDtoImpl implements _UserResponseDto {
     required this.name,
     required this.username,
     required this.email,
-    @JsonKey(name: 'user_type') required this.userType,
-    @JsonKey(name: 'is_active') required this.isActive,
-    @JsonKey(name: 'created_at') required this.createdAt,
-    @JsonKey(name: 'updated_at') required this.updatedAt,
+    required this.userType,
   });
 
   factory _$UserResponseDtoImpl.fromJson(Map<String, dynamic> json) =>
@@ -236,21 +190,11 @@ class _$UserResponseDtoImpl implements _UserResponseDto {
   @override
   final String email;
   @override
-  @JsonKey(name: 'user_type')
   final String userType;
-  @override
-  @JsonKey(name: 'is_active')
-  final bool isActive;
-  @override
-  @JsonKey(name: 'created_at')
-  final DateTime createdAt;
-  @override
-  @JsonKey(name: 'updated_at')
-  final DateTime updatedAt;
 
   @override
   String toString() {
-    return 'UserResponseDto(id: $id, name: $name, username: $username, email: $email, userType: $userType, isActive: $isActive, createdAt: $createdAt, updatedAt: $updatedAt)';
+    return 'UserResponseDto(id: $id, name: $name, username: $username, email: $email, userType: $userType)';
   }
 
   @override
@@ -264,28 +208,13 @@ class _$UserResponseDtoImpl implements _UserResponseDto {
                 other.username == username) &&
             (identical(other.email, email) || other.email == email) &&
             (identical(other.userType, userType) ||
-                other.userType == userType) &&
-            (identical(other.isActive, isActive) ||
-                other.isActive == isActive) &&
-            (identical(other.createdAt, createdAt) ||
-                other.createdAt == createdAt) &&
-            (identical(other.updatedAt, updatedAt) ||
-                other.updatedAt == updatedAt));
+                other.userType == userType));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(
-    runtimeType,
-    id,
-    name,
-    username,
-    email,
-    userType,
-    isActive,
-    createdAt,
-    updatedAt,
-  );
+  int get hashCode =>
+      Object.hash(runtimeType, id, name, username, email, userType);
 
   /// Create a copy of UserResponseDto
   /// with the given fields replaced by the non-null parameter values.
@@ -310,10 +239,7 @@ abstract class _UserResponseDto implements UserResponseDto {
     required final String name,
     required final String username,
     required final String email,
-    @JsonKey(name: 'user_type') required final String userType,
-    @JsonKey(name: 'is_active') required final bool isActive,
-    @JsonKey(name: 'created_at') required final DateTime createdAt,
-    @JsonKey(name: 'updated_at') required final DateTime updatedAt,
+    required final String userType,
   }) = _$UserResponseDtoImpl;
 
   factory _UserResponseDto.fromJson(Map<String, dynamic> json) =
@@ -328,17 +254,7 @@ abstract class _UserResponseDto implements UserResponseDto {
   @override
   String get email;
   @override
-  @JsonKey(name: 'user_type')
   String get userType;
-  @override
-  @JsonKey(name: 'is_active')
-  bool get isActive;
-  @override
-  @JsonKey(name: 'created_at')
-  DateTime get createdAt;
-  @override
-  @JsonKey(name: 'updated_at')
-  DateTime get updatedAt;
 
   /// Create a copy of UserResponseDto
   /// with the given fields replaced by the non-null parameter values.

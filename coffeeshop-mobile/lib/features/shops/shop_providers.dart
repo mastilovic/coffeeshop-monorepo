@@ -15,8 +15,6 @@ class ShopListParams {
   final String? city;
   final int page;
 
-  static const pageSize = 20;
-
   ShopListParams copyWith({
     String? query,
     String? city,
@@ -63,8 +61,8 @@ final shopListProvider = FutureProvider<ShopListResult>((ref) async {
 
   return ShopListResult(
     shops: content,
-    totalPages: (data['total_pages'] as int?) ?? 0,
-    totalElements: (data['total_elements'] as int?) ?? 0,
+    totalPages: (data['totalPages'] as int?) ?? 0,
+    totalElements: (data['totalElements'] as int?) ?? 0,
   );
 });
 

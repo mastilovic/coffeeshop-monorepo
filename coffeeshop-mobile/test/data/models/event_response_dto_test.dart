@@ -4,13 +4,13 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   group('EventResponseDto', () {
     final validJson = {
-      'event_id': 'evt-123',
-      'event_name': 'Coffee Tasting Workshop',
-      'event_date': '2024-06-15T18:00:00Z',
+      'eventId': 'evt-123',
+      'eventName': 'Coffee Tasting Workshop',
+      'eventDate': '2024-06-15T18:00:00Z',
       'description': 'Learn about coffee brewing',
-      'shop_id': 'shop-456',
-      'shop_name': 'Central Perk',
-      'shop_city': 'New York',
+      'shopId': 'shop-456',
+      'shopName': 'Central Perk',
+      'shopCity': 'New York',
     };
 
     test('fromJson parses valid JSON correctly', () {
@@ -26,9 +26,9 @@ void main() {
 
     test('fromJson handles optional fields', () {
       final minimalJson = {
-        'event_id': 'evt-min',
-        'event_name': 'Min Event',
-        'event_date': '2024-07-01T12:00:00Z',
+        'eventId': 'evt-min',
+        'eventName': 'Min Event',
+        'eventDate': '2024-07-01T12:00:00Z',
       };
       final dto = EventResponseDto.fromJson(minimalJson);
       expect(dto.description, isNull);
@@ -37,13 +37,30 @@ void main() {
       expect(dto.shopCity, isNull);
     });
 
+    test('fromJson handles empty-string shop fields from Go API', () {
+      final json = {
+        'eventId': 'evt-empty-shop',
+        'eventName': 'Standalone Event',
+        'eventDate': '2024-07-01T12:00:00Z',
+        'description': '',
+        'shopId': '',
+        'shopName': '',
+        'shopCity': '',
+      };
+      final dto = EventResponseDto.fromJson(json);
+      expect(dto.eventId, 'evt-empty-shop');
+      expect(dto.shopId, '');
+      expect(dto.shopName, '');
+      expect(dto.shopCity, '');
+    });
+
     test('toJson produces valid JSON', () {
       final dto = EventResponseDto.fromJson(validJson);
       final json = dto.toJson();
-      expect(json['event_id'], 'evt-123');
-      expect(json['event_name'], 'Coffee Tasting Workshop');
-      expect(json['event_date'], '2024-06-15T18:00:00Z');
-      expect(json['shop_name'], 'Central Perk');
+      expect(json['eventId'], 'evt-123');
+      expect(json['eventName'], 'Coffee Tasting Workshop');
+      expect(json['eventDate'], '2024-06-15T18:00:00Z');
+      expect(json['shopName'], 'Central Perk');
     });
 
     test('round-trip serialization preserves data', () {
@@ -59,10 +76,10 @@ void main() {
   group('EventCreateRequest', () {
     test('fromJson parses correctly', () {
       final json = {
-        'event_name': 'New Event',
-        'event_date': '2024-08-01T15:00:00Z',
+        'eventName': 'New Event',
+        'eventDate': '2024-08-01T15:00:00Z',
         'description': 'A fun event',
-        'shop_id': 'shop-1',
+        'shopId': 'shop-1',
       };
       final dto = EventCreateRequest.fromJson(json);
       expect(dto.eventName, 'New Event');
@@ -73,19 +90,19 @@ void main() {
 
     test('toJson produces valid JSON', () {
       final dto = EventCreateRequest.fromJson({
-        'event_name': 'New Event',
-        'event_date': '2024-08-01T15:00:00Z',
+        'eventName': 'New Event',
+        'eventDate': '2024-08-01T15:00:00Z',
       });
       final json = dto.toJson();
-      expect(json['event_name'], 'New Event');
-      expect(json['event_date'], '2024-08-01T15:00:00Z');
+      expect(json['eventName'], 'New Event');
+      expect(json['eventDate'], '2024-08-01T15:00:00Z');
     });
   });
 
   group('EventUpdateRequest', () {
     test('fromJson parses partial update correctly', () {
       final json = {
-        'event_name': 'Updated Event Name',
+        'eventName': 'Updated Event Name',
       };
       final dto = EventUpdateRequest.fromJson(json);
       expect(dto.eventName, 'Updated Event Name');
@@ -107,8 +124,8 @@ void main() {
 
     test('fromJson parses with date filters', () {
       final json = {
-        'date_from': '2024-06-01',
-        'date_to': '2024-06-30',
+        'dateFrom': '2024-06-01',
+        'dateTo': '2024-06-30',
         'page': 1,
       };
       final dto = EventSearchParams.fromJson(json);
@@ -120,11 +137,11 @@ void main() {
     test('toJson produces valid JSON', () {
       final dto = EventSearchParams.fromJson({
         'q': 'coffee',
-        'date_from': '2024-06-01',
+        'dateFrom': '2024-06-01',
       });
       final json = dto.toJson();
       expect(json['q'], 'coffee');
-      expect(json['date_from'], '2024-06-01');
+      expect(json['dateFrom'], '2024-06-01');
     });
   });
 }

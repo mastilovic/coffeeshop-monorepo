@@ -21,13 +21,10 @@ ShopEmployeeDto _$ShopEmployeeDtoFromJson(Map<String, dynamic> json) {
 
 /// @nodoc
 mixin _$ShopEmployeeDto {
-  @JsonKey(name: 'user_id')
   String get userId => throw _privateConstructorUsedError;
-  @JsonKey(name: 'shop_id')
   String get shopId => throw _privateConstructorUsedError;
   String get name => throw _privateConstructorUsedError;
   String get email => throw _privateConstructorUsedError;
-  @JsonKey(name: 'is_owner')
   bool get isOwner => throw _privateConstructorUsedError;
 
   /// Serializes this ShopEmployeeDto to a JSON map.
@@ -48,11 +45,11 @@ abstract class $ShopEmployeeDtoCopyWith<$Res> {
   ) = _$ShopEmployeeDtoCopyWithImpl<$Res, ShopEmployeeDto>;
   @useResult
   $Res call({
-    @JsonKey(name: 'user_id') String userId,
-    @JsonKey(name: 'shop_id') String shopId,
+    String userId,
+    String shopId,
     String name,
     String email,
-    @JsonKey(name: 'is_owner') bool isOwner,
+    bool isOwner,
   });
 }
 
@@ -115,11 +112,11 @@ abstract class _$$ShopEmployeeDtoImplCopyWith<$Res>
   @override
   @useResult
   $Res call({
-    @JsonKey(name: 'user_id') String userId,
-    @JsonKey(name: 'shop_id') String shopId,
+    String userId,
+    String shopId,
     String name,
     String email,
-    @JsonKey(name: 'is_owner') bool isOwner,
+    bool isOwner,
   });
 }
 
@@ -174,28 +171,26 @@ class __$$ShopEmployeeDtoImplCopyWithImpl<$Res>
 @JsonSerializable()
 class _$ShopEmployeeDtoImpl implements _ShopEmployeeDto {
   const _$ShopEmployeeDtoImpl({
-    @JsonKey(name: 'user_id') required this.userId,
-    @JsonKey(name: 'shop_id') required this.shopId,
+    required this.userId,
+    required this.shopId,
     required this.name,
     required this.email,
-    @JsonKey(name: 'is_owner') this.isOwner = false,
+    this.isOwner = false,
   });
 
   factory _$ShopEmployeeDtoImpl.fromJson(Map<String, dynamic> json) =>
       _$$ShopEmployeeDtoImplFromJson(json);
 
   @override
-  @JsonKey(name: 'user_id')
   final String userId;
   @override
-  @JsonKey(name: 'shop_id')
   final String shopId;
   @override
   final String name;
   @override
   final String email;
   @override
-  @JsonKey(name: 'is_owner')
+  @JsonKey()
   final bool isOwner;
 
   @override
@@ -239,28 +234,25 @@ class _$ShopEmployeeDtoImpl implements _ShopEmployeeDto {
 
 abstract class _ShopEmployeeDto implements ShopEmployeeDto {
   const factory _ShopEmployeeDto({
-    @JsonKey(name: 'user_id') required final String userId,
-    @JsonKey(name: 'shop_id') required final String shopId,
+    required final String userId,
+    required final String shopId,
     required final String name,
     required final String email,
-    @JsonKey(name: 'is_owner') final bool isOwner,
+    final bool isOwner,
   }) = _$ShopEmployeeDtoImpl;
 
   factory _ShopEmployeeDto.fromJson(Map<String, dynamic> json) =
       _$ShopEmployeeDtoImpl.fromJson;
 
   @override
-  @JsonKey(name: 'user_id')
   String get userId;
   @override
-  @JsonKey(name: 'shop_id')
   String get shopId;
   @override
   String get name;
   @override
   String get email;
   @override
-  @JsonKey(name: 'is_owner')
   bool get isOwner;
 
   /// Create a copy of ShopEmployeeDto
@@ -279,9 +271,7 @@ AssignEmployeeRequest _$AssignEmployeeRequestFromJson(
 
 /// @nodoc
 mixin _$AssignEmployeeRequest {
-  @JsonKey(name: 'shop_id')
   String get shopId => throw _privateConstructorUsedError;
-  @JsonKey(name: 'user_id')
   String get userId => throw _privateConstructorUsedError;
 
   /// Serializes this AssignEmployeeRequest to a JSON map.
@@ -301,10 +291,7 @@ abstract class $AssignEmployeeRequestCopyWith<$Res> {
     $Res Function(AssignEmployeeRequest) then,
   ) = _$AssignEmployeeRequestCopyWithImpl<$Res, AssignEmployeeRequest>;
   @useResult
-  $Res call({
-    @JsonKey(name: 'shop_id') String shopId,
-    @JsonKey(name: 'user_id') String userId,
-  });
+  $Res call({String shopId, String userId});
 }
 
 /// @nodoc
@@ -350,10 +337,7 @@ abstract class _$$AssignEmployeeRequestImplCopyWith<$Res>
   ) = __$$AssignEmployeeRequestImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({
-    @JsonKey(name: 'shop_id') String shopId,
-    @JsonKey(name: 'user_id') String userId,
-  });
+  $Res call({String shopId, String userId});
 }
 
 /// @nodoc
@@ -390,18 +374,16 @@ class __$$AssignEmployeeRequestImplCopyWithImpl<$Res>
 @JsonSerializable()
 class _$AssignEmployeeRequestImpl implements _AssignEmployeeRequest {
   const _$AssignEmployeeRequestImpl({
-    @JsonKey(name: 'shop_id') required this.shopId,
-    @JsonKey(name: 'user_id') required this.userId,
+    required this.shopId,
+    required this.userId,
   });
 
   factory _$AssignEmployeeRequestImpl.fromJson(Map<String, dynamic> json) =>
       _$$AssignEmployeeRequestImplFromJson(json);
 
   @override
-  @JsonKey(name: 'shop_id')
   final String shopId;
   @override
-  @JsonKey(name: 'user_id')
   final String userId;
 
   @override
@@ -442,18 +424,16 @@ class _$AssignEmployeeRequestImpl implements _AssignEmployeeRequest {
 
 abstract class _AssignEmployeeRequest implements AssignEmployeeRequest {
   const factory _AssignEmployeeRequest({
-    @JsonKey(name: 'shop_id') required final String shopId,
-    @JsonKey(name: 'user_id') required final String userId,
+    required final String shopId,
+    required final String userId,
   }) = _$AssignEmployeeRequestImpl;
 
   factory _AssignEmployeeRequest.fromJson(Map<String, dynamic> json) =
       _$AssignEmployeeRequestImpl.fromJson;
 
   @override
-  @JsonKey(name: 'shop_id')
   String get shopId;
   @override
-  @JsonKey(name: 'user_id')
   String get userId;
 
   /// Create a copy of AssignEmployeeRequest
@@ -472,9 +452,7 @@ RemoveEmployeeRequest _$RemoveEmployeeRequestFromJson(
 
 /// @nodoc
 mixin _$RemoveEmployeeRequest {
-  @JsonKey(name: 'shop_id')
   String get shopId => throw _privateConstructorUsedError;
-  @JsonKey(name: 'user_id')
   String get userId => throw _privateConstructorUsedError;
 
   /// Serializes this RemoveEmployeeRequest to a JSON map.
@@ -494,10 +472,7 @@ abstract class $RemoveEmployeeRequestCopyWith<$Res> {
     $Res Function(RemoveEmployeeRequest) then,
   ) = _$RemoveEmployeeRequestCopyWithImpl<$Res, RemoveEmployeeRequest>;
   @useResult
-  $Res call({
-    @JsonKey(name: 'shop_id') String shopId,
-    @JsonKey(name: 'user_id') String userId,
-  });
+  $Res call({String shopId, String userId});
 }
 
 /// @nodoc
@@ -543,10 +518,7 @@ abstract class _$$RemoveEmployeeRequestImplCopyWith<$Res>
   ) = __$$RemoveEmployeeRequestImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({
-    @JsonKey(name: 'shop_id') String shopId,
-    @JsonKey(name: 'user_id') String userId,
-  });
+  $Res call({String shopId, String userId});
 }
 
 /// @nodoc
@@ -583,18 +555,16 @@ class __$$RemoveEmployeeRequestImplCopyWithImpl<$Res>
 @JsonSerializable()
 class _$RemoveEmployeeRequestImpl implements _RemoveEmployeeRequest {
   const _$RemoveEmployeeRequestImpl({
-    @JsonKey(name: 'shop_id') required this.shopId,
-    @JsonKey(name: 'user_id') required this.userId,
+    required this.shopId,
+    required this.userId,
   });
 
   factory _$RemoveEmployeeRequestImpl.fromJson(Map<String, dynamic> json) =>
       _$$RemoveEmployeeRequestImplFromJson(json);
 
   @override
-  @JsonKey(name: 'shop_id')
   final String shopId;
   @override
-  @JsonKey(name: 'user_id')
   final String userId;
 
   @override
@@ -635,18 +605,16 @@ class _$RemoveEmployeeRequestImpl implements _RemoveEmployeeRequest {
 
 abstract class _RemoveEmployeeRequest implements RemoveEmployeeRequest {
   const factory _RemoveEmployeeRequest({
-    @JsonKey(name: 'shop_id') required final String shopId,
-    @JsonKey(name: 'user_id') required final String userId,
+    required final String shopId,
+    required final String userId,
   }) = _$RemoveEmployeeRequestImpl;
 
   factory _RemoveEmployeeRequest.fromJson(Map<String, dynamic> json) =
       _$RemoveEmployeeRequestImpl.fromJson;
 
   @override
-  @JsonKey(name: 'shop_id')
   String get shopId;
   @override
-  @JsonKey(name: 'user_id')
   String get userId;
 
   /// Create a copy of RemoveEmployeeRequest

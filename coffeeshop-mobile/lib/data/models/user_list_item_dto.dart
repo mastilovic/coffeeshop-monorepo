@@ -11,7 +11,7 @@ class UserListItemDto with _$UserListItemDto {
     required String id,
     required String name,
     required String username,
-    @JsonKey(name: 'user_type') required String userType,
+    required String userType,
   }) = _UserListItemDto;
 
   factory UserListItemDto.fromJson(Map<String, dynamic> json) =>

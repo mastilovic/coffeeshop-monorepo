@@ -10,14 +10,14 @@ _$ReservationRequestResponseDtoImpl
 _$$ReservationRequestResponseDtoImplFromJson(Map<String, dynamic> json) =>
     _$ReservationRequestResponseDtoImpl(
       id: json['id'] as String,
-      partySize: (json['party_size'] as num).toInt(),
+      partySize: (json['partySize'] as num).toInt(),
       status: json['status'] as String? ?? 'PENDING',
-      userId: json['user_id'] as String?,
-      shopId: json['shop_id'] as String?,
-      eventId: json['event_id'] as String?,
-      reservationId: json['reservation_id'] as String?,
-      eventName: json['event_name'] as String?,
-      eventDate: json['event_date'] as String?,
+      userId: json['userId'] as String?,
+      shopId: json['shopId'] as String?,
+      eventId: json['eventId'] as String?,
+      reservationId: json['reservationId'] as String?,
+      eventName: json['eventName'] as String?,
+      eventDate: json['eventDate'] as String?,
       user: json['user'] as Map<String, dynamic>?,
       shop: json['shop'] as Map<String, dynamic>?,
     );
@@ -26,14 +26,14 @@ Map<String, dynamic> _$$ReservationRequestResponseDtoImplToJson(
   _$ReservationRequestResponseDtoImpl instance,
 ) => <String, dynamic>{
   'id': instance.id,
-  'party_size': instance.partySize,
+  'partySize': instance.partySize,
   'status': instance.status,
-  'user_id': instance.userId,
-  'shop_id': instance.shopId,
-  'event_id': instance.eventId,
-  'reservation_id': instance.reservationId,
-  'event_name': instance.eventName,
-  'event_date': instance.eventDate,
+  'userId': instance.userId,
+  'shopId': instance.shopId,
+  'eventId': instance.eventId,
+  'reservationId': instance.reservationId,
+  'eventName': instance.eventName,
+  'eventDate': instance.eventDate,
   'user': instance.user,
   'shop': instance.shop,
 };
@@ -41,25 +41,25 @@ Map<String, dynamic> _$$ReservationRequestResponseDtoImplToJson(
 _$ReservationRequestCreateRequestImpl
 _$$ReservationRequestCreateRequestImplFromJson(Map<String, dynamic> json) =>
     _$ReservationRequestCreateRequestImpl(
-      partySize: (json['party_size'] as num).toInt(),
-      userId: json['user_id'] as String?,
-      shopId: json['shop_id'] as String?,
-      eventId: json['event_id'] as String?,
+      partySize: (json['partySize'] as num).toInt(),
+      userId: json['userId'] as String?,
+      shopId: json['shopId'] as String?,
+      eventId: json['eventId'] as String?,
     );
 
 Map<String, dynamic> _$$ReservationRequestCreateRequestImplToJson(
   _$ReservationRequestCreateRequestImpl instance,
 ) => <String, dynamic>{
-  'party_size': instance.partySize,
-  'user_id': instance.userId,
-  'shop_id': instance.shopId,
-  'event_id': instance.eventId,
+  'partySize': instance.partySize,
+  'userId': instance.userId,
+  'shopId': instance.shopId,
+  'eventId': instance.eventId,
 };
 
 _$ReservationAcceptRequestImpl _$$ReservationAcceptRequestImplFromJson(
   Map<String, dynamic> json,
-) => _$ReservationAcceptRequestImpl(tableId: json['table_id'] as String?);
+) => _$ReservationAcceptRequestImpl(tableId: json['tableId'] as String?);
 
 Map<String, dynamic> _$$ReservationAcceptRequestImplToJson(
   _$ReservationAcceptRequestImpl instance,
-) => <String, dynamic>{'table_id': instance.tableId};
+) => <String, dynamic>{'tableId': instance.tableId};

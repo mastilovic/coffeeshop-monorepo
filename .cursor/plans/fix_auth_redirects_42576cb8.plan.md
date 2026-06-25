@@ -4,19 +4,19 @@ overview: Login and registration update auth state correctly, but GoRouter never
 todos:
   - id: router-refresh
     content: Add RouterRefreshNotifier + refreshListenable to app_router.dart; use ref.read in redirect and ref.listen for auth changes
-    status: pending
+    status: completed
   - id: unknown-guard
     content: Return null from redirect when AuthStatus.unknown to avoid login flash during auto-login
-    status: pending
+    status: completed
   - id: auth-notifier-cleanup
     content: Remove pre-login unauthenticated reset in AuthNotifier.login()
-    status: pending
+    status: completed
   - id: register-notifier
     content: Switch register_screen to use authNotifierProvider.notifier.register
-    status: pending
+    status: completed
   - id: verify-chrome
     content: Test login, register, logout, and guarded routes on Chrome; add WebOptions to token_storage only if OperationError persists
-    status: pending
+    status: completed
 isProject: false
 ---
 

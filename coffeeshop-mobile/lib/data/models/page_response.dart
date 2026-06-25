@@ -11,8 +11,8 @@ class PageResponseDto with _$PageResponseDto {
     @Default([]) List<Map<String, dynamic>> content,
     required int page,
     required int size,
-    @JsonKey(name: 'total_elements') required int totalElements,
-    @JsonKey(name: 'total_pages') required int totalPages,
+    required int totalElements,
+    required int totalPages,
   }) = _PageResponseDto;
 
   factory PageResponseDto.fromJson(Map<String, dynamic> json) =>

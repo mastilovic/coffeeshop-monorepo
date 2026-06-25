@@ -2,6 +2,8 @@
 
 import 'package:freezed_annotation/freezed_annotation.dart';
 
+import 'shop_response_dto.dart';
+
 part 'user_profile_response_dto.freezed.dart';
 part 'user_profile_response_dto.g.dart';
 
@@ -12,10 +14,8 @@ class UserProfileResponseDto with _$UserProfileResponseDto {
     required String name,
     required String username,
     required String email,
-    @JsonKey(name: 'user_type') required String userType,
-    @JsonKey(name: 'is_active') required bool isActive,
-    @JsonKey(name: 'created_at') required DateTime createdAt,
-    @JsonKey(name: 'updated_at') required DateTime updatedAt,
+    required String userType,
+    @Default([]) List<ShopSummaryDto> favouriteShops,
   }) = _UserProfileResponseDto;
 
   factory UserProfileResponseDto.fromJson(Map<String, dynamic> json) =>

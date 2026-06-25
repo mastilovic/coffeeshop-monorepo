@@ -10,9 +10,9 @@ class DashboardActivityResponse with _$DashboardActivityResponse {
   const factory DashboardActivityResponse({
     required DashboardAggregate aggregate,
     @Default([]) List<DashboardActivityItem> activities,
-    @JsonKey(name: 'top_shops') @Default([]) List<TopShopItem> topShops,
-    @JsonKey(name: 'upcoming_events') @Default([]) List<UpcomingEventItem> upcomingEvents,
-    @JsonKey(name: 'personal_summary') DashboardPersonalSummary? personalSummary,
+    @Default([]) List<TopShopItem> topShops,
+    @Default([]) List<UpcomingEventItem> upcomingEvents,
+    DashboardPersonalSummary? personalSummary,
     @Default([]) List<DashboardNotification> notifications,
   }) = _DashboardActivityResponse;
 
@@ -25,11 +25,11 @@ class DashboardActivityItem with _$DashboardActivityItem {
   const factory DashboardActivityItem({
     required String type,
     String? timestamp,
-    @JsonKey(name: 'shop_id') String? shopId,
-    @JsonKey(name: 'shop_name') String? shopName,
+    String? shopId,
+    String? shopName,
     String? title,
     String? body,
-    @JsonKey(name: 'actor_name') String? actorName,
+    String? actorName,
     double? rating,
   }) = _DashboardActivityItem;
 
@@ -40,11 +40,11 @@ class DashboardActivityItem with _$DashboardActivityItem {
 @freezed
 class DashboardAggregate with _$DashboardAggregate {
   const factory DashboardAggregate({
-    @JsonKey(name: 'shop_count') @Default(0) int shopCount,
-    @JsonKey(name: 'review_count') @Default(0) int reviewCount,
-    @JsonKey(name: 'average_rating') double? averageRating,
-    @JsonKey(name: 'event_count') @Default(0) int eventCount,
-    @JsonKey(name: 'member_count') @Default(0) int memberCount,
+    @Default(0) int shopCount,
+    @Default(0) int reviewCount,
+    double? averageRating,
+    @Default(0) int eventCount,
+    @Default(0) int memberCount,
   }) = _DashboardAggregate;
 
   factory DashboardAggregate.fromJson(Map<String, dynamic> json) =>
@@ -54,11 +54,11 @@ class DashboardAggregate with _$DashboardAggregate {
 @freezed
 class TopShopItem with _$TopShopItem {
   const factory TopShopItem({
-    @JsonKey(name: 'shop_id') required String shopId,
-    @JsonKey(name: 'shop_name') required String shopName,
+    required String shopId,
+    required String shopName,
     String? city,
-    @JsonKey(name: 'average_rating') double? averageRating,
-    @JsonKey(name: 'review_count') @Default(0) int reviewCount,
+    double? averageRating,
+    @Default(0) int reviewCount,
   }) = _TopShopItem;
 
   factory TopShopItem.fromJson(Map<String, dynamic> json) =>
@@ -68,11 +68,11 @@ class TopShopItem with _$TopShopItem {
 @freezed
 class UpcomingEventItem with _$UpcomingEventItem {
   const factory UpcomingEventItem({
-    @JsonKey(name: 'event_id') required String eventId,
-    @JsonKey(name: 'event_name') required String eventName,
-    @JsonKey(name: 'event_date') String? eventDate,
-    @JsonKey(name: 'shop_id') String? shopId,
-    @JsonKey(name: 'shop_name') String? shopName,
+    required String eventId,
+    required String eventName,
+    String? eventDate,
+    String? shopId,
+    String? shopName,
   }) = _UpcomingEventItem;
 
   factory UpcomingEventItem.fromJson(Map<String, dynamic> json) =>
@@ -82,9 +82,9 @@ class UpcomingEventItem with _$UpcomingEventItem {
 @freezed
 class DashboardPersonalSummary with _$DashboardPersonalSummary {
   const factory DashboardPersonalSummary({
-    @JsonKey(name: 'favourite_shops') @Default(0) int favouriteShops,
+    @Default(0) int favouriteShops,
     @Default(0) int reservations,
-    @JsonKey(name: 'reviews_written') @Default(0) int reviewsWritten,
+    @Default(0) int reviewsWritten,
   }) = _DashboardPersonalSummary;
 
   factory DashboardPersonalSummary.fromJson(Map<String, dynamic> json) =>

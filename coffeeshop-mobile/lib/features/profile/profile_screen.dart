@@ -3,7 +3,23 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/auth/auth_notifier.dart';
 import '../../core/auth/auth_service.dart';
+import '../../core/auth/user_role.dart';
 import '../../core/utils/extensions.dart';
+import '../../data/services/reservation_api_service.dart';
+import '../../data/services/review_api_service.dart';
+import '../../data/services/user_api_service.dart';
+
+final _userReservationsCountProvider = FutureProvider<int>((ref) async {
+  final api = ref.watch(reservationApiServiceProvider);
+  final data = await api.getAll();
+  return data.length;
+});
+
+final _userReviewsCountProvider = FutureProvider<int>((ref) async {
+  final api = ref.watch(reviewApiServiceProvider);
+  final data = await api.getAll();
+  return data.length;
+});
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -47,12 +63,27 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   Future<void> _saveProfile() async {
     setState(() => _isSaving = true);
     try {
-      // TODO: Call update profile API
-      await Future<void>.delayed(const Duration(milliseconds: 500));
+      final user = ref.read(authNotifierProvider).user;
+      if (user == null) return;
+
+      await ref.read(userApiServiceProvider).update(user.id, {
+        'name': _nameController.text.trim(),
+        'username': _usernameController.text.trim(),
+        'email': _emailController.text.trim(),
+      });
+
+      await ref.read(authNotifierProvider.notifier).refreshProfile();
+
       if (mounted) {
         setState(() => _isEditing = false);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Profile updated')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to update profile: $e')),
         );
       }
     } finally {
@@ -168,6 +199,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
   Widget _buildViewMode(BuildContext context, AuthState authState) {
     final user = authState.user!;
+    final favourites = user.favouriteShops.length;
+    final reservationsAsync = ref.watch(_userReservationsCountProvider);
+    final reviewsAsync = ref.watch(_userReviewsCountProvider);
+
     return Column(
       children: [
         Text(
@@ -192,18 +227,22 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
           decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.primaryContainer,
+            color: UserRole.fromString(user.userType).displayColor(context),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Text(
-            user.userType.replaceAll('_', ' '),
+            UserRole.fromString(user.userType).displayName,
             style: Theme.of(context).textTheme.labelMedium?.copyWith(
                   color: Theme.of(context).colorScheme.onPrimaryContainer,
                 ),
           ),
         ),
         const SizedBox(height: 32),
-                    _statsRow(context),
+        _StatsRow(
+          favourites: favourites.toString(),
+          reservationsAsync: reservationsAsync,
+          reviewsAsync: reviewsAsync,
+        ),
         const SizedBox(height: 16),
         Card(
           child: Padding(
@@ -219,11 +258,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 ),
                 const SizedBox(height: 8),
                 _DetailRow(label: 'User ID', value: user.id),
-                _DetailRow(label: 'Status', value: user.isActive ? 'Active' : 'Inactive'),
-                _DetailRow(
-                  label: 'Joined',
-                  value: user.createdAt.toString().substring(0, 10),
-                ),
+                _DetailRow(label: 'Account Type', value: UserRole.fromString(user.userType).displayName),
               ],
             ),
           ),
@@ -231,27 +266,43 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       ],
     );
   }
+}
 
-  Widget _statsRow(BuildContext context) {
+class _StatsRow extends StatelessWidget {
+  const _StatsRow({
+    required this.favourites,
+    required this.reservationsAsync,
+    required this.reviewsAsync,
+  });
+
+  final String favourites;
+  final AsyncValue<int> reservationsAsync;
+  final AsyncValue<int> reviewsAsync;
+
+  @override
+  Widget build(BuildContext context) {
+    final reservations = reservationsAsync.valueOrNull?.toString() ?? '--';
+    final reviews = reviewsAsync.valueOrNull?.toString() ?? '--';
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
-        const _StatItem(
+        _StatItem(
           icon: Icons.favorite,
           label: 'Favourites',
-          value: '--',
+          value: favourites,
           color: Colors.red,
         ),
         _StatItem(
           icon: Icons.calendar_month,
           label: 'Reservations',
-          value: '--',
+          value: reservations,
           color: Theme.of(context).colorScheme.primary,
         ),
-        const _StatItem(
+        _StatItem(
           icon: Icons.star,
           label: 'Reviews',
-          value: '--',
+          value: reviews,
           color: Colors.amber,
         ),
       ],

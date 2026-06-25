@@ -27,14 +27,8 @@ mixin _$UserProfileResponseDto {
   String get name => throw _privateConstructorUsedError;
   String get username => throw _privateConstructorUsedError;
   String get email => throw _privateConstructorUsedError;
-  @JsonKey(name: 'user_type')
   String get userType => throw _privateConstructorUsedError;
-  @JsonKey(name: 'is_active')
-  bool get isActive => throw _privateConstructorUsedError;
-  @JsonKey(name: 'created_at')
-  DateTime get createdAt => throw _privateConstructorUsedError;
-  @JsonKey(name: 'updated_at')
-  DateTime get updatedAt => throw _privateConstructorUsedError;
+  List<ShopSummaryDto> get favouriteShops => throw _privateConstructorUsedError;
 
   /// Serializes this UserProfileResponseDto to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -58,10 +52,8 @@ abstract class $UserProfileResponseDtoCopyWith<$Res> {
     String name,
     String username,
     String email,
-    @JsonKey(name: 'user_type') String userType,
-    @JsonKey(name: 'is_active') bool isActive,
-    @JsonKey(name: 'created_at') DateTime createdAt,
-    @JsonKey(name: 'updated_at') DateTime updatedAt,
+    String userType,
+    List<ShopSummaryDto> favouriteShops,
   });
 }
 
@@ -88,9 +80,7 @@ class _$UserProfileResponseDtoCopyWithImpl<
     Object? username = null,
     Object? email = null,
     Object? userType = null,
-    Object? isActive = null,
-    Object? createdAt = null,
-    Object? updatedAt = null,
+    Object? favouriteShops = null,
   }) {
     return _then(
       _value.copyWith(
@@ -114,18 +104,10 @@ class _$UserProfileResponseDtoCopyWithImpl<
                 ? _value.userType
                 : userType // ignore: cast_nullable_to_non_nullable
                       as String,
-            isActive: null == isActive
-                ? _value.isActive
-                : isActive // ignore: cast_nullable_to_non_nullable
-                      as bool,
-            createdAt: null == createdAt
-                ? _value.createdAt
-                : createdAt // ignore: cast_nullable_to_non_nullable
-                      as DateTime,
-            updatedAt: null == updatedAt
-                ? _value.updatedAt
-                : updatedAt // ignore: cast_nullable_to_non_nullable
-                      as DateTime,
+            favouriteShops: null == favouriteShops
+                ? _value.favouriteShops
+                : favouriteShops // ignore: cast_nullable_to_non_nullable
+                      as List<ShopSummaryDto>,
           )
           as $Val,
     );
@@ -146,10 +128,8 @@ abstract class _$$UserProfileResponseDtoImplCopyWith<$Res>
     String name,
     String username,
     String email,
-    @JsonKey(name: 'user_type') String userType,
-    @JsonKey(name: 'is_active') bool isActive,
-    @JsonKey(name: 'created_at') DateTime createdAt,
-    @JsonKey(name: 'updated_at') DateTime updatedAt,
+    String userType,
+    List<ShopSummaryDto> favouriteShops,
   });
 }
 
@@ -173,9 +153,7 @@ class __$$UserProfileResponseDtoImplCopyWithImpl<$Res>
     Object? username = null,
     Object? email = null,
     Object? userType = null,
-    Object? isActive = null,
-    Object? createdAt = null,
-    Object? updatedAt = null,
+    Object? favouriteShops = null,
   }) {
     return _then(
       _$UserProfileResponseDtoImpl(
@@ -199,18 +177,10 @@ class __$$UserProfileResponseDtoImplCopyWithImpl<$Res>
             ? _value.userType
             : userType // ignore: cast_nullable_to_non_nullable
                   as String,
-        isActive: null == isActive
-            ? _value.isActive
-            : isActive // ignore: cast_nullable_to_non_nullable
-                  as bool,
-        createdAt: null == createdAt
-            ? _value.createdAt
-            : createdAt // ignore: cast_nullable_to_non_nullable
-                  as DateTime,
-        updatedAt: null == updatedAt
-            ? _value.updatedAt
-            : updatedAt // ignore: cast_nullable_to_non_nullable
-                  as DateTime,
+        favouriteShops: null == favouriteShops
+            ? _value._favouriteShops
+            : favouriteShops // ignore: cast_nullable_to_non_nullable
+                  as List<ShopSummaryDto>,
       ),
     );
   }
@@ -224,11 +194,9 @@ class _$UserProfileResponseDtoImpl implements _UserProfileResponseDto {
     required this.name,
     required this.username,
     required this.email,
-    @JsonKey(name: 'user_type') required this.userType,
-    @JsonKey(name: 'is_active') required this.isActive,
-    @JsonKey(name: 'created_at') required this.createdAt,
-    @JsonKey(name: 'updated_at') required this.updatedAt,
-  });
+    required this.userType,
+    final List<ShopSummaryDto> favouriteShops = const [],
+  }) : _favouriteShops = favouriteShops;
 
   factory _$UserProfileResponseDtoImpl.fromJson(Map<String, dynamic> json) =>
       _$$UserProfileResponseDtoImplFromJson(json);
@@ -242,21 +210,19 @@ class _$UserProfileResponseDtoImpl implements _UserProfileResponseDto {
   @override
   final String email;
   @override
-  @JsonKey(name: 'user_type')
   final String userType;
+  final List<ShopSummaryDto> _favouriteShops;
   @override
-  @JsonKey(name: 'is_active')
-  final bool isActive;
-  @override
-  @JsonKey(name: 'created_at')
-  final DateTime createdAt;
-  @override
-  @JsonKey(name: 'updated_at')
-  final DateTime updatedAt;
+  @JsonKey()
+  List<ShopSummaryDto> get favouriteShops {
+    if (_favouriteShops is EqualUnmodifiableListView) return _favouriteShops;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_favouriteShops);
+  }
 
   @override
   String toString() {
-    return 'UserProfileResponseDto(id: $id, name: $name, username: $username, email: $email, userType: $userType, isActive: $isActive, createdAt: $createdAt, updatedAt: $updatedAt)';
+    return 'UserProfileResponseDto(id: $id, name: $name, username: $username, email: $email, userType: $userType, favouriteShops: $favouriteShops)';
   }
 
   @override
@@ -271,12 +237,10 @@ class _$UserProfileResponseDtoImpl implements _UserProfileResponseDto {
             (identical(other.email, email) || other.email == email) &&
             (identical(other.userType, userType) ||
                 other.userType == userType) &&
-            (identical(other.isActive, isActive) ||
-                other.isActive == isActive) &&
-            (identical(other.createdAt, createdAt) ||
-                other.createdAt == createdAt) &&
-            (identical(other.updatedAt, updatedAt) ||
-                other.updatedAt == updatedAt));
+            const DeepCollectionEquality().equals(
+              other._favouriteShops,
+              _favouriteShops,
+            ));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -288,9 +252,7 @@ class _$UserProfileResponseDtoImpl implements _UserProfileResponseDto {
     username,
     email,
     userType,
-    isActive,
-    createdAt,
-    updatedAt,
+    const DeepCollectionEquality().hash(_favouriteShops),
   );
 
   /// Create a copy of UserProfileResponseDto
@@ -317,10 +279,8 @@ abstract class _UserProfileResponseDto implements UserProfileResponseDto {
     required final String name,
     required final String username,
     required final String email,
-    @JsonKey(name: 'user_type') required final String userType,
-    @JsonKey(name: 'is_active') required final bool isActive,
-    @JsonKey(name: 'created_at') required final DateTime createdAt,
-    @JsonKey(name: 'updated_at') required final DateTime updatedAt,
+    required final String userType,
+    final List<ShopSummaryDto> favouriteShops,
   }) = _$UserProfileResponseDtoImpl;
 
   factory _UserProfileResponseDto.fromJson(Map<String, dynamic> json) =
@@ -335,17 +295,9 @@ abstract class _UserProfileResponseDto implements UserProfileResponseDto {
   @override
   String get email;
   @override
-  @JsonKey(name: 'user_type')
   String get userType;
   @override
-  @JsonKey(name: 'is_active')
-  bool get isActive;
-  @override
-  @JsonKey(name: 'created_at')
-  DateTime get createdAt;
-  @override
-  @JsonKey(name: 'updated_at')
-  DateTime get updatedAt;
+  List<ShopSummaryDto> get favouriteShops;
 
   /// Create a copy of UserProfileResponseDto
   /// with the given fields replaced by the non-null parameter values.

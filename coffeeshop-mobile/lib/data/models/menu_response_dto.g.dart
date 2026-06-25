@@ -11,8 +11,8 @@ _$MenuResponseDtoImpl _$$MenuResponseDtoImplFromJson(
 ) => _$MenuResponseDtoImpl(
   id: json['id'] as String,
   label: json['label'] as String?,
-  createdAt: json['created_at'] as String?,
-  shopId: json['shop_id'] as String?,
+  createdAt: json['createdAt'] as String?,
+  shopId: json['shopId'] as String?,
   current: json['current'] as bool? ?? false,
   items:
       (json['items'] as List<dynamic>?)
@@ -26,8 +26,8 @@ Map<String, dynamic> _$$MenuResponseDtoImplToJson(
 ) => <String, dynamic>{
   'id': instance.id,
   'label': instance.label,
-  'created_at': instance.createdAt,
-  'shop_id': instance.shopId,
+  'createdAt': instance.createdAt,
+  'shopId': instance.shopId,
   'current': instance.current,
   'items': instance.items,
 };
@@ -39,10 +39,10 @@ _$MenuItemResponseDtoImpl _$$MenuItemResponseDtoImplFromJson(
   name: json['name'] as String,
   description: json['description'] as String?,
   price: (json['price'] as num).toDouble(),
-  priceCurrency: json['price_currency'] as String,
-  imageUrl: json['image_url'] as String?,
-  itemType: json['item_type'] as String,
-  menuId: json['menu_id'] as String?,
+  priceCurrency: json['priceCurrency'] as String,
+  imageUrl: json['imageUrl'] as String?,
+  itemType: json['itemType'] as String,
+  menuId: json['menuId'] as String?,
 );
 
 Map<String, dynamic> _$$MenuItemResponseDtoImplToJson(
@@ -52,10 +52,10 @@ Map<String, dynamic> _$$MenuItemResponseDtoImplToJson(
   'name': instance.name,
   'description': instance.description,
   'price': instance.price,
-  'price_currency': instance.priceCurrency,
-  'image_url': instance.imageUrl,
-  'item_type': instance.itemType,
-  'menu_id': instance.menuId,
+  'priceCurrency': instance.priceCurrency,
+  'imageUrl': instance.imageUrl,
+  'itemType': instance.itemType,
+  'menuId': instance.menuId,
 };
 
 _$MenuCreateRequestImpl _$$MenuCreateRequestImplFromJson(
@@ -72,10 +72,10 @@ _$MenuItemCreateRequestImpl _$$MenuItemCreateRequestImplFromJson(
   name: json['name'] as String,
   description: json['description'] as String?,
   price: (json['price'] as num).toDouble(),
-  priceCurrency: json['price_currency'] as String,
-  imageUrl: json['image_url'] as String?,
-  itemType: json['item_type'] as String,
-  menuId: json['menu_id'] as String,
+  priceCurrency: json['priceCurrency'] as String,
+  imageUrl: json['imageUrl'] as String?,
+  itemType: json['itemType'] as String,
+  menuId: json['menuId'] as String,
 );
 
 Map<String, dynamic> _$$MenuItemCreateRequestImplToJson(
@@ -84,8 +84,8 @@ Map<String, dynamic> _$$MenuItemCreateRequestImplToJson(
   'name': instance.name,
   'description': instance.description,
   'price': instance.price,
-  'price_currency': instance.priceCurrency,
-  'image_url': instance.imageUrl,
-  'item_type': instance.itemType,
-  'menu_id': instance.menuId,
+  'priceCurrency': instance.priceCurrency,
+  'imageUrl': instance.imageUrl,
+  'itemType': instance.itemType,
+  'menuId': instance.menuId,
 };

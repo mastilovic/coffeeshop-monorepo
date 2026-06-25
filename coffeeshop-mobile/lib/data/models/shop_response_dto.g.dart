@@ -13,12 +13,12 @@ _$ShopResponseDtoImpl _$$ShopResponseDtoImplFromJson(
   name: json['name'] as String,
   address: json['address'] as String,
   city: json['city'] as String,
-  phoneNumber: json['phone_number'] as String?,
+  phoneNumber: json['phoneNumber'] as String?,
   email: json['email'] as String?,
-  averageRating: (json['average_rating'] as num?)?.toDouble(),
-  reviewCount: (json['review_count'] as num?)?.toInt() ?? 0,
-  memberCount: (json['member_count'] as num?)?.toInt() ?? 0,
-  favouriteByCurrentUser: json['favourite_by_current_user'] as bool? ?? false,
+  averageRating: (json['averageRating'] as num?)?.toDouble(),
+  reviewCount: (json['reviewCount'] as num?)?.toInt() ?? 0,
+  memberCount: (json['memberCount'] as num?)?.toInt() ?? 0,
+  favouriteByCurrentUser: json['favouriteByCurrentUser'] as bool? ?? false,
   events: (json['events'] as List<dynamic>?)
       ?.map((e) => e as Map<String, dynamic>)
       .toList(),
@@ -42,12 +42,12 @@ Map<String, dynamic> _$$ShopResponseDtoImplToJson(
   'name': instance.name,
   'address': instance.address,
   'city': instance.city,
-  'phone_number': instance.phoneNumber,
+  'phoneNumber': instance.phoneNumber,
   'email': instance.email,
-  'average_rating': instance.averageRating,
-  'review_count': instance.reviewCount,
-  'member_count': instance.memberCount,
-  'favourite_by_current_user': instance.favouriteByCurrentUser,
+  'averageRating': instance.averageRating,
+  'reviewCount': instance.reviewCount,
+  'memberCount': instance.memberCount,
+  'favouriteByCurrentUser': instance.favouriteByCurrentUser,
   'events': instance.events,
   'tables': instance.tables,
   'reviews': instance.reviews,
@@ -62,7 +62,7 @@ _$ShopSummaryDtoImpl _$$ShopSummaryDtoImplFromJson(Map<String, dynamic> json) =>
       name: json['name'] as String,
       address: json['address'] as String?,
       city: json['city'] as String?,
-      phoneNumber: json['phone_number'] as String?,
+      phoneNumber: json['phoneNumber'] as String?,
       email: json['email'] as String?,
     );
 
@@ -73,7 +73,7 @@ Map<String, dynamic> _$$ShopSummaryDtoImplToJson(
   'name': instance.name,
   'address': instance.address,
   'city': instance.city,
-  'phone_number': instance.phoneNumber,
+  'phoneNumber': instance.phoneNumber,
   'email': instance.email,
 };
 
@@ -83,10 +83,10 @@ _$ShopCreateRequestImpl _$$ShopCreateRequestImplFromJson(
   name: json['name'] as String,
   address: json['address'] as String,
   city: json['city'] as String,
-  phoneNumber: json['phone_number'] as String?,
+  phoneNumber: json['phoneNumber'] as String?,
   email: json['email'] as String?,
-  ownerUserId: json['owner_user_id'] as String?,
-  loyaltyPlanId: json['loyalty_plan_id'] as String?,
+  ownerUserId: json['ownerUserId'] as String?,
+  loyaltyPlanId: json['loyaltyPlanId'] as String?,
 );
 
 Map<String, dynamic> _$$ShopCreateRequestImplToJson(
@@ -95,10 +95,10 @@ Map<String, dynamic> _$$ShopCreateRequestImplToJson(
   'name': instance.name,
   'address': instance.address,
   'city': instance.city,
-  'phone_number': instance.phoneNumber,
+  'phoneNumber': instance.phoneNumber,
   'email': instance.email,
-  'owner_user_id': instance.ownerUserId,
-  'loyalty_plan_id': instance.loyaltyPlanId,
+  'ownerUserId': instance.ownerUserId,
+  'loyaltyPlanId': instance.loyaltyPlanId,
 };
 
 _$ShopUpdateRequestImpl _$$ShopUpdateRequestImplFromJson(
@@ -107,10 +107,10 @@ _$ShopUpdateRequestImpl _$$ShopUpdateRequestImplFromJson(
   name: json['name'] as String?,
   address: json['address'] as String?,
   city: json['city'] as String?,
-  phoneNumber: json['phone_number'] as String?,
+  phoneNumber: json['phoneNumber'] as String?,
   email: json['email'] as String?,
-  newOwnerUserId: json['new_owner_user_id'] as String?,
-  loyaltyPlanId: json['loyalty_plan_id'] as String?,
+  newOwnerUserId: json['newOwnerUserId'] as String?,
+  loyaltyPlanId: json['loyaltyPlanId'] as String?,
 );
 
 Map<String, dynamic> _$$ShopUpdateRequestImplToJson(
@@ -119,10 +119,10 @@ Map<String, dynamic> _$$ShopUpdateRequestImplToJson(
   'name': instance.name,
   'address': instance.address,
   'city': instance.city,
-  'phone_number': instance.phoneNumber,
+  'phoneNumber': instance.phoneNumber,
   'email': instance.email,
-  'new_owner_user_id': instance.newOwnerUserId,
-  'loyalty_plan_id': instance.loyaltyPlanId,
+  'newOwnerUserId': instance.newOwnerUserId,
+  'loyaltyPlanId': instance.loyaltyPlanId,
 };
 
 _$ShopSearchParamsImpl _$$ShopSearchParamsImplFromJson(

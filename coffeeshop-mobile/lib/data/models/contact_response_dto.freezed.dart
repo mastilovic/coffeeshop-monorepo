@@ -22,7 +22,6 @@ ContactResponseDto _$ContactResponseDtoFromJson(Map<String, dynamic> json) {
 /// @nodoc
 mixin _$ContactResponseDto {
   String get id => throw _privateConstructorUsedError;
-  @JsonKey(name: 'shop_id')
   String? get shopId => throw _privateConstructorUsedError;
 
   /// Serializes this ContactResponseDto to a JSON map.
@@ -42,7 +41,7 @@ abstract class $ContactResponseDtoCopyWith<$Res> {
     $Res Function(ContactResponseDto) then,
   ) = _$ContactResponseDtoCopyWithImpl<$Res, ContactResponseDto>;
   @useResult
-  $Res call({String id, @JsonKey(name: 'shop_id') String? shopId});
+  $Res call({String id, String? shopId});
 }
 
 /// @nodoc
@@ -85,7 +84,7 @@ abstract class _$$ContactResponseDtoImplCopyWith<$Res>
   ) = __$$ContactResponseDtoImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({String id, @JsonKey(name: 'shop_id') String? shopId});
+  $Res call({String id, String? shopId});
 }
 
 /// @nodoc
@@ -120,10 +119,7 @@ class __$$ContactResponseDtoImplCopyWithImpl<$Res>
 /// @nodoc
 @JsonSerializable()
 class _$ContactResponseDtoImpl implements _ContactResponseDto {
-  const _$ContactResponseDtoImpl({
-    required this.id,
-    @JsonKey(name: 'shop_id') this.shopId,
-  });
+  const _$ContactResponseDtoImpl({required this.id, this.shopId});
 
   factory _$ContactResponseDtoImpl.fromJson(Map<String, dynamic> json) =>
       _$$ContactResponseDtoImplFromJson(json);
@@ -131,7 +127,6 @@ class _$ContactResponseDtoImpl implements _ContactResponseDto {
   @override
   final String id;
   @override
-  @JsonKey(name: 'shop_id')
   final String? shopId;
 
   @override
@@ -172,7 +167,7 @@ class _$ContactResponseDtoImpl implements _ContactResponseDto {
 abstract class _ContactResponseDto implements ContactResponseDto {
   const factory _ContactResponseDto({
     required final String id,
-    @JsonKey(name: 'shop_id') final String? shopId,
+    final String? shopId,
   }) = _$ContactResponseDtoImpl;
 
   factory _ContactResponseDto.fromJson(Map<String, dynamic> json) =
@@ -181,7 +176,6 @@ abstract class _ContactResponseDto implements ContactResponseDto {
   @override
   String get id;
   @override
-  @JsonKey(name: 'shop_id')
   String? get shopId;
 
   /// Create a copy of ContactResponseDto
@@ -198,7 +192,6 @@ ContactCreateRequest _$ContactCreateRequestFromJson(Map<String, dynamic> json) {
 
 /// @nodoc
 mixin _$ContactCreateRequest {
-  @JsonKey(name: 'shop_id')
   String get shopId => throw _privateConstructorUsedError;
 
   /// Serializes this ContactCreateRequest to a JSON map.
@@ -218,7 +211,7 @@ abstract class $ContactCreateRequestCopyWith<$Res> {
     $Res Function(ContactCreateRequest) then,
   ) = _$ContactCreateRequestCopyWithImpl<$Res, ContactCreateRequest>;
   @useResult
-  $Res call({@JsonKey(name: 'shop_id') String shopId});
+  $Res call({String shopId});
 }
 
 /// @nodoc
@@ -260,7 +253,7 @@ abstract class _$$ContactCreateRequestImplCopyWith<$Res>
   ) = __$$ContactCreateRequestImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({@JsonKey(name: 'shop_id') String shopId});
+  $Res call({String shopId});
 }
 
 /// @nodoc
@@ -291,15 +284,12 @@ class __$$ContactCreateRequestImplCopyWithImpl<$Res>
 /// @nodoc
 @JsonSerializable()
 class _$ContactCreateRequestImpl implements _ContactCreateRequest {
-  const _$ContactCreateRequestImpl({
-    @JsonKey(name: 'shop_id') required this.shopId,
-  });
+  const _$ContactCreateRequestImpl({required this.shopId});
 
   factory _$ContactCreateRequestImpl.fromJson(Map<String, dynamic> json) =>
       _$$ContactCreateRequestImplFromJson(json);
 
   @override
-  @JsonKey(name: 'shop_id')
   final String shopId;
 
   @override
@@ -338,15 +328,13 @@ class _$ContactCreateRequestImpl implements _ContactCreateRequest {
 }
 
 abstract class _ContactCreateRequest implements ContactCreateRequest {
-  const factory _ContactCreateRequest({
-    @JsonKey(name: 'shop_id') required final String shopId,
-  }) = _$ContactCreateRequestImpl;
+  const factory _ContactCreateRequest({required final String shopId}) =
+      _$ContactCreateRequestImpl;
 
   factory _ContactCreateRequest.fromJson(Map<String, dynamic> json) =
       _$ContactCreateRequestImpl.fromJson;
 
   @override
-  @JsonKey(name: 'shop_id')
   String get shopId;
 
   /// Create a copy of ContactCreateRequest

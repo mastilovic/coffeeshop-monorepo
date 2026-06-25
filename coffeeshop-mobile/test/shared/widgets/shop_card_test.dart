@@ -131,5 +131,57 @@ void main() {
 
       expect(find.byIcon(Icons.store), findsOneWidget);
     });
+
+    testWidgets('shows management actions when callbacks provided', (tester) async {
+      await tester.pumpWidget(
+        buildTestWidget(
+          ShopCard(
+            name: 'Managed Shop',
+            onEmployees: () {},
+            onDelete: () {},
+          ),
+        ),
+      );
+
+      expect(find.text('Employees'), findsOneWidget);
+      expect(find.byIcon(Icons.delete_outline), findsOneWidget);
+    });
+
+    testWidgets('does not show management actions when not provided', (tester) async {
+      await tester.pumpWidget(
+        buildTestWidget(const ShopCard(name: 'Customer Shop')),
+      );
+
+      expect(find.text('Employees'), findsNothing);
+      expect(find.byIcon(Icons.delete_outline), findsNothing);
+    });
+
+    testWidgets('calls onDelete when delete tapped', (tester) async {
+      var wasDeleted = false;
+      await tester.pumpWidget(
+        buildTestWidget(
+          ShopCard(
+            name: 'Managed Shop',
+            onDelete: () => wasDeleted = true,
+          ),
+        ),
+      );
+
+      await tester.tap(find.byIcon(Icons.delete_outline));
+      expect(wasDeleted, isTrue);
+    });
+
+    testWidgets('renders outlined card when isOwned is true', (tester) async {
+      await tester.pumpWidget(
+        buildTestWidget(
+          const ShopCard(name: 'My Shop', isOwned: true),
+        ),
+      );
+
+      final card = tester.widget<Card>(find.byType(Card));
+      final shape = card.shape as RoundedRectangleBorder?;
+      expect(shape, isNotNull);
+      expect(shape!.side.width, 2);
+    });
   });
 }

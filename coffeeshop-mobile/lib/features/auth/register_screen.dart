@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../core/auth/auth_service.dart';
+import '../../core/auth/auth_notifier.dart';
 import '../../shared/widgets/form_select.dart';
 
 const _roleOptions = ['customer', 'shop_owner'];
@@ -44,8 +44,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     setState(() => _isLoading = true);
 
     try {
-      final authService = ref.read(authServiceProvider);
-      await authService.register(
+      final authNotifier = ref.read(authNotifierProvider.notifier);
+      await authNotifier.register(
         name: _nameController.text.trim(),
         username: _usernameController.text.trim(),
         email: _emailController.text.trim(),

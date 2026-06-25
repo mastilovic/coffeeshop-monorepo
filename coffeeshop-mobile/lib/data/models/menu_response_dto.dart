@@ -10,8 +10,8 @@ class MenuResponseDto with _$MenuResponseDto {
   const factory MenuResponseDto({
     required String id,
     String? label,
-    @JsonKey(name: 'created_at') String? createdAt,
-    @JsonKey(name: 'shop_id') String? shopId,
+    String? createdAt,
+    String? shopId,
     @Default(false) bool current,
     @Default([]) List<Map<String, dynamic>> items,
   }) = _MenuResponseDto;
@@ -27,10 +27,10 @@ class MenuItemResponseDto with _$MenuItemResponseDto {
     required String name,
     String? description,
     required double price,
-    @JsonKey(name: 'price_currency') required String priceCurrency,
-    @JsonKey(name: 'image_url') String? imageUrl,
-    @JsonKey(name: 'item_type') required String itemType,
-    @JsonKey(name: 'menu_id') String? menuId,
+    required String priceCurrency,
+    String? imageUrl,
+    required String itemType,
+    String? menuId,
   }) = _MenuItemResponseDto;
 
   factory MenuItemResponseDto.fromJson(Map<String, dynamic> json) =>
@@ -53,10 +53,10 @@ class MenuItemCreateRequest with _$MenuItemCreateRequest {
     required String name,
     String? description,
     required double price,
-    @JsonKey(name: 'price_currency') required String priceCurrency,
-    @JsonKey(name: 'image_url') String? imageUrl,
-    @JsonKey(name: 'item_type') required String itemType,
-    @JsonKey(name: 'menu_id') required String menuId,
+    required String priceCurrency,
+    String? imageUrl,
+    required String itemType,
+    required String menuId,
   }) = _MenuItemCreateRequest;
 
   factory MenuItemCreateRequest.fromJson(Map<String, dynamic> json) =>

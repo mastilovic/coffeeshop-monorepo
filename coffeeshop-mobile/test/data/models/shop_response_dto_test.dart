@@ -8,12 +8,12 @@ void main() {
       'name': 'Central Perk',
       'address': '123 Main St',
       'city': 'New York',
-      'phone_number': '+1-555-0100',
+      'phoneNumber': '+1-555-0100',
       'email': 'info@centralperk.com',
-      'average_rating': 4.5,
-      'review_count': 42,
-      'member_count': 128,
-      'favourite_by_current_user': true,
+      'averageRating': 4.5,
+      'reviewCount': 42,
+      'memberCount': 128,
+      'favouriteByCurrentUser': true,
     };
 
     test('fromJson parses valid JSON correctly', () {
@@ -49,21 +49,21 @@ void main() {
     test('fromJson handles nested objects', () {
       final jsonWithNested = Map<String, dynamic>.from(validJson)
         ..['events'] = [
-          {'event_id': 'evt-1', 'event_name': 'Coffee Tasting'}
+          {'eventId': 'evt-1', 'eventName': 'Coffee Tasting'}
         ]
         ..['tables'] = [
-          {'table_id': 'tbl-1', 'table_number': 1, 'capacity': 4}
+          {'id': 'tbl-1', 'number': 1, 'capacity': 4}
         ]
         ..['reviews'] = [
-          {'review_id': 'rev-1', 'rating': 5, 'title': 'Great!'}
+          {'id': 'rev-1', 'rating': 5, 'title': 'Great!'}
         ];
       final dto = ShopResponseDto.fromJson(jsonWithNested);
       expect(dto.events, isNotNull);
       expect(dto.events!.length, 1);
-      expect(dto.events![0]['event_name'], 'Coffee Tasting');
+      expect(dto.events![0]['eventName'], 'Coffee Tasting');
       expect(dto.tables, isNotNull);
       expect(dto.tables!.length, 1);
-      expect(dto.tables![0]['table_number'], 1);
+      expect(dto.tables![0]['number'], 1);
     });
 
     test('toJson produces valid JSON', () {
@@ -71,9 +71,9 @@ void main() {
       final json = dto.toJson();
       expect(json['id'], 'shop-456');
       expect(json['name'], 'Central Perk');
-      expect(json['favourite_by_current_user'], true);
-      expect(json['review_count'], 42);
-      expect(json['member_count'], 128);
+      expect(json['favouriteByCurrentUser'], true);
+      expect(json['reviewCount'], 42);
+      expect(json['memberCount'], 128);
     });
 
     test('round-trip serialization preserves data', () {
@@ -100,7 +100,7 @@ void main() {
       'name': 'Summary Shop',
       'address': '10 Sum St',
       'city': 'Sum City',
-      'phone_number': '+1-555-0200',
+      'phoneNumber': '+1-555-0200',
       'email': 'sum@example.com',
     };
 
@@ -128,8 +128,8 @@ void main() {
         'name': 'New Shop',
         'address': '456 New Ave',
         'city': 'New City',
-        'owner_user_id': 'user-1',
-        'loyalty_plan_id': 'plan-1',
+        'ownerUserId': 'user-1',
+        'loyaltyPlanId': 'plan-1',
       };
       final dto = ShopCreateRequest.fromJson(json);
       expect(dto.name, 'New Shop');
@@ -149,7 +149,7 @@ void main() {
       expect(json['name'], 'New Shop');
       expect(json['address'], '456 New Ave');
       expect(json['city'], 'New City');
-      expect(json['phone_number'], isNull);
+      expect(json['phoneNumber'], isNull);
       expect(json['email'], isNull);
     });
   });

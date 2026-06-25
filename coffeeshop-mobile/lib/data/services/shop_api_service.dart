@@ -11,10 +11,14 @@ class ShopApiService {
   ShopApiService({required DioClient dioClient}) : _dioClient = dioClient;
   final DioClient _dioClient;
 
-  Future<Map<String, dynamic>> getShops({String? q, int page = 0, int size = 20}) async {
+  Future<Map<String, dynamic>> getShops({String? q, int page = 0, int size = 25}) async {
     final response = await _dioClient.get<Map<String, dynamic>>(
       '/api/v2/shop',
-      queryParameters: {'q': q, 'page': page, 'size': size},
+      queryParameters: {
+        if (q != null && q.isNotEmpty) 'q': q,
+        'page': page,
+        'size': size,
+      },
     );
     return response.data!;
   }

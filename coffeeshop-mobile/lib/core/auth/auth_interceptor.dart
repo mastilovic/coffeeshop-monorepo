@@ -33,7 +33,12 @@ class AuthInterceptor extends Interceptor {
       return handler.next(options);
     }
 
-    final token = await _tokenStorage.readAccessToken();
+    String? token;
+    try {
+      token = await _tokenStorage.readAccessToken();
+    } catch (_) {
+      token = null;
+    }
     if (token != null) {
       options.headers['Authorization'] = 'Bearer $token';
     }
@@ -57,7 +62,12 @@ class AuthInterceptor extends Interceptor {
     }
 
     try {
-      final refreshToken = await _getRefreshToken();
+      String? refreshToken;
+      try {
+        refreshToken = await _getRefreshToken();
+      } catch (_) {
+        refreshToken = null;
+      }
       if (refreshToken == null) {
         await _onLogout();
         return handler.next(err);
@@ -65,7 +75,7 @@ class AuthInterceptor extends Interceptor {
 
       final response = await _dio.post<Map<String, dynamic>>(
         '${ApiConfig.baseUrl}/api/v2/auth/refresh',
-        data: {'refresh_token': refreshToken},
+        data: {'refreshToken': refreshToken},
         options: Options(headers: {
           'Content-Type': 'application/json',
         }),

@@ -25,11 +25,8 @@ ReviewCommentResponseDto _$ReviewCommentResponseDtoFromJson(
 mixin _$ReviewCommentResponseDto {
   String get id => throw _privateConstructorUsedError;
   String get body => throw _privateConstructorUsedError;
-  @JsonKey(name: 'created_at')
   String? get createdAt => throw _privateConstructorUsedError;
-  @JsonKey(name: 'user_id')
   String? get userId => throw _privateConstructorUsedError;
-  @JsonKey(name: 'review_id')
   String? get reviewId => throw _privateConstructorUsedError;
   Map<String, dynamic>? get user => throw _privateConstructorUsedError;
 
@@ -53,9 +50,9 @@ abstract class $ReviewCommentResponseDtoCopyWith<$Res> {
   $Res call({
     String id,
     String body,
-    @JsonKey(name: 'created_at') String? createdAt,
-    @JsonKey(name: 'user_id') String? userId,
-    @JsonKey(name: 'review_id') String? reviewId,
+    String? createdAt,
+    String? userId,
+    String? reviewId,
     Map<String, dynamic>? user,
   });
 }
@@ -129,9 +126,9 @@ abstract class _$$ReviewCommentResponseDtoImplCopyWith<$Res>
   $Res call({
     String id,
     String body,
-    @JsonKey(name: 'created_at') String? createdAt,
-    @JsonKey(name: 'user_id') String? userId,
-    @JsonKey(name: 'review_id') String? reviewId,
+    String? createdAt,
+    String? userId,
+    String? reviewId,
     Map<String, dynamic>? user,
   });
 }
@@ -198,9 +195,9 @@ class _$ReviewCommentResponseDtoImpl implements _ReviewCommentResponseDto {
   const _$ReviewCommentResponseDtoImpl({
     required this.id,
     required this.body,
-    @JsonKey(name: 'created_at') this.createdAt,
-    @JsonKey(name: 'user_id') this.userId,
-    @JsonKey(name: 'review_id') this.reviewId,
+    this.createdAt,
+    this.userId,
+    this.reviewId,
     final Map<String, dynamic>? user,
   }) : _user = user;
 
@@ -212,13 +209,10 @@ class _$ReviewCommentResponseDtoImpl implements _ReviewCommentResponseDto {
   @override
   final String body;
   @override
-  @JsonKey(name: 'created_at')
   final String? createdAt;
   @override
-  @JsonKey(name: 'user_id')
   final String? userId;
   @override
-  @JsonKey(name: 'review_id')
   final String? reviewId;
   final Map<String, dynamic>? _user;
   @override
@@ -283,9 +277,9 @@ abstract class _ReviewCommentResponseDto implements ReviewCommentResponseDto {
   const factory _ReviewCommentResponseDto({
     required final String id,
     required final String body,
-    @JsonKey(name: 'created_at') final String? createdAt,
-    @JsonKey(name: 'user_id') final String? userId,
-    @JsonKey(name: 'review_id') final String? reviewId,
+    final String? createdAt,
+    final String? userId,
+    final String? reviewId,
     final Map<String, dynamic>? user,
   }) = _$ReviewCommentResponseDtoImpl;
 
@@ -297,13 +291,10 @@ abstract class _ReviewCommentResponseDto implements ReviewCommentResponseDto {
   @override
   String get body;
   @override
-  @JsonKey(name: 'created_at')
   String? get createdAt;
   @override
-  @JsonKey(name: 'user_id')
   String? get userId;
   @override
-  @JsonKey(name: 'review_id')
   String? get reviewId;
   @override
   Map<String, dynamic>? get user;

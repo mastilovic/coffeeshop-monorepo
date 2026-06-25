@@ -13,10 +13,10 @@ _$ReviewResponseDtoImpl _$$ReviewResponseDtoImplFromJson(
   title: json['title'] as String?,
   description: json['description'] as String?,
   rating: (json['rating'] as num).toInt(),
-  reviewDate: json['review_date'] as String?,
-  commentsEnabled: json['comments_enabled'] as bool? ?? true,
-  userId: json['user_id'] as String?,
-  shopId: json['shop_id'] as String?,
+  reviewDate: json['reviewDate'] as String?,
+  commentsEnabled: json['commentsEnabled'] as bool? ?? true,
+  userId: json['userId'] as String?,
+  shopId: json['shopId'] as String?,
   user: json['user'] as Map<String, dynamic>?,
   shop: json['shop'] as Map<String, dynamic>?,
   comments:
@@ -33,10 +33,10 @@ Map<String, dynamic> _$$ReviewResponseDtoImplToJson(
   'title': instance.title,
   'description': instance.description,
   'rating': instance.rating,
-  'review_date': instance.reviewDate,
-  'comments_enabled': instance.commentsEnabled,
-  'user_id': instance.userId,
-  'shop_id': instance.shopId,
+  'reviewDate': instance.reviewDate,
+  'commentsEnabled': instance.commentsEnabled,
+  'userId': instance.userId,
+  'shopId': instance.shopId,
   'user': instance.user,
   'shop': instance.shop,
   'comments': instance.comments,
@@ -48,8 +48,8 @@ _$ReviewCreateRequestImpl _$$ReviewCreateRequestImplFromJson(
   title: json['title'] as String?,
   description: json['description'] as String?,
   rating: (json['rating'] as num).toInt(),
-  commentsEnabled: json['comments_enabled'] as bool? ?? true,
-  shopId: json['shop_id'] as String,
+  commentsEnabled: json['commentsEnabled'] as bool? ?? true,
+  shopId: json['shopId'] as String,
 );
 
 Map<String, dynamic> _$$ReviewCreateRequestImplToJson(
@@ -58,8 +58,8 @@ Map<String, dynamic> _$$ReviewCreateRequestImplToJson(
   'title': instance.title,
   'description': instance.description,
   'rating': instance.rating,
-  'comments_enabled': instance.commentsEnabled,
-  'shop_id': instance.shopId,
+  'commentsEnabled': instance.commentsEnabled,
+  'shopId': instance.shopId,
 };
 
 _$ReviewUpdateRequestImpl _$$ReviewUpdateRequestImplFromJson(
@@ -68,7 +68,7 @@ _$ReviewUpdateRequestImpl _$$ReviewUpdateRequestImplFromJson(
   title: json['title'] as String?,
   description: json['description'] as String?,
   rating: (json['rating'] as num?)?.toInt(),
-  commentsEnabled: json['comments_enabled'] as bool?,
+  commentsEnabled: json['commentsEnabled'] as bool?,
 );
 
 Map<String, dynamic> _$$ReviewUpdateRequestImplToJson(
@@ -77,5 +77,5 @@ Map<String, dynamic> _$$ReviewUpdateRequestImplToJson(
   'title': instance.title,
   'description': instance.description,
   'rating': instance.rating,
-  'comments_enabled': instance.commentsEnabled,
+  'commentsEnabled': instance.commentsEnabled,
 };

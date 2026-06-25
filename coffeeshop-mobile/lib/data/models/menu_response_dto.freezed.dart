@@ -23,9 +23,7 @@ MenuResponseDto _$MenuResponseDtoFromJson(Map<String, dynamic> json) {
 mixin _$MenuResponseDto {
   String get id => throw _privateConstructorUsedError;
   String? get label => throw _privateConstructorUsedError;
-  @JsonKey(name: 'created_at')
   String? get createdAt => throw _privateConstructorUsedError;
-  @JsonKey(name: 'shop_id')
   String? get shopId => throw _privateConstructorUsedError;
   bool get current => throw _privateConstructorUsedError;
   List<Map<String, dynamic>> get items => throw _privateConstructorUsedError;
@@ -50,8 +48,8 @@ abstract class $MenuResponseDtoCopyWith<$Res> {
   $Res call({
     String id,
     String? label,
-    @JsonKey(name: 'created_at') String? createdAt,
-    @JsonKey(name: 'shop_id') String? shopId,
+    String? createdAt,
+    String? shopId,
     bool current,
     List<Map<String, dynamic>> items,
   });
@@ -123,8 +121,8 @@ abstract class _$$MenuResponseDtoImplCopyWith<$Res>
   $Res call({
     String id,
     String? label,
-    @JsonKey(name: 'created_at') String? createdAt,
-    @JsonKey(name: 'shop_id') String? shopId,
+    String? createdAt,
+    String? shopId,
     bool current,
     List<Map<String, dynamic>> items,
   });
@@ -188,8 +186,8 @@ class _$MenuResponseDtoImpl implements _MenuResponseDto {
   const _$MenuResponseDtoImpl({
     required this.id,
     this.label,
-    @JsonKey(name: 'created_at') this.createdAt,
-    @JsonKey(name: 'shop_id') this.shopId,
+    this.createdAt,
+    this.shopId,
     this.current = false,
     final List<Map<String, dynamic>> items = const [],
   }) : _items = items;
@@ -202,10 +200,8 @@ class _$MenuResponseDtoImpl implements _MenuResponseDto {
   @override
   final String? label;
   @override
-  @JsonKey(name: 'created_at')
   final String? createdAt;
   @override
-  @JsonKey(name: 'shop_id')
   final String? shopId;
   @override
   @JsonKey()
@@ -271,8 +267,8 @@ abstract class _MenuResponseDto implements MenuResponseDto {
   const factory _MenuResponseDto({
     required final String id,
     final String? label,
-    @JsonKey(name: 'created_at') final String? createdAt,
-    @JsonKey(name: 'shop_id') final String? shopId,
+    final String? createdAt,
+    final String? shopId,
     final bool current,
     final List<Map<String, dynamic>> items,
   }) = _$MenuResponseDtoImpl;
@@ -285,10 +281,8 @@ abstract class _MenuResponseDto implements MenuResponseDto {
   @override
   String? get label;
   @override
-  @JsonKey(name: 'created_at')
   String? get createdAt;
   @override
-  @JsonKey(name: 'shop_id')
   String? get shopId;
   @override
   bool get current;
@@ -313,13 +307,9 @@ mixin _$MenuItemResponseDto {
   String get name => throw _privateConstructorUsedError;
   String? get description => throw _privateConstructorUsedError;
   double get price => throw _privateConstructorUsedError;
-  @JsonKey(name: 'price_currency')
   String get priceCurrency => throw _privateConstructorUsedError;
-  @JsonKey(name: 'image_url')
   String? get imageUrl => throw _privateConstructorUsedError;
-  @JsonKey(name: 'item_type')
   String get itemType => throw _privateConstructorUsedError;
-  @JsonKey(name: 'menu_id')
   String? get menuId => throw _privateConstructorUsedError;
 
   /// Serializes this MenuItemResponseDto to a JSON map.
@@ -344,10 +334,10 @@ abstract class $MenuItemResponseDtoCopyWith<$Res> {
     String name,
     String? description,
     double price,
-    @JsonKey(name: 'price_currency') String priceCurrency,
-    @JsonKey(name: 'image_url') String? imageUrl,
-    @JsonKey(name: 'item_type') String itemType,
-    @JsonKey(name: 'menu_id') String? menuId,
+    String priceCurrency,
+    String? imageUrl,
+    String itemType,
+    String? menuId,
   });
 }
 
@@ -429,10 +419,10 @@ abstract class _$$MenuItemResponseDtoImplCopyWith<$Res>
     String name,
     String? description,
     double price,
-    @JsonKey(name: 'price_currency') String priceCurrency,
-    @JsonKey(name: 'image_url') String? imageUrl,
-    @JsonKey(name: 'item_type') String itemType,
-    @JsonKey(name: 'menu_id') String? menuId,
+    String priceCurrency,
+    String? imageUrl,
+    String itemType,
+    String? menuId,
   });
 }
 
@@ -506,10 +496,10 @@ class _$MenuItemResponseDtoImpl implements _MenuItemResponseDto {
     required this.name,
     this.description,
     required this.price,
-    @JsonKey(name: 'price_currency') required this.priceCurrency,
-    @JsonKey(name: 'image_url') this.imageUrl,
-    @JsonKey(name: 'item_type') required this.itemType,
-    @JsonKey(name: 'menu_id') this.menuId,
+    required this.priceCurrency,
+    this.imageUrl,
+    required this.itemType,
+    this.menuId,
   });
 
   factory _$MenuItemResponseDtoImpl.fromJson(Map<String, dynamic> json) =>
@@ -524,16 +514,12 @@ class _$MenuItemResponseDtoImpl implements _MenuItemResponseDto {
   @override
   final double price;
   @override
-  @JsonKey(name: 'price_currency')
   final String priceCurrency;
   @override
-  @JsonKey(name: 'image_url')
   final String? imageUrl;
   @override
-  @JsonKey(name: 'item_type')
   final String itemType;
   @override
-  @JsonKey(name: 'menu_id')
   final String? menuId;
 
   @override
@@ -597,10 +583,10 @@ abstract class _MenuItemResponseDto implements MenuItemResponseDto {
     required final String name,
     final String? description,
     required final double price,
-    @JsonKey(name: 'price_currency') required final String priceCurrency,
-    @JsonKey(name: 'image_url') final String? imageUrl,
-    @JsonKey(name: 'item_type') required final String itemType,
-    @JsonKey(name: 'menu_id') final String? menuId,
+    required final String priceCurrency,
+    final String? imageUrl,
+    required final String itemType,
+    final String? menuId,
   }) = _$MenuItemResponseDtoImpl;
 
   factory _MenuItemResponseDto.fromJson(Map<String, dynamic> json) =
@@ -615,16 +601,12 @@ abstract class _MenuItemResponseDto implements MenuItemResponseDto {
   @override
   double get price;
   @override
-  @JsonKey(name: 'price_currency')
   String get priceCurrency;
   @override
-  @JsonKey(name: 'image_url')
   String? get imageUrl;
   @override
-  @JsonKey(name: 'item_type')
   String get itemType;
   @override
-  @JsonKey(name: 'menu_id')
   String? get menuId;
 
   /// Create a copy of MenuItemResponseDto
@@ -801,13 +783,9 @@ mixin _$MenuItemCreateRequest {
   String get name => throw _privateConstructorUsedError;
   String? get description => throw _privateConstructorUsedError;
   double get price => throw _privateConstructorUsedError;
-  @JsonKey(name: 'price_currency')
   String get priceCurrency => throw _privateConstructorUsedError;
-  @JsonKey(name: 'image_url')
   String? get imageUrl => throw _privateConstructorUsedError;
-  @JsonKey(name: 'item_type')
   String get itemType => throw _privateConstructorUsedError;
-  @JsonKey(name: 'menu_id')
   String get menuId => throw _privateConstructorUsedError;
 
   /// Serializes this MenuItemCreateRequest to a JSON map.
@@ -831,10 +809,10 @@ abstract class $MenuItemCreateRequestCopyWith<$Res> {
     String name,
     String? description,
     double price,
-    @JsonKey(name: 'price_currency') String priceCurrency,
-    @JsonKey(name: 'image_url') String? imageUrl,
-    @JsonKey(name: 'item_type') String itemType,
-    @JsonKey(name: 'menu_id') String menuId,
+    String priceCurrency,
+    String? imageUrl,
+    String itemType,
+    String menuId,
   });
 }
 
@@ -913,10 +891,10 @@ abstract class _$$MenuItemCreateRequestImplCopyWith<$Res>
     String name,
     String? description,
     double price,
-    @JsonKey(name: 'price_currency') String priceCurrency,
-    @JsonKey(name: 'image_url') String? imageUrl,
-    @JsonKey(name: 'item_type') String itemType,
-    @JsonKey(name: 'menu_id') String menuId,
+    String priceCurrency,
+    String? imageUrl,
+    String itemType,
+    String menuId,
   });
 }
 
@@ -985,10 +963,10 @@ class _$MenuItemCreateRequestImpl implements _MenuItemCreateRequest {
     required this.name,
     this.description,
     required this.price,
-    @JsonKey(name: 'price_currency') required this.priceCurrency,
-    @JsonKey(name: 'image_url') this.imageUrl,
-    @JsonKey(name: 'item_type') required this.itemType,
-    @JsonKey(name: 'menu_id') required this.menuId,
+    required this.priceCurrency,
+    this.imageUrl,
+    required this.itemType,
+    required this.menuId,
   });
 
   factory _$MenuItemCreateRequestImpl.fromJson(Map<String, dynamic> json) =>
@@ -1001,16 +979,12 @@ class _$MenuItemCreateRequestImpl implements _MenuItemCreateRequest {
   @override
   final double price;
   @override
-  @JsonKey(name: 'price_currency')
   final String priceCurrency;
   @override
-  @JsonKey(name: 'image_url')
   final String? imageUrl;
   @override
-  @JsonKey(name: 'item_type')
   final String itemType;
   @override
-  @JsonKey(name: 'menu_id')
   final String menuId;
 
   @override
@@ -1072,10 +1046,10 @@ abstract class _MenuItemCreateRequest implements MenuItemCreateRequest {
     required final String name,
     final String? description,
     required final double price,
-    @JsonKey(name: 'price_currency') required final String priceCurrency,
-    @JsonKey(name: 'image_url') final String? imageUrl,
-    @JsonKey(name: 'item_type') required final String itemType,
-    @JsonKey(name: 'menu_id') required final String menuId,
+    required final String priceCurrency,
+    final String? imageUrl,
+    required final String itemType,
+    required final String menuId,
   }) = _$MenuItemCreateRequestImpl;
 
   factory _MenuItemCreateRequest.fromJson(Map<String, dynamic> json) =
@@ -1088,16 +1062,12 @@ abstract class _MenuItemCreateRequest implements MenuItemCreateRequest {
   @override
   double get price;
   @override
-  @JsonKey(name: 'price_currency')
   String get priceCurrency;
   @override
-  @JsonKey(name: 'image_url')
   String? get imageUrl;
   @override
-  @JsonKey(name: 'item_type')
   String get itemType;
   @override
-  @JsonKey(name: 'menu_id')
   String get menuId;
 
   /// Create a copy of MenuItemCreateRequest

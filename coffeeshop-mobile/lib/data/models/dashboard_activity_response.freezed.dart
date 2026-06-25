@@ -26,12 +26,9 @@ mixin _$DashboardActivityResponse {
   DashboardAggregate get aggregate => throw _privateConstructorUsedError;
   List<DashboardActivityItem> get activities =>
       throw _privateConstructorUsedError;
-  @JsonKey(name: 'top_shops')
   List<TopShopItem> get topShops => throw _privateConstructorUsedError;
-  @JsonKey(name: 'upcoming_events')
   List<UpcomingEventItem> get upcomingEvents =>
       throw _privateConstructorUsedError;
-  @JsonKey(name: 'personal_summary')
   DashboardPersonalSummary? get personalSummary =>
       throw _privateConstructorUsedError;
   List<DashboardNotification> get notifications =>
@@ -57,9 +54,8 @@ abstract class $DashboardActivityResponseCopyWith<$Res> {
   $Res call({
     DashboardAggregate aggregate,
     List<DashboardActivityItem> activities,
-    @JsonKey(name: 'top_shops') List<TopShopItem> topShops,
-    @JsonKey(name: 'upcoming_events') List<UpcomingEventItem> upcomingEvents,
-    @JsonKey(name: 'personal_summary')
+    List<TopShopItem> topShops,
+    List<UpcomingEventItem> upcomingEvents,
     DashboardPersonalSummary? personalSummary,
     List<DashboardNotification> notifications,
   });
@@ -163,9 +159,8 @@ abstract class _$$DashboardActivityResponseImplCopyWith<$Res>
   $Res call({
     DashboardAggregate aggregate,
     List<DashboardActivityItem> activities,
-    @JsonKey(name: 'top_shops') List<TopShopItem> topShops,
-    @JsonKey(name: 'upcoming_events') List<UpcomingEventItem> upcomingEvents,
-    @JsonKey(name: 'personal_summary')
+    List<TopShopItem> topShops,
+    List<UpcomingEventItem> upcomingEvents,
     DashboardPersonalSummary? personalSummary,
     List<DashboardNotification> notifications,
   });
@@ -238,10 +233,9 @@ class _$DashboardActivityResponseImpl implements _DashboardActivityResponse {
   const _$DashboardActivityResponseImpl({
     required this.aggregate,
     final List<DashboardActivityItem> activities = const [],
-    @JsonKey(name: 'top_shops') final List<TopShopItem> topShops = const [],
-    @JsonKey(name: 'upcoming_events')
+    final List<TopShopItem> topShops = const [],
     final List<UpcomingEventItem> upcomingEvents = const [],
-    @JsonKey(name: 'personal_summary') this.personalSummary,
+    this.personalSummary,
     final List<DashboardNotification> notifications = const [],
   }) : _activities = activities,
        _topShops = topShops,
@@ -264,7 +258,7 @@ class _$DashboardActivityResponseImpl implements _DashboardActivityResponse {
 
   final List<TopShopItem> _topShops;
   @override
-  @JsonKey(name: 'top_shops')
+  @JsonKey()
   List<TopShopItem> get topShops {
     if (_topShops is EqualUnmodifiableListView) return _topShops;
     // ignore: implicit_dynamic_type
@@ -273,7 +267,7 @@ class _$DashboardActivityResponseImpl implements _DashboardActivityResponse {
 
   final List<UpcomingEventItem> _upcomingEvents;
   @override
-  @JsonKey(name: 'upcoming_events')
+  @JsonKey()
   List<UpcomingEventItem> get upcomingEvents {
     if (_upcomingEvents is EqualUnmodifiableListView) return _upcomingEvents;
     // ignore: implicit_dynamic_type
@@ -281,7 +275,6 @@ class _$DashboardActivityResponseImpl implements _DashboardActivityResponse {
   }
 
   @override
-  @JsonKey(name: 'personal_summary')
   final DashboardPersonalSummary? personalSummary;
   final List<DashboardNotification> _notifications;
   @override
@@ -354,10 +347,8 @@ abstract class _DashboardActivityResponse implements DashboardActivityResponse {
   const factory _DashboardActivityResponse({
     required final DashboardAggregate aggregate,
     final List<DashboardActivityItem> activities,
-    @JsonKey(name: 'top_shops') final List<TopShopItem> topShops,
-    @JsonKey(name: 'upcoming_events')
+    final List<TopShopItem> topShops,
     final List<UpcomingEventItem> upcomingEvents,
-    @JsonKey(name: 'personal_summary')
     final DashboardPersonalSummary? personalSummary,
     final List<DashboardNotification> notifications,
   }) = _$DashboardActivityResponseImpl;
@@ -370,13 +361,10 @@ abstract class _DashboardActivityResponse implements DashboardActivityResponse {
   @override
   List<DashboardActivityItem> get activities;
   @override
-  @JsonKey(name: 'top_shops')
   List<TopShopItem> get topShops;
   @override
-  @JsonKey(name: 'upcoming_events')
   List<UpcomingEventItem> get upcomingEvents;
   @override
-  @JsonKey(name: 'personal_summary')
   DashboardPersonalSummary? get personalSummary;
   @override
   List<DashboardNotification> get notifications;
@@ -399,13 +387,10 @@ DashboardActivityItem _$DashboardActivityItemFromJson(
 mixin _$DashboardActivityItem {
   String get type => throw _privateConstructorUsedError;
   String? get timestamp => throw _privateConstructorUsedError;
-  @JsonKey(name: 'shop_id')
   String? get shopId => throw _privateConstructorUsedError;
-  @JsonKey(name: 'shop_name')
   String? get shopName => throw _privateConstructorUsedError;
   String? get title => throw _privateConstructorUsedError;
   String? get body => throw _privateConstructorUsedError;
-  @JsonKey(name: 'actor_name')
   String? get actorName => throw _privateConstructorUsedError;
   double? get rating => throw _privateConstructorUsedError;
 
@@ -429,11 +414,11 @@ abstract class $DashboardActivityItemCopyWith<$Res> {
   $Res call({
     String type,
     String? timestamp,
-    @JsonKey(name: 'shop_id') String? shopId,
-    @JsonKey(name: 'shop_name') String? shopName,
+    String? shopId,
+    String? shopName,
     String? title,
     String? body,
-    @JsonKey(name: 'actor_name') String? actorName,
+    String? actorName,
     double? rating,
   });
 }
@@ -517,11 +502,11 @@ abstract class _$$DashboardActivityItemImplCopyWith<$Res>
   $Res call({
     String type,
     String? timestamp,
-    @JsonKey(name: 'shop_id') String? shopId,
-    @JsonKey(name: 'shop_name') String? shopName,
+    String? shopId,
+    String? shopName,
     String? title,
     String? body,
-    @JsonKey(name: 'actor_name') String? actorName,
+    String? actorName,
     double? rating,
   });
 }
@@ -595,11 +580,11 @@ class _$DashboardActivityItemImpl implements _DashboardActivityItem {
   const _$DashboardActivityItemImpl({
     required this.type,
     this.timestamp,
-    @JsonKey(name: 'shop_id') this.shopId,
-    @JsonKey(name: 'shop_name') this.shopName,
+    this.shopId,
+    this.shopName,
     this.title,
     this.body,
-    @JsonKey(name: 'actor_name') this.actorName,
+    this.actorName,
     this.rating,
   });
 
@@ -611,17 +596,14 @@ class _$DashboardActivityItemImpl implements _DashboardActivityItem {
   @override
   final String? timestamp;
   @override
-  @JsonKey(name: 'shop_id')
   final String? shopId;
   @override
-  @JsonKey(name: 'shop_name')
   final String? shopName;
   @override
   final String? title;
   @override
   final String? body;
   @override
-  @JsonKey(name: 'actor_name')
   final String? actorName;
   @override
   final double? rating;
@@ -685,11 +667,11 @@ abstract class _DashboardActivityItem implements DashboardActivityItem {
   const factory _DashboardActivityItem({
     required final String type,
     final String? timestamp,
-    @JsonKey(name: 'shop_id') final String? shopId,
-    @JsonKey(name: 'shop_name') final String? shopName,
+    final String? shopId,
+    final String? shopName,
     final String? title,
     final String? body,
-    @JsonKey(name: 'actor_name') final String? actorName,
+    final String? actorName,
     final double? rating,
   }) = _$DashboardActivityItemImpl;
 
@@ -701,17 +683,14 @@ abstract class _DashboardActivityItem implements DashboardActivityItem {
   @override
   String? get timestamp;
   @override
-  @JsonKey(name: 'shop_id')
   String? get shopId;
   @override
-  @JsonKey(name: 'shop_name')
   String? get shopName;
   @override
   String? get title;
   @override
   String? get body;
   @override
-  @JsonKey(name: 'actor_name')
   String? get actorName;
   @override
   double? get rating;
@@ -730,15 +709,10 @@ DashboardAggregate _$DashboardAggregateFromJson(Map<String, dynamic> json) {
 
 /// @nodoc
 mixin _$DashboardAggregate {
-  @JsonKey(name: 'shop_count')
   int get shopCount => throw _privateConstructorUsedError;
-  @JsonKey(name: 'review_count')
   int get reviewCount => throw _privateConstructorUsedError;
-  @JsonKey(name: 'average_rating')
   double? get averageRating => throw _privateConstructorUsedError;
-  @JsonKey(name: 'event_count')
   int get eventCount => throw _privateConstructorUsedError;
-  @JsonKey(name: 'member_count')
   int get memberCount => throw _privateConstructorUsedError;
 
   /// Serializes this DashboardAggregate to a JSON map.
@@ -759,11 +733,11 @@ abstract class $DashboardAggregateCopyWith<$Res> {
   ) = _$DashboardAggregateCopyWithImpl<$Res, DashboardAggregate>;
   @useResult
   $Res call({
-    @JsonKey(name: 'shop_count') int shopCount,
-    @JsonKey(name: 'review_count') int reviewCount,
-    @JsonKey(name: 'average_rating') double? averageRating,
-    @JsonKey(name: 'event_count') int eventCount,
-    @JsonKey(name: 'member_count') int memberCount,
+    int shopCount,
+    int reviewCount,
+    double? averageRating,
+    int eventCount,
+    int memberCount,
   });
 }
 
@@ -826,11 +800,11 @@ abstract class _$$DashboardAggregateImplCopyWith<$Res>
   @override
   @useResult
   $Res call({
-    @JsonKey(name: 'shop_count') int shopCount,
-    @JsonKey(name: 'review_count') int reviewCount,
-    @JsonKey(name: 'average_rating') double? averageRating,
-    @JsonKey(name: 'event_count') int eventCount,
-    @JsonKey(name: 'member_count') int memberCount,
+    int shopCount,
+    int reviewCount,
+    double? averageRating,
+    int eventCount,
+    int memberCount,
   });
 }
 
@@ -885,30 +859,29 @@ class __$$DashboardAggregateImplCopyWithImpl<$Res>
 @JsonSerializable()
 class _$DashboardAggregateImpl implements _DashboardAggregate {
   const _$DashboardAggregateImpl({
-    @JsonKey(name: 'shop_count') this.shopCount = 0,
-    @JsonKey(name: 'review_count') this.reviewCount = 0,
-    @JsonKey(name: 'average_rating') this.averageRating,
-    @JsonKey(name: 'event_count') this.eventCount = 0,
-    @JsonKey(name: 'member_count') this.memberCount = 0,
+    this.shopCount = 0,
+    this.reviewCount = 0,
+    this.averageRating,
+    this.eventCount = 0,
+    this.memberCount = 0,
   });
 
   factory _$DashboardAggregateImpl.fromJson(Map<String, dynamic> json) =>
       _$$DashboardAggregateImplFromJson(json);
 
   @override
-  @JsonKey(name: 'shop_count')
+  @JsonKey()
   final int shopCount;
   @override
-  @JsonKey(name: 'review_count')
+  @JsonKey()
   final int reviewCount;
   @override
-  @JsonKey(name: 'average_rating')
   final double? averageRating;
   @override
-  @JsonKey(name: 'event_count')
+  @JsonKey()
   final int eventCount;
   @override
-  @JsonKey(name: 'member_count')
+  @JsonKey()
   final int memberCount;
 
   @override
@@ -963,30 +936,25 @@ class _$DashboardAggregateImpl implements _DashboardAggregate {
 
 abstract class _DashboardAggregate implements DashboardAggregate {
   const factory _DashboardAggregate({
-    @JsonKey(name: 'shop_count') final int shopCount,
-    @JsonKey(name: 'review_count') final int reviewCount,
-    @JsonKey(name: 'average_rating') final double? averageRating,
-    @JsonKey(name: 'event_count') final int eventCount,
-    @JsonKey(name: 'member_count') final int memberCount,
+    final int shopCount,
+    final int reviewCount,
+    final double? averageRating,
+    final int eventCount,
+    final int memberCount,
   }) = _$DashboardAggregateImpl;
 
   factory _DashboardAggregate.fromJson(Map<String, dynamic> json) =
       _$DashboardAggregateImpl.fromJson;
 
   @override
-  @JsonKey(name: 'shop_count')
   int get shopCount;
   @override
-  @JsonKey(name: 'review_count')
   int get reviewCount;
   @override
-  @JsonKey(name: 'average_rating')
   double? get averageRating;
   @override
-  @JsonKey(name: 'event_count')
   int get eventCount;
   @override
-  @JsonKey(name: 'member_count')
   int get memberCount;
 
   /// Create a copy of DashboardAggregate
@@ -1003,14 +971,10 @@ TopShopItem _$TopShopItemFromJson(Map<String, dynamic> json) {
 
 /// @nodoc
 mixin _$TopShopItem {
-  @JsonKey(name: 'shop_id')
   String get shopId => throw _privateConstructorUsedError;
-  @JsonKey(name: 'shop_name')
   String get shopName => throw _privateConstructorUsedError;
   String? get city => throw _privateConstructorUsedError;
-  @JsonKey(name: 'average_rating')
   double? get averageRating => throw _privateConstructorUsedError;
-  @JsonKey(name: 'review_count')
   int get reviewCount => throw _privateConstructorUsedError;
 
   /// Serializes this TopShopItem to a JSON map.
@@ -1031,11 +995,11 @@ abstract class $TopShopItemCopyWith<$Res> {
   ) = _$TopShopItemCopyWithImpl<$Res, TopShopItem>;
   @useResult
   $Res call({
-    @JsonKey(name: 'shop_id') String shopId,
-    @JsonKey(name: 'shop_name') String shopName,
+    String shopId,
+    String shopName,
     String? city,
-    @JsonKey(name: 'average_rating') double? averageRating,
-    @JsonKey(name: 'review_count') int reviewCount,
+    double? averageRating,
+    int reviewCount,
   });
 }
 
@@ -1098,11 +1062,11 @@ abstract class _$$TopShopItemImplCopyWith<$Res>
   @override
   @useResult
   $Res call({
-    @JsonKey(name: 'shop_id') String shopId,
-    @JsonKey(name: 'shop_name') String shopName,
+    String shopId,
+    String shopName,
     String? city,
-    @JsonKey(name: 'average_rating') double? averageRating,
-    @JsonKey(name: 'review_count') int reviewCount,
+    double? averageRating,
+    int reviewCount,
   });
 }
 
@@ -1157,29 +1121,26 @@ class __$$TopShopItemImplCopyWithImpl<$Res>
 @JsonSerializable()
 class _$TopShopItemImpl implements _TopShopItem {
   const _$TopShopItemImpl({
-    @JsonKey(name: 'shop_id') required this.shopId,
-    @JsonKey(name: 'shop_name') required this.shopName,
+    required this.shopId,
+    required this.shopName,
     this.city,
-    @JsonKey(name: 'average_rating') this.averageRating,
-    @JsonKey(name: 'review_count') this.reviewCount = 0,
+    this.averageRating,
+    this.reviewCount = 0,
   });
 
   factory _$TopShopItemImpl.fromJson(Map<String, dynamic> json) =>
       _$$TopShopItemImplFromJson(json);
 
   @override
-  @JsonKey(name: 'shop_id')
   final String shopId;
   @override
-  @JsonKey(name: 'shop_name')
   final String shopName;
   @override
   final String? city;
   @override
-  @JsonKey(name: 'average_rating')
   final double? averageRating;
   @override
-  @JsonKey(name: 'review_count')
+  @JsonKey()
   final int reviewCount;
 
   @override
@@ -1229,29 +1190,25 @@ class _$TopShopItemImpl implements _TopShopItem {
 
 abstract class _TopShopItem implements TopShopItem {
   const factory _TopShopItem({
-    @JsonKey(name: 'shop_id') required final String shopId,
-    @JsonKey(name: 'shop_name') required final String shopName,
+    required final String shopId,
+    required final String shopName,
     final String? city,
-    @JsonKey(name: 'average_rating') final double? averageRating,
-    @JsonKey(name: 'review_count') final int reviewCount,
+    final double? averageRating,
+    final int reviewCount,
   }) = _$TopShopItemImpl;
 
   factory _TopShopItem.fromJson(Map<String, dynamic> json) =
       _$TopShopItemImpl.fromJson;
 
   @override
-  @JsonKey(name: 'shop_id')
   String get shopId;
   @override
-  @JsonKey(name: 'shop_name')
   String get shopName;
   @override
   String? get city;
   @override
-  @JsonKey(name: 'average_rating')
   double? get averageRating;
   @override
-  @JsonKey(name: 'review_count')
   int get reviewCount;
 
   /// Create a copy of TopShopItem
@@ -1268,15 +1225,10 @@ UpcomingEventItem _$UpcomingEventItemFromJson(Map<String, dynamic> json) {
 
 /// @nodoc
 mixin _$UpcomingEventItem {
-  @JsonKey(name: 'event_id')
   String get eventId => throw _privateConstructorUsedError;
-  @JsonKey(name: 'event_name')
   String get eventName => throw _privateConstructorUsedError;
-  @JsonKey(name: 'event_date')
   String? get eventDate => throw _privateConstructorUsedError;
-  @JsonKey(name: 'shop_id')
   String? get shopId => throw _privateConstructorUsedError;
-  @JsonKey(name: 'shop_name')
   String? get shopName => throw _privateConstructorUsedError;
 
   /// Serializes this UpcomingEventItem to a JSON map.
@@ -1297,11 +1249,11 @@ abstract class $UpcomingEventItemCopyWith<$Res> {
   ) = _$UpcomingEventItemCopyWithImpl<$Res, UpcomingEventItem>;
   @useResult
   $Res call({
-    @JsonKey(name: 'event_id') String eventId,
-    @JsonKey(name: 'event_name') String eventName,
-    @JsonKey(name: 'event_date') String? eventDate,
-    @JsonKey(name: 'shop_id') String? shopId,
-    @JsonKey(name: 'shop_name') String? shopName,
+    String eventId,
+    String eventName,
+    String? eventDate,
+    String? shopId,
+    String? shopName,
   });
 }
 
@@ -1364,11 +1316,11 @@ abstract class _$$UpcomingEventItemImplCopyWith<$Res>
   @override
   @useResult
   $Res call({
-    @JsonKey(name: 'event_id') String eventId,
-    @JsonKey(name: 'event_name') String eventName,
-    @JsonKey(name: 'event_date') String? eventDate,
-    @JsonKey(name: 'shop_id') String? shopId,
-    @JsonKey(name: 'shop_name') String? shopName,
+    String eventId,
+    String eventName,
+    String? eventDate,
+    String? shopId,
+    String? shopName,
   });
 }
 
@@ -1423,30 +1375,25 @@ class __$$UpcomingEventItemImplCopyWithImpl<$Res>
 @JsonSerializable()
 class _$UpcomingEventItemImpl implements _UpcomingEventItem {
   const _$UpcomingEventItemImpl({
-    @JsonKey(name: 'event_id') required this.eventId,
-    @JsonKey(name: 'event_name') required this.eventName,
-    @JsonKey(name: 'event_date') this.eventDate,
-    @JsonKey(name: 'shop_id') this.shopId,
-    @JsonKey(name: 'shop_name') this.shopName,
+    required this.eventId,
+    required this.eventName,
+    this.eventDate,
+    this.shopId,
+    this.shopName,
   });
 
   factory _$UpcomingEventItemImpl.fromJson(Map<String, dynamic> json) =>
       _$$UpcomingEventItemImplFromJson(json);
 
   @override
-  @JsonKey(name: 'event_id')
   final String eventId;
   @override
-  @JsonKey(name: 'event_name')
   final String eventName;
   @override
-  @JsonKey(name: 'event_date')
   final String? eventDate;
   @override
-  @JsonKey(name: 'shop_id')
   final String? shopId;
   @override
-  @JsonKey(name: 'shop_name')
   final String? shopName;
 
   @override
@@ -1493,30 +1440,25 @@ class _$UpcomingEventItemImpl implements _UpcomingEventItem {
 
 abstract class _UpcomingEventItem implements UpcomingEventItem {
   const factory _UpcomingEventItem({
-    @JsonKey(name: 'event_id') required final String eventId,
-    @JsonKey(name: 'event_name') required final String eventName,
-    @JsonKey(name: 'event_date') final String? eventDate,
-    @JsonKey(name: 'shop_id') final String? shopId,
-    @JsonKey(name: 'shop_name') final String? shopName,
+    required final String eventId,
+    required final String eventName,
+    final String? eventDate,
+    final String? shopId,
+    final String? shopName,
   }) = _$UpcomingEventItemImpl;
 
   factory _UpcomingEventItem.fromJson(Map<String, dynamic> json) =
       _$UpcomingEventItemImpl.fromJson;
 
   @override
-  @JsonKey(name: 'event_id')
   String get eventId;
   @override
-  @JsonKey(name: 'event_name')
   String get eventName;
   @override
-  @JsonKey(name: 'event_date')
   String? get eventDate;
   @override
-  @JsonKey(name: 'shop_id')
   String? get shopId;
   @override
-  @JsonKey(name: 'shop_name')
   String? get shopName;
 
   /// Create a copy of UpcomingEventItem
@@ -1535,10 +1477,8 @@ DashboardPersonalSummary _$DashboardPersonalSummaryFromJson(
 
 /// @nodoc
 mixin _$DashboardPersonalSummary {
-  @JsonKey(name: 'favourite_shops')
   int get favouriteShops => throw _privateConstructorUsedError;
   int get reservations => throw _privateConstructorUsedError;
-  @JsonKey(name: 'reviews_written')
   int get reviewsWritten => throw _privateConstructorUsedError;
 
   /// Serializes this DashboardPersonalSummary to a JSON map.
@@ -1558,11 +1498,7 @@ abstract class $DashboardPersonalSummaryCopyWith<$Res> {
     $Res Function(DashboardPersonalSummary) then,
   ) = _$DashboardPersonalSummaryCopyWithImpl<$Res, DashboardPersonalSummary>;
   @useResult
-  $Res call({
-    @JsonKey(name: 'favourite_shops') int favouriteShops,
-    int reservations,
-    @JsonKey(name: 'reviews_written') int reviewsWritten,
-  });
+  $Res call({int favouriteShops, int reservations, int reviewsWritten});
 }
 
 /// @nodoc
@@ -1616,11 +1552,7 @@ abstract class _$$DashboardPersonalSummaryImplCopyWith<$Res>
   ) = __$$DashboardPersonalSummaryImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({
-    @JsonKey(name: 'favourite_shops') int favouriteShops,
-    int reservations,
-    @JsonKey(name: 'reviews_written') int reviewsWritten,
-  });
+  $Res call({int favouriteShops, int reservations, int reviewsWritten});
 }
 
 /// @nodoc
@@ -1668,22 +1600,22 @@ class __$$DashboardPersonalSummaryImplCopyWithImpl<$Res>
 @JsonSerializable()
 class _$DashboardPersonalSummaryImpl implements _DashboardPersonalSummary {
   const _$DashboardPersonalSummaryImpl({
-    @JsonKey(name: 'favourite_shops') this.favouriteShops = 0,
+    this.favouriteShops = 0,
     this.reservations = 0,
-    @JsonKey(name: 'reviews_written') this.reviewsWritten = 0,
+    this.reviewsWritten = 0,
   });
 
   factory _$DashboardPersonalSummaryImpl.fromJson(Map<String, dynamic> json) =>
       _$$DashboardPersonalSummaryImplFromJson(json);
 
   @override
-  @JsonKey(name: 'favourite_shops')
+  @JsonKey()
   final int favouriteShops;
   @override
   @JsonKey()
   final int reservations;
   @override
-  @JsonKey(name: 'reviews_written')
+  @JsonKey()
   final int reviewsWritten;
 
   @override
@@ -1728,21 +1660,19 @@ class _$DashboardPersonalSummaryImpl implements _DashboardPersonalSummary {
 
 abstract class _DashboardPersonalSummary implements DashboardPersonalSummary {
   const factory _DashboardPersonalSummary({
-    @JsonKey(name: 'favourite_shops') final int favouriteShops,
+    final int favouriteShops,
     final int reservations,
-    @JsonKey(name: 'reviews_written') final int reviewsWritten,
+    final int reviewsWritten,
   }) = _$DashboardPersonalSummaryImpl;
 
   factory _DashboardPersonalSummary.fromJson(Map<String, dynamic> json) =
       _$DashboardPersonalSummaryImpl.fromJson;
 
   @override
-  @JsonKey(name: 'favourite_shops')
   int get favouriteShops;
   @override
   int get reservations;
   @override
-  @JsonKey(name: 'reviews_written')
   int get reviewsWritten;
 
   /// Create a copy of DashboardPersonalSummary

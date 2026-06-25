@@ -96,6 +96,21 @@ func TestPostUser_WithoutBearer_IsUnauthorized(t *testing.T) {
 
 func TestPostUser_WithBearer_IsCreated(t *testing.T) {
 	h := setupTestHarness(t)
+	adminID := h.createUser(t, "Admin User", "admin-bearer@example.com", "ADMIN")
+	token := h.tokenForUser(adminID, []string{"admin"})
+
+	body := map[string]interface{}{
+		"name": "B", "username": "user_b", "email": "b@b.com",
+		"password": "x", "userType": "CUSTOMER",
+	}
+	w := h.doJSON(http.MethodPost, "/api/v2/user", body, token)
+	if w.Code != http.StatusCreated {
+		t.Errorf("expected 201 for POST /user with admin bearer, got %d; body: %s", w.Code, w.Body.String())
+	}
+}
+
+func TestPostUser_WithNonAdminBearer_IsForbidden(t *testing.T) {
+	h := setupTestHarness(t)
 	ownerID := h.createUser(t, "Bearer User", "bearer-user@example.com", "SHOP_OWNER")
 	token := h.tokenForUser(ownerID, []string{"SHOP_OWNER"})
 
@@ -104,8 +119,8 @@ func TestPostUser_WithBearer_IsCreated(t *testing.T) {
 		"password": "x", "userType": "CUSTOMER",
 	}
 	w := h.doJSON(http.MethodPost, "/api/v2/user", body, token)
-	if w.Code != http.StatusCreated {
-		t.Errorf("expected 201 for POST /user with bearer, got %d; body: %s", w.Code, w.Body.String())
+	if w.Code != http.StatusForbidden {
+		t.Errorf("expected 403 for POST /user with non-admin bearer, got %d; body: %s", w.Code, w.Body.String())
 	}
 }
 
@@ -542,8 +557,8 @@ func TestReservationRequest_ListRequiresAuth(t *testing.T) {
 
 func TestRole_CRUD(t *testing.T) {
 	h := setupTestHarness(t)
-	ownerID := h.createUser(t, "Role Owner", "role-owner@example.com", "SHOP_OWNER")
-	token := h.tokenForUser(ownerID, []string{"SHOP_OWNER"})
+	adminID := h.createUser(t, "Role Admin", "role-admin@example.com", "ADMIN")
+	token := h.tokenForUser(adminID, []string{"admin"})
 
 	w := h.doJSON(http.MethodPost, "/api/v2/role", map[string]interface{}{
 		"name": "Test Role", "type": "USER",
@@ -796,7 +811,7 @@ func TestTable_CRUD(t *testing.T) {
 func TestUser_CRUD_WithPagination(t *testing.T) {
 	h := setupTestHarness(t)
 	adminID := h.createUser(t, "Admin User", "admin-user@example.com", "ADMIN")
-	token := h.tokenForUser(adminID, []string{"ADMIN"})
+	token := h.tokenForUser(adminID, []string{"admin"})
 
 	for i := 0; i < 3; i++ {
 		h.doJSON(http.MethodPost, "/api/v2/user", map[string]interface{}{

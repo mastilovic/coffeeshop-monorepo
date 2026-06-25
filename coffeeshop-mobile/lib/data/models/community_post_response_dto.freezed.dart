@@ -27,11 +27,8 @@ mixin _$CommunityPostResponseDto {
   String get body => throw _privateConstructorUsedError;
   String get type => throw _privateConstructorUsedError;
   bool get pinned => throw _privateConstructorUsedError;
-  @JsonKey(name: 'created_at')
   String? get createdAt => throw _privateConstructorUsedError;
-  @JsonKey(name: 'shop_id')
   String? get shopId => throw _privateConstructorUsedError;
-  @JsonKey(name: 'author_id')
   String? get authorId => throw _privateConstructorUsedError;
   Map<String, dynamic>? get author => throw _privateConstructorUsedError;
 
@@ -57,9 +54,9 @@ abstract class $CommunityPostResponseDtoCopyWith<$Res> {
     String body,
     String type,
     bool pinned,
-    @JsonKey(name: 'created_at') String? createdAt,
-    @JsonKey(name: 'shop_id') String? shopId,
-    @JsonKey(name: 'author_id') String? authorId,
+    String? createdAt,
+    String? shopId,
+    String? authorId,
     Map<String, dynamic>? author,
   });
 }
@@ -145,9 +142,9 @@ abstract class _$$CommunityPostResponseDtoImplCopyWith<$Res>
     String body,
     String type,
     bool pinned,
-    @JsonKey(name: 'created_at') String? createdAt,
-    @JsonKey(name: 'shop_id') String? shopId,
-    @JsonKey(name: 'author_id') String? authorId,
+    String? createdAt,
+    String? shopId,
+    String? authorId,
     Map<String, dynamic>? author,
   });
 }
@@ -226,9 +223,9 @@ class _$CommunityPostResponseDtoImpl implements _CommunityPostResponseDto {
     required this.body,
     this.type = 'POST',
     this.pinned = false,
-    @JsonKey(name: 'created_at') this.createdAt,
-    @JsonKey(name: 'shop_id') this.shopId,
-    @JsonKey(name: 'author_id') this.authorId,
+    this.createdAt,
+    this.shopId,
+    this.authorId,
     final Map<String, dynamic>? author,
   }) : _author = author;
 
@@ -246,13 +243,10 @@ class _$CommunityPostResponseDtoImpl implements _CommunityPostResponseDto {
   @JsonKey()
   final bool pinned;
   @override
-  @JsonKey(name: 'created_at')
   final String? createdAt;
   @override
-  @JsonKey(name: 'shop_id')
   final String? shopId;
   @override
-  @JsonKey(name: 'author_id')
   final String? authorId;
   final Map<String, dynamic>? _author;
   @override
@@ -323,9 +317,9 @@ abstract class _CommunityPostResponseDto implements CommunityPostResponseDto {
     required final String body,
     final String type,
     final bool pinned,
-    @JsonKey(name: 'created_at') final String? createdAt,
-    @JsonKey(name: 'shop_id') final String? shopId,
-    @JsonKey(name: 'author_id') final String? authorId,
+    final String? createdAt,
+    final String? shopId,
+    final String? authorId,
     final Map<String, dynamic>? author,
   }) = _$CommunityPostResponseDtoImpl;
 
@@ -341,13 +335,10 @@ abstract class _CommunityPostResponseDto implements CommunityPostResponseDto {
   @override
   bool get pinned;
   @override
-  @JsonKey(name: 'created_at')
   String? get createdAt;
   @override
-  @JsonKey(name: 'shop_id')
   String? get shopId;
   @override
-  @JsonKey(name: 'author_id')
   String? get authorId;
   @override
   Map<String, dynamic>? get author;

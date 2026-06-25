@@ -21,18 +21,12 @@ EventResponseDto _$EventResponseDtoFromJson(Map<String, dynamic> json) {
 
 /// @nodoc
 mixin _$EventResponseDto {
-  @JsonKey(name: 'event_id')
   String get eventId => throw _privateConstructorUsedError;
-  @JsonKey(name: 'event_name')
   String get eventName => throw _privateConstructorUsedError;
-  @JsonKey(name: 'event_date')
   String get eventDate => throw _privateConstructorUsedError;
   String? get description => throw _privateConstructorUsedError;
-  @JsonKey(name: 'shop_id')
   String? get shopId => throw _privateConstructorUsedError;
-  @JsonKey(name: 'shop_name')
   String? get shopName => throw _privateConstructorUsedError;
-  @JsonKey(name: 'shop_city')
   String? get shopCity => throw _privateConstructorUsedError;
 
   /// Serializes this EventResponseDto to a JSON map.
@@ -53,13 +47,13 @@ abstract class $EventResponseDtoCopyWith<$Res> {
   ) = _$EventResponseDtoCopyWithImpl<$Res, EventResponseDto>;
   @useResult
   $Res call({
-    @JsonKey(name: 'event_id') String eventId,
-    @JsonKey(name: 'event_name') String eventName,
-    @JsonKey(name: 'event_date') String eventDate,
+    String eventId,
+    String eventName,
+    String eventDate,
     String? description,
-    @JsonKey(name: 'shop_id') String? shopId,
-    @JsonKey(name: 'shop_name') String? shopName,
-    @JsonKey(name: 'shop_city') String? shopCity,
+    String? shopId,
+    String? shopName,
+    String? shopCity,
   });
 }
 
@@ -132,13 +126,13 @@ abstract class _$$EventResponseDtoImplCopyWith<$Res>
   @override
   @useResult
   $Res call({
-    @JsonKey(name: 'event_id') String eventId,
-    @JsonKey(name: 'event_name') String eventName,
-    @JsonKey(name: 'event_date') String eventDate,
+    String eventId,
+    String eventName,
+    String eventDate,
     String? description,
-    @JsonKey(name: 'shop_id') String? shopId,
-    @JsonKey(name: 'shop_name') String? shopName,
-    @JsonKey(name: 'shop_city') String? shopCity,
+    String? shopId,
+    String? shopName,
+    String? shopCity,
   });
 }
 
@@ -203,37 +197,31 @@ class __$$EventResponseDtoImplCopyWithImpl<$Res>
 @JsonSerializable()
 class _$EventResponseDtoImpl implements _EventResponseDto {
   const _$EventResponseDtoImpl({
-    @JsonKey(name: 'event_id') required this.eventId,
-    @JsonKey(name: 'event_name') required this.eventName,
-    @JsonKey(name: 'event_date') required this.eventDate,
+    required this.eventId,
+    required this.eventName,
+    required this.eventDate,
     this.description,
-    @JsonKey(name: 'shop_id') this.shopId,
-    @JsonKey(name: 'shop_name') this.shopName,
-    @JsonKey(name: 'shop_city') this.shopCity,
+    this.shopId,
+    this.shopName,
+    this.shopCity,
   });
 
   factory _$EventResponseDtoImpl.fromJson(Map<String, dynamic> json) =>
       _$$EventResponseDtoImplFromJson(json);
 
   @override
-  @JsonKey(name: 'event_id')
   final String eventId;
   @override
-  @JsonKey(name: 'event_name')
   final String eventName;
   @override
-  @JsonKey(name: 'event_date')
   final String eventDate;
   @override
   final String? description;
   @override
-  @JsonKey(name: 'shop_id')
   final String? shopId;
   @override
-  @JsonKey(name: 'shop_name')
   final String? shopName;
   @override
-  @JsonKey(name: 'shop_city')
   final String? shopCity;
 
   @override
@@ -292,37 +280,31 @@ class _$EventResponseDtoImpl implements _EventResponseDto {
 
 abstract class _EventResponseDto implements EventResponseDto {
   const factory _EventResponseDto({
-    @JsonKey(name: 'event_id') required final String eventId,
-    @JsonKey(name: 'event_name') required final String eventName,
-    @JsonKey(name: 'event_date') required final String eventDate,
+    required final String eventId,
+    required final String eventName,
+    required final String eventDate,
     final String? description,
-    @JsonKey(name: 'shop_id') final String? shopId,
-    @JsonKey(name: 'shop_name') final String? shopName,
-    @JsonKey(name: 'shop_city') final String? shopCity,
+    final String? shopId,
+    final String? shopName,
+    final String? shopCity,
   }) = _$EventResponseDtoImpl;
 
   factory _EventResponseDto.fromJson(Map<String, dynamic> json) =
       _$EventResponseDtoImpl.fromJson;
 
   @override
-  @JsonKey(name: 'event_id')
   String get eventId;
   @override
-  @JsonKey(name: 'event_name')
   String get eventName;
   @override
-  @JsonKey(name: 'event_date')
   String get eventDate;
   @override
   String? get description;
   @override
-  @JsonKey(name: 'shop_id')
   String? get shopId;
   @override
-  @JsonKey(name: 'shop_name')
   String? get shopName;
   @override
-  @JsonKey(name: 'shop_city')
   String? get shopCity;
 
   /// Create a copy of EventResponseDto
@@ -339,12 +321,9 @@ EventCreateRequest _$EventCreateRequestFromJson(Map<String, dynamic> json) {
 
 /// @nodoc
 mixin _$EventCreateRequest {
-  @JsonKey(name: 'event_name')
   String get eventName => throw _privateConstructorUsedError;
-  @JsonKey(name: 'event_date')
   String get eventDate => throw _privateConstructorUsedError;
   String? get description => throw _privateConstructorUsedError;
-  @JsonKey(name: 'shop_id')
   String? get shopId => throw _privateConstructorUsedError;
 
   /// Serializes this EventCreateRequest to a JSON map.
@@ -365,10 +344,10 @@ abstract class $EventCreateRequestCopyWith<$Res> {
   ) = _$EventCreateRequestCopyWithImpl<$Res, EventCreateRequest>;
   @useResult
   $Res call({
-    @JsonKey(name: 'event_name') String eventName,
-    @JsonKey(name: 'event_date') String eventDate,
+    String eventName,
+    String eventDate,
     String? description,
-    @JsonKey(name: 'shop_id') String? shopId,
+    String? shopId,
   });
 }
 
@@ -426,10 +405,10 @@ abstract class _$$EventCreateRequestImplCopyWith<$Res>
   @override
   @useResult
   $Res call({
-    @JsonKey(name: 'event_name') String eventName,
-    @JsonKey(name: 'event_date') String eventDate,
+    String eventName,
+    String eventDate,
     String? description,
-    @JsonKey(name: 'shop_id') String? shopId,
+    String? shopId,
   });
 }
 
@@ -479,25 +458,22 @@ class __$$EventCreateRequestImplCopyWithImpl<$Res>
 @JsonSerializable()
 class _$EventCreateRequestImpl implements _EventCreateRequest {
   const _$EventCreateRequestImpl({
-    @JsonKey(name: 'event_name') required this.eventName,
-    @JsonKey(name: 'event_date') required this.eventDate,
+    required this.eventName,
+    required this.eventDate,
     this.description,
-    @JsonKey(name: 'shop_id') this.shopId,
+    this.shopId,
   });
 
   factory _$EventCreateRequestImpl.fromJson(Map<String, dynamic> json) =>
       _$$EventCreateRequestImplFromJson(json);
 
   @override
-  @JsonKey(name: 'event_name')
   final String eventName;
   @override
-  @JsonKey(name: 'event_date')
   final String eventDate;
   @override
   final String? description;
   @override
-  @JsonKey(name: 'shop_id')
   final String? shopId;
 
   @override
@@ -543,25 +519,22 @@ class _$EventCreateRequestImpl implements _EventCreateRequest {
 
 abstract class _EventCreateRequest implements EventCreateRequest {
   const factory _EventCreateRequest({
-    @JsonKey(name: 'event_name') required final String eventName,
-    @JsonKey(name: 'event_date') required final String eventDate,
+    required final String eventName,
+    required final String eventDate,
     final String? description,
-    @JsonKey(name: 'shop_id') final String? shopId,
+    final String? shopId,
   }) = _$EventCreateRequestImpl;
 
   factory _EventCreateRequest.fromJson(Map<String, dynamic> json) =
       _$EventCreateRequestImpl.fromJson;
 
   @override
-  @JsonKey(name: 'event_name')
   String get eventName;
   @override
-  @JsonKey(name: 'event_date')
   String get eventDate;
   @override
   String? get description;
   @override
-  @JsonKey(name: 'shop_id')
   String? get shopId;
 
   /// Create a copy of EventCreateRequest
@@ -578,12 +551,9 @@ EventUpdateRequest _$EventUpdateRequestFromJson(Map<String, dynamic> json) {
 
 /// @nodoc
 mixin _$EventUpdateRequest {
-  @JsonKey(name: 'event_name')
   String? get eventName => throw _privateConstructorUsedError;
-  @JsonKey(name: 'event_date')
   String? get eventDate => throw _privateConstructorUsedError;
   String? get description => throw _privateConstructorUsedError;
-  @JsonKey(name: 'shop_id')
   String? get shopId => throw _privateConstructorUsedError;
 
   /// Serializes this EventUpdateRequest to a JSON map.
@@ -604,10 +574,10 @@ abstract class $EventUpdateRequestCopyWith<$Res> {
   ) = _$EventUpdateRequestCopyWithImpl<$Res, EventUpdateRequest>;
   @useResult
   $Res call({
-    @JsonKey(name: 'event_name') String? eventName,
-    @JsonKey(name: 'event_date') String? eventDate,
+    String? eventName,
+    String? eventDate,
     String? description,
-    @JsonKey(name: 'shop_id') String? shopId,
+    String? shopId,
   });
 }
 
@@ -665,10 +635,10 @@ abstract class _$$EventUpdateRequestImplCopyWith<$Res>
   @override
   @useResult
   $Res call({
-    @JsonKey(name: 'event_name') String? eventName,
-    @JsonKey(name: 'event_date') String? eventDate,
+    String? eventName,
+    String? eventDate,
     String? description,
-    @JsonKey(name: 'shop_id') String? shopId,
+    String? shopId,
   });
 }
 
@@ -718,25 +688,22 @@ class __$$EventUpdateRequestImplCopyWithImpl<$Res>
 @JsonSerializable()
 class _$EventUpdateRequestImpl implements _EventUpdateRequest {
   const _$EventUpdateRequestImpl({
-    @JsonKey(name: 'event_name') this.eventName,
-    @JsonKey(name: 'event_date') this.eventDate,
+    this.eventName,
+    this.eventDate,
     this.description,
-    @JsonKey(name: 'shop_id') this.shopId,
+    this.shopId,
   });
 
   factory _$EventUpdateRequestImpl.fromJson(Map<String, dynamic> json) =>
       _$$EventUpdateRequestImplFromJson(json);
 
   @override
-  @JsonKey(name: 'event_name')
   final String? eventName;
   @override
-  @JsonKey(name: 'event_date')
   final String? eventDate;
   @override
   final String? description;
   @override
-  @JsonKey(name: 'shop_id')
   final String? shopId;
 
   @override
@@ -782,25 +749,22 @@ class _$EventUpdateRequestImpl implements _EventUpdateRequest {
 
 abstract class _EventUpdateRequest implements EventUpdateRequest {
   const factory _EventUpdateRequest({
-    @JsonKey(name: 'event_name') final String? eventName,
-    @JsonKey(name: 'event_date') final String? eventDate,
+    final String? eventName,
+    final String? eventDate,
     final String? description,
-    @JsonKey(name: 'shop_id') final String? shopId,
+    final String? shopId,
   }) = _$EventUpdateRequestImpl;
 
   factory _EventUpdateRequest.fromJson(Map<String, dynamic> json) =
       _$EventUpdateRequestImpl.fromJson;
 
   @override
-  @JsonKey(name: 'event_name')
   String? get eventName;
   @override
-  @JsonKey(name: 'event_date')
   String? get eventDate;
   @override
   String? get description;
   @override
-  @JsonKey(name: 'shop_id')
   String? get shopId;
 
   /// Create a copy of EventUpdateRequest
@@ -818,9 +782,7 @@ EventSearchParams _$EventSearchParamsFromJson(Map<String, dynamic> json) {
 /// @nodoc
 mixin _$EventSearchParams {
   String? get q => throw _privateConstructorUsedError;
-  @JsonKey(name: 'date_from')
   String? get dateFrom => throw _privateConstructorUsedError;
-  @JsonKey(name: 'date_to')
   String? get dateTo => throw _privateConstructorUsedError;
   int get page => throw _privateConstructorUsedError;
   int get size => throw _privateConstructorUsedError;
@@ -842,13 +804,7 @@ abstract class $EventSearchParamsCopyWith<$Res> {
     $Res Function(EventSearchParams) then,
   ) = _$EventSearchParamsCopyWithImpl<$Res, EventSearchParams>;
   @useResult
-  $Res call({
-    String? q,
-    @JsonKey(name: 'date_from') String? dateFrom,
-    @JsonKey(name: 'date_to') String? dateTo,
-    int page,
-    int size,
-  });
+  $Res call({String? q, String? dateFrom, String? dateTo, int page, int size});
 }
 
 /// @nodoc
@@ -909,13 +865,7 @@ abstract class _$$EventSearchParamsImplCopyWith<$Res>
   ) = __$$EventSearchParamsImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({
-    String? q,
-    @JsonKey(name: 'date_from') String? dateFrom,
-    @JsonKey(name: 'date_to') String? dateTo,
-    int page,
-    int size,
-  });
+  $Res call({String? q, String? dateFrom, String? dateTo, int page, int size});
 }
 
 /// @nodoc
@@ -970,8 +920,8 @@ class __$$EventSearchParamsImplCopyWithImpl<$Res>
 class _$EventSearchParamsImpl implements _EventSearchParams {
   const _$EventSearchParamsImpl({
     this.q,
-    @JsonKey(name: 'date_from') this.dateFrom,
-    @JsonKey(name: 'date_to') this.dateTo,
+    this.dateFrom,
+    this.dateTo,
     this.page = 0,
     this.size = 20,
   });
@@ -982,10 +932,8 @@ class _$EventSearchParamsImpl implements _EventSearchParams {
   @override
   final String? q;
   @override
-  @JsonKey(name: 'date_from')
   final String? dateFrom;
   @override
-  @JsonKey(name: 'date_to')
   final String? dateTo;
   @override
   @JsonKey()
@@ -1036,8 +984,8 @@ class _$EventSearchParamsImpl implements _EventSearchParams {
 abstract class _EventSearchParams implements EventSearchParams {
   const factory _EventSearchParams({
     final String? q,
-    @JsonKey(name: 'date_from') final String? dateFrom,
-    @JsonKey(name: 'date_to') final String? dateTo,
+    final String? dateFrom,
+    final String? dateTo,
     final int page,
     final int size,
   }) = _$EventSearchParamsImpl;
@@ -1048,10 +996,8 @@ abstract class _EventSearchParams implements EventSearchParams {
   @override
   String? get q;
   @override
-  @JsonKey(name: 'date_from')
   String? get dateFrom;
   @override
-  @JsonKey(name: 'date_to')
   String? get dateTo;
   @override
   int get page;

@@ -11,7 +11,7 @@ class TableResponseDto with _$TableResponseDto {
     required String id,
     required int number,
     required int capacity,
-    @JsonKey(name: 'shop_id') String? shopId,
+    String? shopId,
     @Default([]) List<Map<String, dynamic>> reservations,
   }) = _TableResponseDto;
 
@@ -36,7 +36,7 @@ class TableCreateRequest with _$TableCreateRequest {
   const factory TableCreateRequest({
     required int number,
     required int capacity,
-    @JsonKey(name: 'shop_id') required String shopId,
+    required String shopId,
   }) = _TableCreateRequest;
 
   factory TableCreateRequest.fromJson(Map<String, dynamic> json) =>

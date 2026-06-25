@@ -10,9 +10,9 @@ class ReviewCommentResponseDto with _$ReviewCommentResponseDto {
   const factory ReviewCommentResponseDto({
     required String id,
     required String body,
-    @JsonKey(name: 'created_at') String? createdAt,
-    @JsonKey(name: 'user_id') String? userId,
-    @JsonKey(name: 'review_id') String? reviewId,
+    String? createdAt,
+    String? userId,
+    String? reviewId,
     Map<String, dynamic>? user,
   }) = _ReviewCommentResponseDto;
 

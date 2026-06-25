@@ -24,21 +24,13 @@ ReservationResponseDto _$ReservationResponseDtoFromJson(
 /// @nodoc
 mixin _$ReservationResponseDto {
   String get id => throw _privateConstructorUsedError;
-  @JsonKey(name: 'party_size')
   int get partySize => throw _privateConstructorUsedError;
-  @JsonKey(name: 'user_id')
   String? get userId => throw _privateConstructorUsedError;
-  @JsonKey(name: 'shop_id')
   String? get shopId => throw _privateConstructorUsedError;
-  @JsonKey(name: 'table_id')
   String? get tableId => throw _privateConstructorUsedError;
-  @JsonKey(name: 'event_id')
   String? get eventId => throw _privateConstructorUsedError;
-  @JsonKey(name: 'reservation_request_id')
   String? get reservationRequestId => throw _privateConstructorUsedError;
-  @JsonKey(name: 'event_name')
   String? get eventName => throw _privateConstructorUsedError;
-  @JsonKey(name: 'event_date')
   String? get eventDate => throw _privateConstructorUsedError;
   Map<String, dynamic>? get user => throw _privateConstructorUsedError;
   Map<String, dynamic>? get shop => throw _privateConstructorUsedError;
@@ -63,14 +55,14 @@ abstract class $ReservationResponseDtoCopyWith<$Res> {
   @useResult
   $Res call({
     String id,
-    @JsonKey(name: 'party_size') int partySize,
-    @JsonKey(name: 'user_id') String? userId,
-    @JsonKey(name: 'shop_id') String? shopId,
-    @JsonKey(name: 'table_id') String? tableId,
-    @JsonKey(name: 'event_id') String? eventId,
-    @JsonKey(name: 'reservation_request_id') String? reservationRequestId,
-    @JsonKey(name: 'event_name') String? eventName,
-    @JsonKey(name: 'event_date') String? eventDate,
+    int partySize,
+    String? userId,
+    String? shopId,
+    String? tableId,
+    String? eventId,
+    String? reservationRequestId,
+    String? eventName,
+    String? eventDate,
     Map<String, dynamic>? user,
     Map<String, dynamic>? shop,
     Map<String, dynamic>? table,
@@ -175,14 +167,14 @@ abstract class _$$ReservationResponseDtoImplCopyWith<$Res>
   @useResult
   $Res call({
     String id,
-    @JsonKey(name: 'party_size') int partySize,
-    @JsonKey(name: 'user_id') String? userId,
-    @JsonKey(name: 'shop_id') String? shopId,
-    @JsonKey(name: 'table_id') String? tableId,
-    @JsonKey(name: 'event_id') String? eventId,
-    @JsonKey(name: 'reservation_request_id') String? reservationRequestId,
-    @JsonKey(name: 'event_name') String? eventName,
-    @JsonKey(name: 'event_date') String? eventDate,
+    int partySize,
+    String? userId,
+    String? shopId,
+    String? tableId,
+    String? eventId,
+    String? reservationRequestId,
+    String? eventName,
+    String? eventDate,
     Map<String, dynamic>? user,
     Map<String, dynamic>? shop,
     Map<String, dynamic>? table,
@@ -277,14 +269,14 @@ class __$$ReservationResponseDtoImplCopyWithImpl<$Res>
 class _$ReservationResponseDtoImpl implements _ReservationResponseDto {
   const _$ReservationResponseDtoImpl({
     required this.id,
-    @JsonKey(name: 'party_size') required this.partySize,
-    @JsonKey(name: 'user_id') this.userId,
-    @JsonKey(name: 'shop_id') this.shopId,
-    @JsonKey(name: 'table_id') this.tableId,
-    @JsonKey(name: 'event_id') this.eventId,
-    @JsonKey(name: 'reservation_request_id') this.reservationRequestId,
-    @JsonKey(name: 'event_name') this.eventName,
-    @JsonKey(name: 'event_date') this.eventDate,
+    required this.partySize,
+    this.userId,
+    this.shopId,
+    this.tableId,
+    this.eventId,
+    this.reservationRequestId,
+    this.eventName,
+    this.eventDate,
     final Map<String, dynamic>? user,
     final Map<String, dynamic>? shop,
     final Map<String, dynamic>? table,
@@ -298,28 +290,20 @@ class _$ReservationResponseDtoImpl implements _ReservationResponseDto {
   @override
   final String id;
   @override
-  @JsonKey(name: 'party_size')
   final int partySize;
   @override
-  @JsonKey(name: 'user_id')
   final String? userId;
   @override
-  @JsonKey(name: 'shop_id')
   final String? shopId;
   @override
-  @JsonKey(name: 'table_id')
   final String? tableId;
   @override
-  @JsonKey(name: 'event_id')
   final String? eventId;
   @override
-  @JsonKey(name: 'reservation_request_id')
   final String? reservationRequestId;
   @override
-  @JsonKey(name: 'event_name')
   final String? eventName;
   @override
-  @JsonKey(name: 'event_date')
   final String? eventDate;
   final Map<String, dynamic>? _user;
   @override
@@ -418,14 +402,14 @@ class _$ReservationResponseDtoImpl implements _ReservationResponseDto {
 abstract class _ReservationResponseDto implements ReservationResponseDto {
   const factory _ReservationResponseDto({
     required final String id,
-    @JsonKey(name: 'party_size') required final int partySize,
-    @JsonKey(name: 'user_id') final String? userId,
-    @JsonKey(name: 'shop_id') final String? shopId,
-    @JsonKey(name: 'table_id') final String? tableId,
-    @JsonKey(name: 'event_id') final String? eventId,
-    @JsonKey(name: 'reservation_request_id') final String? reservationRequestId,
-    @JsonKey(name: 'event_name') final String? eventName,
-    @JsonKey(name: 'event_date') final String? eventDate,
+    required final int partySize,
+    final String? userId,
+    final String? shopId,
+    final String? tableId,
+    final String? eventId,
+    final String? reservationRequestId,
+    final String? eventName,
+    final String? eventDate,
     final Map<String, dynamic>? user,
     final Map<String, dynamic>? shop,
     final Map<String, dynamic>? table,
@@ -437,28 +421,20 @@ abstract class _ReservationResponseDto implements ReservationResponseDto {
   @override
   String get id;
   @override
-  @JsonKey(name: 'party_size')
   int get partySize;
   @override
-  @JsonKey(name: 'user_id')
   String? get userId;
   @override
-  @JsonKey(name: 'shop_id')
   String? get shopId;
   @override
-  @JsonKey(name: 'table_id')
   String? get tableId;
   @override
-  @JsonKey(name: 'event_id')
   String? get eventId;
   @override
-  @JsonKey(name: 'reservation_request_id')
   String? get reservationRequestId;
   @override
-  @JsonKey(name: 'event_name')
   String? get eventName;
   @override
-  @JsonKey(name: 'event_date')
   String? get eventDate;
   @override
   Map<String, dynamic>? get user;
@@ -483,15 +459,10 @@ ReservationCreateRequest _$ReservationCreateRequestFromJson(
 
 /// @nodoc
 mixin _$ReservationCreateRequest {
-  @JsonKey(name: 'party_size')
   int get partySize => throw _privateConstructorUsedError;
-  @JsonKey(name: 'user_id')
   String? get userId => throw _privateConstructorUsedError;
-  @JsonKey(name: 'shop_id')
   String? get shopId => throw _privateConstructorUsedError;
-  @JsonKey(name: 'table_id')
   String? get tableId => throw _privateConstructorUsedError;
-  @JsonKey(name: 'event_id')
   String? get eventId => throw _privateConstructorUsedError;
 
   /// Serializes this ReservationCreateRequest to a JSON map.
@@ -512,11 +483,11 @@ abstract class $ReservationCreateRequestCopyWith<$Res> {
   ) = _$ReservationCreateRequestCopyWithImpl<$Res, ReservationCreateRequest>;
   @useResult
   $Res call({
-    @JsonKey(name: 'party_size') int partySize,
-    @JsonKey(name: 'user_id') String? userId,
-    @JsonKey(name: 'shop_id') String? shopId,
-    @JsonKey(name: 'table_id') String? tableId,
-    @JsonKey(name: 'event_id') String? eventId,
+    int partySize,
+    String? userId,
+    String? shopId,
+    String? tableId,
+    String? eventId,
   });
 }
 
@@ -582,11 +553,11 @@ abstract class _$$ReservationCreateRequestImplCopyWith<$Res>
   @override
   @useResult
   $Res call({
-    @JsonKey(name: 'party_size') int partySize,
-    @JsonKey(name: 'user_id') String? userId,
-    @JsonKey(name: 'shop_id') String? shopId,
-    @JsonKey(name: 'table_id') String? tableId,
-    @JsonKey(name: 'event_id') String? eventId,
+    int partySize,
+    String? userId,
+    String? shopId,
+    String? tableId,
+    String? eventId,
   });
 }
 
@@ -645,30 +616,25 @@ class __$$ReservationCreateRequestImplCopyWithImpl<$Res>
 @JsonSerializable()
 class _$ReservationCreateRequestImpl implements _ReservationCreateRequest {
   const _$ReservationCreateRequestImpl({
-    @JsonKey(name: 'party_size') required this.partySize,
-    @JsonKey(name: 'user_id') this.userId,
-    @JsonKey(name: 'shop_id') this.shopId,
-    @JsonKey(name: 'table_id') this.tableId,
-    @JsonKey(name: 'event_id') this.eventId,
+    required this.partySize,
+    this.userId,
+    this.shopId,
+    this.tableId,
+    this.eventId,
   });
 
   factory _$ReservationCreateRequestImpl.fromJson(Map<String, dynamic> json) =>
       _$$ReservationCreateRequestImplFromJson(json);
 
   @override
-  @JsonKey(name: 'party_size')
   final int partySize;
   @override
-  @JsonKey(name: 'user_id')
   final String? userId;
   @override
-  @JsonKey(name: 'shop_id')
   final String? shopId;
   @override
-  @JsonKey(name: 'table_id')
   final String? tableId;
   @override
-  @JsonKey(name: 'event_id')
   final String? eventId;
 
   @override
@@ -713,30 +679,25 @@ class _$ReservationCreateRequestImpl implements _ReservationCreateRequest {
 
 abstract class _ReservationCreateRequest implements ReservationCreateRequest {
   const factory _ReservationCreateRequest({
-    @JsonKey(name: 'party_size') required final int partySize,
-    @JsonKey(name: 'user_id') final String? userId,
-    @JsonKey(name: 'shop_id') final String? shopId,
-    @JsonKey(name: 'table_id') final String? tableId,
-    @JsonKey(name: 'event_id') final String? eventId,
+    required final int partySize,
+    final String? userId,
+    final String? shopId,
+    final String? tableId,
+    final String? eventId,
   }) = _$ReservationCreateRequestImpl;
 
   factory _ReservationCreateRequest.fromJson(Map<String, dynamic> json) =
       _$ReservationCreateRequestImpl.fromJson;
 
   @override
-  @JsonKey(name: 'party_size')
   int get partySize;
   @override
-  @JsonKey(name: 'user_id')
   String? get userId;
   @override
-  @JsonKey(name: 'shop_id')
   String? get shopId;
   @override
-  @JsonKey(name: 'table_id')
   String? get tableId;
   @override
-  @JsonKey(name: 'event_id')
   String? get eventId;
 
   /// Create a copy of ReservationCreateRequest
@@ -755,9 +716,7 @@ ReservationUpdateRequest _$ReservationUpdateRequestFromJson(
 
 /// @nodoc
 mixin _$ReservationUpdateRequest {
-  @JsonKey(name: 'party_size')
   int? get partySize => throw _privateConstructorUsedError;
-  @JsonKey(name: 'table_id')
   String? get tableId => throw _privateConstructorUsedError;
 
   /// Serializes this ReservationUpdateRequest to a JSON map.
@@ -777,10 +736,7 @@ abstract class $ReservationUpdateRequestCopyWith<$Res> {
     $Res Function(ReservationUpdateRequest) then,
   ) = _$ReservationUpdateRequestCopyWithImpl<$Res, ReservationUpdateRequest>;
   @useResult
-  $Res call({
-    @JsonKey(name: 'party_size') int? partySize,
-    @JsonKey(name: 'table_id') String? tableId,
-  });
+  $Res call({int? partySize, String? tableId});
 }
 
 /// @nodoc
@@ -826,10 +782,7 @@ abstract class _$$ReservationUpdateRequestImplCopyWith<$Res>
   ) = __$$ReservationUpdateRequestImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({
-    @JsonKey(name: 'party_size') int? partySize,
-    @JsonKey(name: 'table_id') String? tableId,
-  });
+  $Res call({int? partySize, String? tableId});
 }
 
 /// @nodoc
@@ -868,19 +821,14 @@ class __$$ReservationUpdateRequestImplCopyWithImpl<$Res>
 /// @nodoc
 @JsonSerializable()
 class _$ReservationUpdateRequestImpl implements _ReservationUpdateRequest {
-  const _$ReservationUpdateRequestImpl({
-    @JsonKey(name: 'party_size') this.partySize,
-    @JsonKey(name: 'table_id') this.tableId,
-  });
+  const _$ReservationUpdateRequestImpl({this.partySize, this.tableId});
 
   factory _$ReservationUpdateRequestImpl.fromJson(Map<String, dynamic> json) =>
       _$$ReservationUpdateRequestImplFromJson(json);
 
   @override
-  @JsonKey(name: 'party_size')
   final int? partySize;
   @override
-  @JsonKey(name: 'table_id')
   final String? tableId;
 
   @override
@@ -921,18 +869,16 @@ class _$ReservationUpdateRequestImpl implements _ReservationUpdateRequest {
 
 abstract class _ReservationUpdateRequest implements ReservationUpdateRequest {
   const factory _ReservationUpdateRequest({
-    @JsonKey(name: 'party_size') final int? partySize,
-    @JsonKey(name: 'table_id') final String? tableId,
+    final int? partySize,
+    final String? tableId,
   }) = _$ReservationUpdateRequestImpl;
 
   factory _ReservationUpdateRequest.fromJson(Map<String, dynamic> json) =
       _$ReservationUpdateRequestImpl.fromJson;
 
   @override
-  @JsonKey(name: 'party_size')
   int? get partySize;
   @override
-  @JsonKey(name: 'table_id')
   String? get tableId;
 
   /// Create a copy of ReservationUpdateRequest

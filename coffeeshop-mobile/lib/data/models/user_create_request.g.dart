@@ -13,7 +13,7 @@ _$UserCreateRequestImpl _$$UserCreateRequestImplFromJson(
   username: json['username'] as String,
   email: json['email'] as String,
   password: json['password'] as String?,
-  userType: json['user_type'] as String,
+  userType: json['userType'] as String,
 );
 
 Map<String, dynamic> _$$UserCreateRequestImplToJson(
@@ -23,5 +23,5 @@ Map<String, dynamic> _$$UserCreateRequestImplToJson(
   'username': instance.username,
   'email': instance.email,
   'password': instance.password,
-  'user_type': instance.userType,
+  'userType': instance.userType,
 };

@@ -20,7 +20,6 @@ class AuthNotifier extends StateNotifier<AuthState> {
   final AuthService _authService;
 
   Future<void> login(String email, String password) async {
-    state = state.copyWith(status: AuthStatus.unauthenticated, clearUser: true);
     try {
       await _authService.login(email, password);
     } catch (_) {
@@ -49,4 +48,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     await _authService.logout();
   }
 
+  Future<void> refreshProfile() async {
+    await _authService.refreshProfile();
+  }
 }

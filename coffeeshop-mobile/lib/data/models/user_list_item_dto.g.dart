@@ -12,7 +12,7 @@ _$UserListItemDtoImpl _$$UserListItemDtoImplFromJson(
   id: json['id'] as String,
   name: json['name'] as String,
   username: json['username'] as String,
-  userType: json['user_type'] as String,
+  userType: json['userType'] as String,
 );
 
 Map<String, dynamic> _$$UserListItemDtoImplToJson(
@@ -21,5 +21,5 @@ Map<String, dynamic> _$$UserListItemDtoImplToJson(
   'id': instance.id,
   'name': instance.name,
   'username': instance.username,
-  'user_type': instance.userType,
+  'userType': instance.userType,
 };

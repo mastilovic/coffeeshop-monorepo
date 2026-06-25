@@ -8,10 +8,7 @@ void main() {
       'name': 'John Doe',
       'username': 'johndoe',
       'email': 'john@example.com',
-      'user_type': 'customer',
-      'is_active': true,
-      'created_at': '2024-01-15T10:30:00Z',
-      'updated_at': '2024-03-20T14:45:00Z',
+      'userType': 'CUSTOMER',
     };
 
     test('fromJson parses valid JSON correctly', () {
@@ -20,24 +17,14 @@ void main() {
       expect(dto.name, 'John Doe');
       expect(dto.username, 'johndoe');
       expect(dto.email, 'john@example.com');
-      expect(dto.userType, 'customer');
-      expect(dto.isActive, isTrue);
-      expect(dto.createdAt, DateTime.parse('2024-01-15T10:30:00Z'));
-      expect(dto.updatedAt, DateTime.parse('2024-03-20T14:45:00Z'));
+      expect(dto.userType, 'CUSTOMER');
     });
 
-    test('fromJson handles inactive user', () {
+    test('fromJson handles shop owner user type', () {
       final json = Map<String, dynamic>.from(validJson)
-        ..['is_active'] = false;
+        ..['userType'] = 'SHOP_OWNER';
       final dto = UserResponseDto.fromJson(json);
-      expect(dto.isActive, isFalse);
-    });
-
-    test('fromJson handles shop_owner user type', () {
-      final json = Map<String, dynamic>.from(validJson)
-        ..['user_type'] = 'shop_owner';
-      final dto = UserResponseDto.fromJson(json);
-      expect(dto.userType, 'shop_owner');
+      expect(dto.userType, 'SHOP_OWNER');
     });
 
     test('toJson produces valid JSON', () {
@@ -45,8 +32,7 @@ void main() {
       final json = dto.toJson();
       expect(json['id'], 'user-123');
       expect(json['name'], 'John Doe');
-      expect(json['user_type'], 'customer');
-      expect(json['is_active'], true);
+      expect(json['userType'], 'CUSTOMER');
     });
 
     test('round-trip serialization preserves data', () {
@@ -58,7 +44,6 @@ void main() {
       expect(dto2.username, dto.username);
       expect(dto2.email, dto.email);
       expect(dto2.userType, dto.userType);
-      expect(dto2.isActive, dto.isActive);
     });
   });
 }

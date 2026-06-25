@@ -38,6 +38,7 @@ func isPublicEndpoint(r *http.Request) bool {
 			path != "/api/v2/reservation-request" &&
 			!strings.HasPrefix(path, "/api/v2/reservation-request/") &&
 			path != "/api/v2/shop/mine" &&
+			path != "/api/v2/shop-employees/me" &&
 			path != "/api/v2/shop"
 	}
 

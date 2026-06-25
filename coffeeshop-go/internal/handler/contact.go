@@ -7,16 +7,19 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/mastilovic/coffeeshop-go/internal/apperror"
+	"github.com/mastilovic/coffeeshop-go/internal/auth"
 	"github.com/mastilovic/coffeeshop-go/internal/model"
 	"gorm.io/gorm"
 )
 
 type ContactHandler struct {
-	db *gorm.DB
+	db             *gorm.DB
+	currentUserSvc *auth.CurrentUserService
+	authorizer     *auth.ShopAuthorizer
 }
 
-func NewContactHandler(db *gorm.DB) *ContactHandler {
-	return &ContactHandler{db: db}
+func NewContactHandler(db *gorm.DB, currentUserSvc *auth.CurrentUserService, authorizer *auth.ShopAuthorizer) *ContactHandler {
+	return &ContactHandler{db: db, currentUserSvc: currentUserSvc, authorizer: authorizer}
 }
 
 func (h *ContactHandler) GetAll(w http.ResponseWriter, r *http.Request) {
@@ -41,11 +44,22 @@ func (h *ContactHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *ContactHandler) Create(w http.ResponseWriter, r *http.Request) {
+	if _, err := h.currentUserSvc.RequireCurrentUser(r.Context()); err != nil {
+		apperror.WriteError(w, err)
+		return
+	}
+
 	var req model.Contact
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		apperror.WriteError(w, apperror.BadRequest("Invalid request body"))
 		return
 	}
+
+	if err := h.authorizer.RequireShopOwnerOrEmployeeOrAdmin(r.Context(), req.ShopID); err != nil {
+		apperror.WriteError(w, err)
+		return
+	}
+
 	req.ID = uuid.New().String()
 	if err := h.db.WithContext(r.Context()).Create(&req).Error; err != nil {
 		apperror.WriteError(w, apperror.Internal("Failed to create contact"))
@@ -57,12 +71,23 @@ func (h *ContactHandler) Create(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *ContactHandler) Update(w http.ResponseWriter, r *http.Request) {
+	if _, err := h.currentUserSvc.RequireCurrentUser(r.Context()); err != nil {
+		apperror.WriteError(w, err)
+		return
+	}
+
 	id := chi.URLParam(r, "id")
 	var existing model.Contact
 	if err := h.db.WithContext(r.Context()).First(&existing, "id = ?", id).Error; err != nil {
 		apperror.WriteError(w, apperror.NotFound("Contact not found"))
 		return
 	}
+
+	if err := h.authorizer.RequireShopOwnerOrEmployeeOrAdmin(r.Context(), existing.ShopID); err != nil {
+		apperror.WriteError(w, err)
+		return
+	}
+
 	var req model.Contact
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		apperror.WriteError(w, apperror.BadRequest("Invalid request body"))
@@ -78,7 +103,23 @@ func (h *ContactHandler) Update(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *ContactHandler) Delete(w http.ResponseWriter, r *http.Request) {
+	if _, err := h.currentUserSvc.RequireCurrentUser(r.Context()); err != nil {
+		apperror.WriteError(w, err)
+		return
+	}
+
 	id := chi.URLParam(r, "id")
+	var existing model.Contact
+	if err := h.db.WithContext(r.Context()).First(&existing, "id = ?", id).Error; err != nil {
+		apperror.WriteError(w, apperror.NotFound("Contact not found"))
+		return
+	}
+
+	if err := h.authorizer.RequireShopOwnerOrEmployeeOrAdmin(r.Context(), existing.ShopID); err != nil {
+		apperror.WriteError(w, err)
+		return
+	}
+
 	result := h.db.WithContext(r.Context()).Delete(&model.Contact{}, "id = ?", id)
 	if result.Error != nil {
 		apperror.WriteError(w, apperror.Internal("Failed to delete contact"))

@@ -25,13 +25,9 @@ mixin _$ReviewResponseDto {
   String? get title => throw _privateConstructorUsedError;
   String? get description => throw _privateConstructorUsedError;
   int get rating => throw _privateConstructorUsedError;
-  @JsonKey(name: 'review_date')
   String? get reviewDate => throw _privateConstructorUsedError;
-  @JsonKey(name: 'comments_enabled')
   bool get commentsEnabled => throw _privateConstructorUsedError;
-  @JsonKey(name: 'user_id')
   String? get userId => throw _privateConstructorUsedError;
-  @JsonKey(name: 'shop_id')
   String? get shopId => throw _privateConstructorUsedError;
   Map<String, dynamic>? get user => throw _privateConstructorUsedError;
   Map<String, dynamic>? get shop => throw _privateConstructorUsedError;
@@ -59,10 +55,10 @@ abstract class $ReviewResponseDtoCopyWith<$Res> {
     String? title,
     String? description,
     int rating,
-    @JsonKey(name: 'review_date') String? reviewDate,
-    @JsonKey(name: 'comments_enabled') bool commentsEnabled,
-    @JsonKey(name: 'user_id') String? userId,
-    @JsonKey(name: 'shop_id') String? shopId,
+    String? reviewDate,
+    bool commentsEnabled,
+    String? userId,
+    String? shopId,
     Map<String, dynamic>? user,
     Map<String, dynamic>? shop,
     List<Map<String, dynamic>> comments,
@@ -162,10 +158,10 @@ abstract class _$$ReviewResponseDtoImplCopyWith<$Res>
     String? title,
     String? description,
     int rating,
-    @JsonKey(name: 'review_date') String? reviewDate,
-    @JsonKey(name: 'comments_enabled') bool commentsEnabled,
-    @JsonKey(name: 'user_id') String? userId,
-    @JsonKey(name: 'shop_id') String? shopId,
+    String? reviewDate,
+    bool commentsEnabled,
+    String? userId,
+    String? shopId,
     Map<String, dynamic>? user,
     Map<String, dynamic>? shop,
     List<Map<String, dynamic>> comments,
@@ -257,10 +253,10 @@ class _$ReviewResponseDtoImpl implements _ReviewResponseDto {
     this.title,
     this.description,
     required this.rating,
-    @JsonKey(name: 'review_date') this.reviewDate,
-    @JsonKey(name: 'comments_enabled') this.commentsEnabled = true,
-    @JsonKey(name: 'user_id') this.userId,
-    @JsonKey(name: 'shop_id') this.shopId,
+    this.reviewDate,
+    this.commentsEnabled = true,
+    this.userId,
+    this.shopId,
     final Map<String, dynamic>? user,
     final Map<String, dynamic>? shop,
     final List<Map<String, dynamic>> comments = const [],
@@ -280,16 +276,13 @@ class _$ReviewResponseDtoImpl implements _ReviewResponseDto {
   @override
   final int rating;
   @override
-  @JsonKey(name: 'review_date')
   final String? reviewDate;
   @override
-  @JsonKey(name: 'comments_enabled')
+  @JsonKey()
   final bool commentsEnabled;
   @override
-  @JsonKey(name: 'user_id')
   final String? userId;
   @override
-  @JsonKey(name: 'shop_id')
   final String? shopId;
   final Map<String, dynamic>? _user;
   @override
@@ -386,10 +379,10 @@ abstract class _ReviewResponseDto implements ReviewResponseDto {
     final String? title,
     final String? description,
     required final int rating,
-    @JsonKey(name: 'review_date') final String? reviewDate,
-    @JsonKey(name: 'comments_enabled') final bool commentsEnabled,
-    @JsonKey(name: 'user_id') final String? userId,
-    @JsonKey(name: 'shop_id') final String? shopId,
+    final String? reviewDate,
+    final bool commentsEnabled,
+    final String? userId,
+    final String? shopId,
     final Map<String, dynamic>? user,
     final Map<String, dynamic>? shop,
     final List<Map<String, dynamic>> comments,
@@ -407,16 +400,12 @@ abstract class _ReviewResponseDto implements ReviewResponseDto {
   @override
   int get rating;
   @override
-  @JsonKey(name: 'review_date')
   String? get reviewDate;
   @override
-  @JsonKey(name: 'comments_enabled')
   bool get commentsEnabled;
   @override
-  @JsonKey(name: 'user_id')
   String? get userId;
   @override
-  @JsonKey(name: 'shop_id')
   String? get shopId;
   @override
   Map<String, dynamic>? get user;
@@ -442,9 +431,7 @@ mixin _$ReviewCreateRequest {
   String? get title => throw _privateConstructorUsedError;
   String? get description => throw _privateConstructorUsedError;
   int get rating => throw _privateConstructorUsedError;
-  @JsonKey(name: 'comments_enabled')
   bool get commentsEnabled => throw _privateConstructorUsedError;
-  @JsonKey(name: 'shop_id')
   String get shopId => throw _privateConstructorUsedError;
 
   /// Serializes this ReviewCreateRequest to a JSON map.
@@ -468,8 +455,8 @@ abstract class $ReviewCreateRequestCopyWith<$Res> {
     String? title,
     String? description,
     int rating,
-    @JsonKey(name: 'comments_enabled') bool commentsEnabled,
-    @JsonKey(name: 'shop_id') String shopId,
+    bool commentsEnabled,
+    String shopId,
   });
 }
 
@@ -535,8 +522,8 @@ abstract class _$$ReviewCreateRequestImplCopyWith<$Res>
     String? title,
     String? description,
     int rating,
-    @JsonKey(name: 'comments_enabled') bool commentsEnabled,
-    @JsonKey(name: 'shop_id') String shopId,
+    bool commentsEnabled,
+    String shopId,
   });
 }
 
@@ -594,8 +581,8 @@ class _$ReviewCreateRequestImpl implements _ReviewCreateRequest {
     this.title,
     this.description,
     required this.rating,
-    @JsonKey(name: 'comments_enabled') this.commentsEnabled = true,
-    @JsonKey(name: 'shop_id') required this.shopId,
+    this.commentsEnabled = true,
+    required this.shopId,
   });
 
   factory _$ReviewCreateRequestImpl.fromJson(Map<String, dynamic> json) =>
@@ -608,10 +595,9 @@ class _$ReviewCreateRequestImpl implements _ReviewCreateRequest {
   @override
   final int rating;
   @override
-  @JsonKey(name: 'comments_enabled')
+  @JsonKey()
   final bool commentsEnabled;
   @override
-  @JsonKey(name: 'shop_id')
   final String shopId;
 
   @override
@@ -666,8 +652,8 @@ abstract class _ReviewCreateRequest implements ReviewCreateRequest {
     final String? title,
     final String? description,
     required final int rating,
-    @JsonKey(name: 'comments_enabled') final bool commentsEnabled,
-    @JsonKey(name: 'shop_id') required final String shopId,
+    final bool commentsEnabled,
+    required final String shopId,
   }) = _$ReviewCreateRequestImpl;
 
   factory _ReviewCreateRequest.fromJson(Map<String, dynamic> json) =
@@ -680,10 +666,8 @@ abstract class _ReviewCreateRequest implements ReviewCreateRequest {
   @override
   int get rating;
   @override
-  @JsonKey(name: 'comments_enabled')
   bool get commentsEnabled;
   @override
-  @JsonKey(name: 'shop_id')
   String get shopId;
 
   /// Create a copy of ReviewCreateRequest
@@ -703,7 +687,6 @@ mixin _$ReviewUpdateRequest {
   String? get title => throw _privateConstructorUsedError;
   String? get description => throw _privateConstructorUsedError;
   int? get rating => throw _privateConstructorUsedError;
-  @JsonKey(name: 'comments_enabled')
   bool? get commentsEnabled => throw _privateConstructorUsedError;
 
   /// Serializes this ReviewUpdateRequest to a JSON map.
@@ -727,7 +710,7 @@ abstract class $ReviewUpdateRequestCopyWith<$Res> {
     String? title,
     String? description,
     int? rating,
-    @JsonKey(name: 'comments_enabled') bool? commentsEnabled,
+    bool? commentsEnabled,
   });
 }
 
@@ -788,7 +771,7 @@ abstract class _$$ReviewUpdateRequestImplCopyWith<$Res>
     String? title,
     String? description,
     int? rating,
-    @JsonKey(name: 'comments_enabled') bool? commentsEnabled,
+    bool? commentsEnabled,
   });
 }
 
@@ -841,7 +824,7 @@ class _$ReviewUpdateRequestImpl implements _ReviewUpdateRequest {
     this.title,
     this.description,
     this.rating,
-    @JsonKey(name: 'comments_enabled') this.commentsEnabled,
+    this.commentsEnabled,
   });
 
   factory _$ReviewUpdateRequestImpl.fromJson(Map<String, dynamic> json) =>
@@ -854,7 +837,6 @@ class _$ReviewUpdateRequestImpl implements _ReviewUpdateRequest {
   @override
   final int? rating;
   @override
-  @JsonKey(name: 'comments_enabled')
   final bool? commentsEnabled;
 
   @override
@@ -902,7 +884,7 @@ abstract class _ReviewUpdateRequest implements ReviewUpdateRequest {
     final String? title,
     final String? description,
     final int? rating,
-    @JsonKey(name: 'comments_enabled') final bool? commentsEnabled,
+    final bool? commentsEnabled,
   }) = _$ReviewUpdateRequestImpl;
 
   factory _ReviewUpdateRequest.fromJson(Map<String, dynamic> json) =
@@ -915,7 +897,6 @@ abstract class _ReviewUpdateRequest implements ReviewUpdateRequest {
   @override
   int? get rating;
   @override
-  @JsonKey(name: 'comments_enabled')
   bool? get commentsEnabled;
 
   /// Create a copy of ReviewUpdateRequest

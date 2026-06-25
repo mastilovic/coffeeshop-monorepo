@@ -133,6 +133,11 @@ func (h *ReservationRequestHandler) List(w http.ResponseWriter, r *http.Request)
 }
 
 func (h *ReservationRequestHandler) Create(w http.ResponseWriter, r *http.Request) {
+	if _, err := h.currentUser.RequireCurrentUser(r.Context()); err != nil {
+		apperror.WriteError(w, err)
+		return
+	}
+
 	var req ReservationRequestCreateRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		apperror.WriteError(w, apperror.BadRequest("Invalid request body"))

@@ -8,13 +8,13 @@ part 'event_response_dto.g.dart';
 @freezed
 class EventResponseDto with _$EventResponseDto {
   const factory EventResponseDto({
-    @JsonKey(name: 'event_id') required String eventId,
-    @JsonKey(name: 'event_name') required String eventName,
-    @JsonKey(name: 'event_date') required String eventDate,
+    required String eventId,
+    required String eventName,
+    required String eventDate,
     String? description,
-    @JsonKey(name: 'shop_id') String? shopId,
-    @JsonKey(name: 'shop_name') String? shopName,
-    @JsonKey(name: 'shop_city') String? shopCity,
+    String? shopId,
+    String? shopName,
+    String? shopCity,
   }) = _EventResponseDto;
 
   factory EventResponseDto.fromJson(Map<String, dynamic> json) =>
@@ -24,10 +24,10 @@ class EventResponseDto with _$EventResponseDto {
 @freezed
 class EventCreateRequest with _$EventCreateRequest {
   const factory EventCreateRequest({
-    @JsonKey(name: 'event_name') required String eventName,
-    @JsonKey(name: 'event_date') required String eventDate,
+    required String eventName,
+    required String eventDate,
     String? description,
-    @JsonKey(name: 'shop_id') String? shopId,
+    String? shopId,
   }) = _EventCreateRequest;
 
   factory EventCreateRequest.fromJson(Map<String, dynamic> json) =>
@@ -37,10 +37,10 @@ class EventCreateRequest with _$EventCreateRequest {
 @freezed
 class EventUpdateRequest with _$EventUpdateRequest {
   const factory EventUpdateRequest({
-    @JsonKey(name: 'event_name') String? eventName,
-    @JsonKey(name: 'event_date') String? eventDate,
+    String? eventName,
+    String? eventDate,
     String? description,
-    @JsonKey(name: 'shop_id') String? shopId,
+    String? shopId,
   }) = _EventUpdateRequest;
 
   factory EventUpdateRequest.fromJson(Map<String, dynamic> json) =>
@@ -51,8 +51,8 @@ class EventUpdateRequest with _$EventUpdateRequest {
 class EventSearchParams with _$EventSearchParams {
   const factory EventSearchParams({
     String? q,
-    @JsonKey(name: 'date_from') String? dateFrom,
-    @JsonKey(name: 'date_to') String? dateTo,
+    String? dateFrom,
+    String? dateTo,
     @Default(0) int page,
     @Default(20) int size,
   }) = _EventSearchParams;

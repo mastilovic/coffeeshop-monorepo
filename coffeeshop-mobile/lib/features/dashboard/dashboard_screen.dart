@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/auth/auth_notifier.dart';
+import '../../core/auth/user_permissions.dart';
+import '../../core/network/api_exception.dart';
 import '../../data/models/dashboard_activity_response.dart';
 import '../../shared/widgets/error_view.dart';
 import '../../shared/widgets/loading_indicator.dart';
@@ -14,21 +17,58 @@ import 'widgets/upcoming_events_list.dart';
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
 
+  String _formatError(Object error) {
+    if (error is ApiException) {
+      return error.when(
+        networkException: (message, _) => message,
+        serverException: (message, _) => message,
+        unauthorizedException: (message) => message,
+        validationException: (message, _) => message,
+        unknownException: (message) => message,
+      );
+    }
+
+    return error.toString().replaceFirst('Exception: ', '');
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final dashboardAsync = ref.watch(dashboardProvider);
+    final auth = ref.watch(authNotifierProvider);
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Dashboard'),
       ),
-      body: dashboardAsync.when(
-        loading: () => const LoadingIndicator(message: 'Loading dashboard...'),
-        error: (error, stackTrace) => ErrorView(
-          message: error.toString(),
-          onRetry: () => ref.invalidate(dashboardProvider),
-        ),
-        data: (data) => RefreshIndicator(
+      body: switch (auth.status) {
+        AuthStatus.unknown ||
+        AuthStatus.unauthenticated =>
+          const LoadingIndicator(message: 'Loading dashboard...'),
+        AuthStatus.authenticated => _DashboardBody(formatError: _formatError),
+      },
+    );
+  }
+}
+
+class _DashboardBody extends ConsumerWidget {
+  const _DashboardBody({required this.formatError});
+
+  final String Function(Object error) formatError;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final dashboardAsync = ref.watch(dashboardProvider);
+
+    return dashboardAsync.when(
+      loading: () => const LoadingIndicator(message: 'Loading dashboard...'),
+      error: (error, stackTrace) => ErrorView(
+        message: formatError(error),
+        onRetry: () => ref.invalidate(dashboardProvider),
+      ),
+      data: (data) {
+        final permissions = ref.watch(userPermissionsProvider).valueOrNull;
+        final isShopOwner = permissions?.isShopOwner ?? false;
+
+        return RefreshIndicator(
           onRefresh: () async {
             ref.invalidate(dashboardProvider);
             await ref.read(dashboardProvider.future);
@@ -45,7 +85,14 @@ class DashboardScreen extends ConsumerWidget {
               ),
               if (data.notifications.isNotEmpty) ...[
                 const SizedBox(height: 8),
-                _NotificationsBanner(notifications: data.notifications),
+                _NotificationsBanner(
+                  notifications: isShopOwner
+                      ? data.notifications
+                      : data.notifications.where((n) {
+                          final type = n.type;
+                          return type != 'reservation_request' && type != 'review';
+                        }).toList(),
+                ),
               ],
               const SizedBox(height: 12),
               TopShopsCarousel(shops: data.topShops),
@@ -61,8 +108,8 @@ class DashboardScreen extends ConsumerWidget {
               ],
             ],
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }

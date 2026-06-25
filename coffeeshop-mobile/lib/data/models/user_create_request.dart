@@ -12,7 +12,7 @@ class UserCreateRequest with _$UserCreateRequest {
     required String username,
     required String email,
     String? password,
-    @JsonKey(name: 'user_type') required String userType,
+    required String userType,
   }) = _UserCreateRequest;
 
   factory UserCreateRequest.fromJson(Map<String, dynamic> json) =>

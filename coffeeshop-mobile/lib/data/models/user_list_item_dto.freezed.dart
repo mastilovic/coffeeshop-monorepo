@@ -24,7 +24,6 @@ mixin _$UserListItemDto {
   String get id => throw _privateConstructorUsedError;
   String get name => throw _privateConstructorUsedError;
   String get username => throw _privateConstructorUsedError;
-  @JsonKey(name: 'user_type')
   String get userType => throw _privateConstructorUsedError;
 
   /// Serializes this UserListItemDto to a JSON map.
@@ -44,12 +43,7 @@ abstract class $UserListItemDtoCopyWith<$Res> {
     $Res Function(UserListItemDto) then,
   ) = _$UserListItemDtoCopyWithImpl<$Res, UserListItemDto>;
   @useResult
-  $Res call({
-    String id,
-    String name,
-    String username,
-    @JsonKey(name: 'user_type') String userType,
-  });
+  $Res call({String id, String name, String username, String userType});
 }
 
 /// @nodoc
@@ -105,12 +99,7 @@ abstract class _$$UserListItemDtoImplCopyWith<$Res>
   ) = __$$UserListItemDtoImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({
-    String id,
-    String name,
-    String username,
-    @JsonKey(name: 'user_type') String userType,
-  });
+  $Res call({String id, String name, String username, String userType});
 }
 
 /// @nodoc
@@ -162,7 +151,7 @@ class _$UserListItemDtoImpl implements _UserListItemDto {
     required this.id,
     required this.name,
     required this.username,
-    @JsonKey(name: 'user_type') required this.userType,
+    required this.userType,
   });
 
   factory _$UserListItemDtoImpl.fromJson(Map<String, dynamic> json) =>
@@ -175,7 +164,6 @@ class _$UserListItemDtoImpl implements _UserListItemDto {
   @override
   final String username;
   @override
-  @JsonKey(name: 'user_type')
   final String userType;
 
   @override
@@ -222,7 +210,7 @@ abstract class _UserListItemDto implements UserListItemDto {
     required final String id,
     required final String name,
     required final String username,
-    @JsonKey(name: 'user_type') required final String userType,
+    required final String userType,
   }) = _$UserListItemDtoImpl;
 
   factory _UserListItemDto.fromJson(Map<String, dynamic> json) =
@@ -235,7 +223,6 @@ abstract class _UserListItemDto implements UserListItemDto {
   @override
   String get username;
   @override
-  @JsonKey(name: 'user_type')
   String get userType;
 
   /// Create a copy of UserListItemDto

@@ -12,10 +12,10 @@ class ReviewResponseDto with _$ReviewResponseDto {
     String? title,
     String? description,
     required int rating,
-    @JsonKey(name: 'review_date') String? reviewDate,
-    @JsonKey(name: 'comments_enabled') @Default(true) bool commentsEnabled,
-    @JsonKey(name: 'user_id') String? userId,
-    @JsonKey(name: 'shop_id') String? shopId,
+    String? reviewDate,
+    @Default(true) bool commentsEnabled,
+    String? userId,
+    String? shopId,
     Map<String, dynamic>? user,
     Map<String, dynamic>? shop,
     @Default([]) List<Map<String, dynamic>> comments,
@@ -31,8 +31,8 @@ class ReviewCreateRequest with _$ReviewCreateRequest {
     String? title,
     String? description,
     required int rating,
-    @JsonKey(name: 'comments_enabled') @Default(true) bool commentsEnabled,
-    @JsonKey(name: 'shop_id') required String shopId,
+    @Default(true) bool commentsEnabled,
+    required String shopId,
   }) = _ReviewCreateRequest;
 
   factory ReviewCreateRequest.fromJson(Map<String, dynamic> json) =>
@@ -45,7 +45,7 @@ class ReviewUpdateRequest with _$ReviewUpdateRequest {
     String? title,
     String? description,
     int? rating,
-    @JsonKey(name: 'comments_enabled') bool? commentsEnabled,
+    bool? commentsEnabled,
   }) = _ReviewUpdateRequest;
 
   factory ReviewUpdateRequest.fromJson(Map<String, dynamic> json) =>

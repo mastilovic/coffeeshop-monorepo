@@ -13,9 +13,9 @@ _$CommunityPostResponseDtoImpl _$$CommunityPostResponseDtoImplFromJson(
   body: json['body'] as String,
   type: json['type'] as String? ?? 'POST',
   pinned: json['pinned'] as bool? ?? false,
-  createdAt: json['created_at'] as String?,
-  shopId: json['shop_id'] as String?,
-  authorId: json['author_id'] as String?,
+  createdAt: json['createdAt'] as String?,
+  shopId: json['shopId'] as String?,
+  authorId: json['authorId'] as String?,
   author: json['author'] as Map<String, dynamic>?,
 );
 
@@ -26,9 +26,9 @@ Map<String, dynamic> _$$CommunityPostResponseDtoImplToJson(
   'body': instance.body,
   'type': instance.type,
   'pinned': instance.pinned,
-  'created_at': instance.createdAt,
-  'shop_id': instance.shopId,
-  'author_id': instance.authorId,
+  'createdAt': instance.createdAt,
+  'shopId': instance.shopId,
+  'authorId': instance.authorId,
   'author': instance.author,
 };
 

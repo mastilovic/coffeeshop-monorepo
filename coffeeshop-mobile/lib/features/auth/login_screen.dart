@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/auth/auth_notifier.dart';
+import '../../core/auth/auth_service.dart';
+import '../../core/network/api_exception.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -26,6 +28,25 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     super.dispose();
   }
 
+  String _formatLoginError(Object error) {
+    if (error is ApiException) {
+      return error.when(
+        networkException: (message, _) => message,
+        serverException: (message, _) => message,
+        unauthorizedException: (message) => message,
+        validationException: (message, _) => message,
+        unknownException: (message) => message,
+      );
+    }
+
+    final message = error.toString();
+    if (message.contains('OperationError')) {
+      return 'Failed to save your login session. Please try again.';
+    }
+
+    return message.replaceFirst('Exception: ', '');
+  }
+
   Future<void> _handleLogin() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -42,7 +63,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       );
     } catch (e) {
       if (mounted) {
-        setState(() => _errorMessage = e.toString());
+        setState(() => _errorMessage = _formatLoginError(e));
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -51,6 +72,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    ref.listen(authNotifierProvider, (previous, next) {
+      if (next.status == AuthStatus.authenticated &&
+          _isLoading &&
+          mounted) {
+        setState(() => _isLoading = false);
+      }
+    });
+
     final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(

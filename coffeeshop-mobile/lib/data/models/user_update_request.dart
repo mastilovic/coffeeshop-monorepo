@@ -12,7 +12,7 @@ class UserUpdateRequest with _$UserUpdateRequest {
     String? username,
     String? email,
     String? password,
-    @JsonKey(name: 'user_type') required String userType,
+    required String userType,
   }) = _UserUpdateRequest;
 
   factory UserUpdateRequest.fromJson(Map<String, dynamic> json) =>

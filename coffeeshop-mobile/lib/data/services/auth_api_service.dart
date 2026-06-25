@@ -4,7 +4,7 @@ import '../../core/network/dio_client.dart';
 import '../models/login_request.dart';
 import '../models/register_request.dart';
 import '../models/token_response.dart';
-import '../models/user_response_dto.dart';
+import '../models/user_profile_response_dto.dart';
 
 final authApiServiceProvider = Provider<AuthApiService>((ref) {
   return AuthApiService(dioClient: ref.watch(dioClientProvider));
@@ -45,14 +45,14 @@ class AuthApiService {
   Future<TokenResponse> refresh(String refreshToken) async {
     final response = await _dioClient.post<Map<String, dynamic>>(
       '/api/v2/auth/refresh',
-      data: {'refresh_token': refreshToken},
+      data: {'refreshToken': refreshToken},
     );
     return TokenResponse.fromJson(response.data!);
   }
 
-  Future<UserResponseDto> getProfile() async {
+  Future<UserProfileResponseDto> getProfile() async {
     final response =
         await _dioClient.get<Map<String, dynamic>>('/api/v2/profile');
-    return UserResponseDto.fromJson(response.data!);
+    return UserProfileResponseDto.fromJson(response.data!);
   }
 }

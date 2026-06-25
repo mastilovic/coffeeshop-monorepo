@@ -25,7 +25,6 @@ mixin _$UserUpdateRequest {
   String? get username => throw _privateConstructorUsedError;
   String? get email => throw _privateConstructorUsedError;
   String? get password => throw _privateConstructorUsedError;
-  @JsonKey(name: 'user_type')
   String get userType => throw _privateConstructorUsedError;
 
   /// Serializes this UserUpdateRequest to a JSON map.
@@ -50,7 +49,7 @@ abstract class $UserUpdateRequestCopyWith<$Res> {
     String? username,
     String? email,
     String? password,
-    @JsonKey(name: 'user_type') String userType,
+    String userType,
   });
 }
 
@@ -117,7 +116,7 @@ abstract class _$$UserUpdateRequestImplCopyWith<$Res>
     String? username,
     String? email,
     String? password,
-    @JsonKey(name: 'user_type') String userType,
+    String userType,
   });
 }
 
@@ -176,7 +175,7 @@ class _$UserUpdateRequestImpl implements _UserUpdateRequest {
     this.username,
     this.email,
     this.password,
-    @JsonKey(name: 'user_type') required this.userType,
+    required this.userType,
   });
 
   factory _$UserUpdateRequestImpl.fromJson(Map<String, dynamic> json) =>
@@ -191,7 +190,6 @@ class _$UserUpdateRequestImpl implements _UserUpdateRequest {
   @override
   final String? password;
   @override
-  @JsonKey(name: 'user_type')
   final String userType;
 
   @override
@@ -242,7 +240,7 @@ abstract class _UserUpdateRequest implements UserUpdateRequest {
     final String? username,
     final String? email,
     final String? password,
-    @JsonKey(name: 'user_type') required final String userType,
+    required final String userType,
   }) = _$UserUpdateRequestImpl;
 
   factory _UserUpdateRequest.fromJson(Map<String, dynamic> json) =
@@ -257,7 +255,6 @@ abstract class _UserUpdateRequest implements UserUpdateRequest {
   @override
   String? get password;
   @override
-  @JsonKey(name: 'user_type')
   String get userType;
 
   /// Create a copy of UserUpdateRequest

@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart' hide SearchBar;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/auth/user_permissions.dart';
+import '../../core/auth/user_role.dart';
+import '../../core/auth/auth_notifier.dart';
 import '../../data/models/user_list_item_dto.dart';
 import '../../shared/widgets/confirm_dialog.dart';
 import '../../shared/widgets/empty_state_view.dart';
@@ -95,6 +98,9 @@ class _UserTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final permissions = ref.watch(userPermissionsProvider).valueOrNull;
+    final isAdmin = permissions?.isAdmin ?? false;
+
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       child: ListTile(
@@ -113,24 +119,25 @@ class _UserTile extends ConsumerWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
               decoration: BoxDecoration(
-                color: _colorForType(user.userType, context),
+                color: UserRole.fromString(user.userType).displayColor(context),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
-                user.userType.replaceAll('_', ' '),
+                UserRole.fromString(user.userType).displayName,
                 style: Theme.of(context).textTheme.labelSmall,
               ),
             ),
-            PopupMenuButton<String>(
-              onSelected: (value) {
-                if (value == 'delete') {
-                  _confirmDelete(context, ref);
-                }
-              },
-              itemBuilder: (context) => [
-                const PopupMenuItem(value: 'delete', child: Text('Delete')),
-              ],
-            ),
+            if (isAdmin)
+              PopupMenuButton<String>(
+                onSelected: (value) {
+                  if (value == 'delete') {
+                    _confirmDelete(context, ref);
+                  }
+                },
+                itemBuilder: (context) => [
+                  const PopupMenuItem(value: 'delete', child: Text('Delete')),
+                ],
+              ),
           ],
         ),
       ),
@@ -138,14 +145,7 @@ class _UserTile extends ConsumerWidget {
   }
 
   Color _colorForType(String type, BuildContext context) {
-    switch (type) {
-      case 'admin':
-        return Colors.red.shade100;
-      case 'shop_owner':
-        return Colors.blue.shade100;
-      default:
-        return Theme.of(context).colorScheme.secondaryContainer;
-    }
+    return UserRole.fromString(type).displayColor(context);
   }
 
   void _confirmDelete(BuildContext context, WidgetRef ref) async {

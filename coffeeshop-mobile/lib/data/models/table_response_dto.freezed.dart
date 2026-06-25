@@ -24,7 +24,6 @@ mixin _$TableResponseDto {
   String get id => throw _privateConstructorUsedError;
   int get number => throw _privateConstructorUsedError;
   int get capacity => throw _privateConstructorUsedError;
-  @JsonKey(name: 'shop_id')
   String? get shopId => throw _privateConstructorUsedError;
   List<Map<String, dynamic>> get reservations =>
       throw _privateConstructorUsedError;
@@ -50,7 +49,7 @@ abstract class $TableResponseDtoCopyWith<$Res> {
     String id,
     int number,
     int capacity,
-    @JsonKey(name: 'shop_id') String? shopId,
+    String? shopId,
     List<Map<String, dynamic>> reservations,
   });
 }
@@ -117,7 +116,7 @@ abstract class _$$TableResponseDtoImplCopyWith<$Res>
     String id,
     int number,
     int capacity,
-    @JsonKey(name: 'shop_id') String? shopId,
+    String? shopId,
     List<Map<String, dynamic>> reservations,
   });
 }
@@ -176,7 +175,7 @@ class _$TableResponseDtoImpl implements _TableResponseDto {
     required this.id,
     required this.number,
     required this.capacity,
-    @JsonKey(name: 'shop_id') this.shopId,
+    this.shopId,
     final List<Map<String, dynamic>> reservations = const [],
   }) : _reservations = reservations;
 
@@ -190,7 +189,6 @@ class _$TableResponseDtoImpl implements _TableResponseDto {
   @override
   final int capacity;
   @override
-  @JsonKey(name: 'shop_id')
   final String? shopId;
   final List<Map<String, dynamic>> _reservations;
   @override
@@ -255,7 +253,7 @@ abstract class _TableResponseDto implements TableResponseDto {
     required final String id,
     required final int number,
     required final int capacity,
-    @JsonKey(name: 'shop_id') final String? shopId,
+    final String? shopId,
     final List<Map<String, dynamic>> reservations,
   }) = _$TableResponseDtoImpl;
 
@@ -269,7 +267,6 @@ abstract class _TableResponseDto implements TableResponseDto {
   @override
   int get capacity;
   @override
-  @JsonKey(name: 'shop_id')
   String? get shopId;
   @override
   List<Map<String, dynamic>> get reservations;
@@ -489,7 +486,6 @@ TableCreateRequest _$TableCreateRequestFromJson(Map<String, dynamic> json) {
 mixin _$TableCreateRequest {
   int get number => throw _privateConstructorUsedError;
   int get capacity => throw _privateConstructorUsedError;
-  @JsonKey(name: 'shop_id')
   String get shopId => throw _privateConstructorUsedError;
 
   /// Serializes this TableCreateRequest to a JSON map.
@@ -509,11 +505,7 @@ abstract class $TableCreateRequestCopyWith<$Res> {
     $Res Function(TableCreateRequest) then,
   ) = _$TableCreateRequestCopyWithImpl<$Res, TableCreateRequest>;
   @useResult
-  $Res call({
-    int number,
-    int capacity,
-    @JsonKey(name: 'shop_id') String shopId,
-  });
+  $Res call({int number, int capacity, String shopId});
 }
 
 /// @nodoc
@@ -564,11 +556,7 @@ abstract class _$$TableCreateRequestImplCopyWith<$Res>
   ) = __$$TableCreateRequestImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({
-    int number,
-    int capacity,
-    @JsonKey(name: 'shop_id') String shopId,
-  });
+  $Res call({int number, int capacity, String shopId});
 }
 
 /// @nodoc
@@ -614,7 +602,7 @@ class _$TableCreateRequestImpl implements _TableCreateRequest {
   const _$TableCreateRequestImpl({
     required this.number,
     required this.capacity,
-    @JsonKey(name: 'shop_id') required this.shopId,
+    required this.shopId,
   });
 
   factory _$TableCreateRequestImpl.fromJson(Map<String, dynamic> json) =>
@@ -625,7 +613,6 @@ class _$TableCreateRequestImpl implements _TableCreateRequest {
   @override
   final int capacity;
   @override
-  @JsonKey(name: 'shop_id')
   final String shopId;
 
   @override
@@ -669,7 +656,7 @@ abstract class _TableCreateRequest implements TableCreateRequest {
   const factory _TableCreateRequest({
     required final int number,
     required final int capacity,
-    @JsonKey(name: 'shop_id') required final String shopId,
+    required final String shopId,
   }) = _$TableCreateRequestImpl;
 
   factory _TableCreateRequest.fromJson(Map<String, dynamic> json) =
@@ -680,7 +667,6 @@ abstract class _TableCreateRequest implements TableCreateRequest {
   @override
   int get capacity;
   @override
-  @JsonKey(name: 'shop_id')
   String get shopId;
 
   /// Create a copy of TableCreateRequest

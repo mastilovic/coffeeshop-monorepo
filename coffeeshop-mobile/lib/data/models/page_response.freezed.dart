@@ -24,9 +24,7 @@ mixin _$PageResponseDto {
   List<Map<String, dynamic>> get content => throw _privateConstructorUsedError;
   int get page => throw _privateConstructorUsedError;
   int get size => throw _privateConstructorUsedError;
-  @JsonKey(name: 'total_elements')
   int get totalElements => throw _privateConstructorUsedError;
-  @JsonKey(name: 'total_pages')
   int get totalPages => throw _privateConstructorUsedError;
 
   /// Serializes this PageResponseDto to a JSON map.
@@ -50,8 +48,8 @@ abstract class $PageResponseDtoCopyWith<$Res> {
     List<Map<String, dynamic>> content,
     int page,
     int size,
-    @JsonKey(name: 'total_elements') int totalElements,
-    @JsonKey(name: 'total_pages') int totalPages,
+    int totalElements,
+    int totalPages,
   });
 }
 
@@ -117,8 +115,8 @@ abstract class _$$PageResponseDtoImplCopyWith<$Res>
     List<Map<String, dynamic>> content,
     int page,
     int size,
-    @JsonKey(name: 'total_elements') int totalElements,
-    @JsonKey(name: 'total_pages') int totalPages,
+    int totalElements,
+    int totalPages,
   });
 }
 
@@ -176,8 +174,8 @@ class _$PageResponseDtoImpl implements _PageResponseDto {
     final List<Map<String, dynamic>> content = const [],
     required this.page,
     required this.size,
-    @JsonKey(name: 'total_elements') required this.totalElements,
-    @JsonKey(name: 'total_pages') required this.totalPages,
+    required this.totalElements,
+    required this.totalPages,
   }) : _content = content;
 
   factory _$PageResponseDtoImpl.fromJson(Map<String, dynamic> json) =>
@@ -197,10 +195,8 @@ class _$PageResponseDtoImpl implements _PageResponseDto {
   @override
   final int size;
   @override
-  @JsonKey(name: 'total_elements')
   final int totalElements;
   @override
-  @JsonKey(name: 'total_pages')
   final int totalPages;
 
   @override
@@ -255,8 +251,8 @@ abstract class _PageResponseDto implements PageResponseDto {
     final List<Map<String, dynamic>> content,
     required final int page,
     required final int size,
-    @JsonKey(name: 'total_elements') required final int totalElements,
-    @JsonKey(name: 'total_pages') required final int totalPages,
+    required final int totalElements,
+    required final int totalPages,
   }) = _$PageResponseDtoImpl;
 
   factory _PageResponseDto.fromJson(Map<String, dynamic> json) =
@@ -269,10 +265,8 @@ abstract class _PageResponseDto implements PageResponseDto {
   @override
   int get size;
   @override
-  @JsonKey(name: 'total_elements')
   int get totalElements;
   @override
-  @JsonKey(name: 'total_pages')
   int get totalPages;
 
   /// Create a copy of PageResponseDto

@@ -24,7 +24,7 @@ class ReservationRequestApiService {
   }
 
   Future<void> accept(String id, {String? tableId}) async {
-    await _dioClient.post<Map<String, dynamic>>('/api/v2/reservation-request/$id/accept', data: {'table_id': tableId});
+    await _dioClient.post<Map<String, dynamic>>('/api/v2/reservation-request/$id/accept', data: {'tableId': tableId});
   }
 
   Future<void> deny(String id) async {

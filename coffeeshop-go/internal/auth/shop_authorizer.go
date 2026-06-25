@@ -95,3 +95,25 @@ func (a *ShopAuthorizer) RequireShopOwnerOrEmployeeOrAdminForUser(ctx context.Co
 	}
 	return nil, apperror.Forbidden("Only the shop owner, an employee, or an admin can perform this action")
 }
+
+func (a *ShopAuthorizer) RequireAdmin(ctx context.Context) error {
+	if a.IsAdmin(ctx) {
+		return nil
+	}
+	return apperror.Forbidden("Only an admin can perform this action")
+}
+
+// RequireCanCreateShop allows admins or users with SHOP_OWNER user type (no shop ID yet).
+func (a *ShopAuthorizer) RequireCanCreateShop(ctx context.Context) error {
+	if a.IsAdmin(ctx) {
+		return nil
+	}
+	user := a.currentUserSvc.GetCurrentUser(ctx)
+	if user == nil {
+		return apperror.Unauthorized("Authentication required")
+	}
+	if NormalizeUserType(user.UserType) == "SHOP_OWNER" {
+		return nil
+	}
+	return apperror.Forbidden("Only shop owners or admins can create shops")
+}

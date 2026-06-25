@@ -5,22 +5,40 @@ import 'package:go_router/go_router.dart';
 import '../../features/auth/login_screen.dart';
 import '../../features/auth/register_screen.dart';
 import '../../features/dashboard/dashboard_screen.dart';
+import '../../features/events/event_create_screen.dart';
+import '../../features/events/event_detail_screen.dart';
 import '../../features/events/event_list_screen.dart';
 import '../../features/profile/profile_screen.dart';
 import '../../features/reservations/reservation_list_screen.dart';
 import '../../features/shop_details/shop_detail_screen.dart';
+import '../../features/shops/shop_create_screen.dart';
 import '../../features/shops/shop_list_screen.dart';
 import '../../features/users/user_list_screen.dart';
 import '../../shared/widgets/app_scaffold.dart';
 import '../auth/auth_notifier.dart';
 import '../auth/auth_service.dart';
+import '../auth/user_role.dart';
+
+class RouterRefreshNotifier extends ChangeNotifier {
+  void notify() => notifyListeners();
+}
 
 final appRouterProvider = Provider<GoRouter>((ref) {
-  final authState = ref.watch(authNotifierProvider);
+  final refresh = RouterRefreshNotifier();
+  ref.onDispose(refresh.dispose);
+
+  ref.listen(authNotifierProvider, (_, __) => refresh.notify());
 
   return GoRouter(
+    refreshListenable: refresh,
     initialLocation: '/dashboard',
     redirect: (BuildContext context, GoRouterState state) {
+      final authState = ref.read(authNotifierProvider);
+
+      if (authState.status == AuthStatus.unknown) {
+        return null;
+      }
+
       final bool isAuthenticated =
           authState.status == AuthStatus.authenticated;
       final bool isAuthRoute = state.matchedLocation == '/login' ||
@@ -32,6 +50,21 @@ final appRouterProvider = Provider<GoRouter>((ref) {
 
       if (isAuthenticated && isAuthRoute) {
         return '/dashboard';
+      }
+
+      // Role-based route guards for owner-only routes.
+      if (isAuthenticated) {
+        final role = authState.role;
+        final isShopOwner = role == UserRole.shop_owner ||
+            role == UserRole.admin;
+        final isOwnerOnlyRoute = state.matchedLocation == '/events/new' ||
+            state.matchedLocation == '/shops/new';
+
+        if (isOwnerOnlyRoute && !isShopOwner) {
+          return state.matchedLocation == '/events/new'
+              ? '/events'
+              : '/shops';
+        }
       }
 
       return null;
@@ -66,17 +99,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                 routes: [
                   GoRoute(
                     path: 'new',
-                    builder: (context, state) => const Scaffold(
-                      body: Center(child: Text('Create Event - Coming Soon')),
-                    ),
+                    builder: (context, state) => const EventCreateScreen(),
                   ),
                   GoRoute(
                     path: ':id',
-                    builder: (context, state) => Scaffold(
-                      body: Center(
-                        child: Text('Event ${state.pathParameters['id']}'),
-                      ),
-                    ),
+                    builder: (context, state) {
+                      final id = state.pathParameters['id']!;
+                      return EventDetailScreen(eventId: id);
+                    },
                   ),
                 ],
               ),
@@ -90,9 +120,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                 routes: [
                   GoRoute(
                     path: 'new',
-                    builder: (context, state) => const Scaffold(
-                      body: Center(child: Text('Create Shop - Coming Soon')),
-                    ),
+                    builder: (context, state) => const ShopCreateScreen(),
                   ),
                   GoRoute(
                     path: ':id',
@@ -109,7 +137,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: '/reservations',
-                builder: (context, state) => const ReservationListScreen(),
+                builder: (context, state) => ReservationListScreen(
+                  initialShopId: state.uri.queryParameters['shopId'],
+                  initialEventId: state.uri.queryParameters['eventId'],
+                ),
               ),
             ],
           ),

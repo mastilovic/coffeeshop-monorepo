@@ -11,9 +11,9 @@ _$ReviewCommentResponseDtoImpl _$$ReviewCommentResponseDtoImplFromJson(
 ) => _$ReviewCommentResponseDtoImpl(
   id: json['id'] as String,
   body: json['body'] as String,
-  createdAt: json['created_at'] as String?,
-  userId: json['user_id'] as String?,
-  reviewId: json['review_id'] as String?,
+  createdAt: json['createdAt'] as String?,
+  userId: json['userId'] as String?,
+  reviewId: json['reviewId'] as String?,
   user: json['user'] as Map<String, dynamic>?,
 );
 
@@ -22,9 +22,9 @@ Map<String, dynamic> _$$ReviewCommentResponseDtoImplToJson(
 ) => <String, dynamic>{
   'id': instance.id,
   'body': instance.body,
-  'created_at': instance.createdAt,
-  'user_id': instance.userId,
-  'review_id': instance.reviewId,
+  'createdAt': instance.createdAt,
+  'userId': instance.userId,
+  'reviewId': instance.reviewId,
   'user': instance.user,
 };
 

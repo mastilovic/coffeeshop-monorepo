@@ -9,14 +9,14 @@ part 'reservation_response_dto.g.dart';
 class ReservationResponseDto with _$ReservationResponseDto {
   const factory ReservationResponseDto({
     required String id,
-    @JsonKey(name: 'party_size') required int partySize,
-    @JsonKey(name: 'user_id') String? userId,
-    @JsonKey(name: 'shop_id') String? shopId,
-    @JsonKey(name: 'table_id') String? tableId,
-    @JsonKey(name: 'event_id') String? eventId,
-    @JsonKey(name: 'reservation_request_id') String? reservationRequestId,
-    @JsonKey(name: 'event_name') String? eventName,
-    @JsonKey(name: 'event_date') String? eventDate,
+    required int partySize,
+    String? userId,
+    String? shopId,
+    String? tableId,
+    String? eventId,
+    String? reservationRequestId,
+    String? eventName,
+    String? eventDate,
     Map<String, dynamic>? user,
     Map<String, dynamic>? shop,
     Map<String, dynamic>? table,
@@ -29,11 +29,11 @@ class ReservationResponseDto with _$ReservationResponseDto {
 @freezed
 class ReservationCreateRequest with _$ReservationCreateRequest {
   const factory ReservationCreateRequest({
-    @JsonKey(name: 'party_size') required int partySize,
-    @JsonKey(name: 'user_id') String? userId,
-    @JsonKey(name: 'shop_id') String? shopId,
-    @JsonKey(name: 'table_id') String? tableId,
-    @JsonKey(name: 'event_id') String? eventId,
+    required int partySize,
+    String? userId,
+    String? shopId,
+    String? tableId,
+    String? eventId,
   }) = _ReservationCreateRequest;
 
   factory ReservationCreateRequest.fromJson(Map<String, dynamic> json) =>
@@ -43,8 +43,8 @@ class ReservationCreateRequest with _$ReservationCreateRequest {
 @freezed
 class ReservationUpdateRequest with _$ReservationUpdateRequest {
   const factory ReservationUpdateRequest({
-    @JsonKey(name: 'party_size') int? partySize,
-    @JsonKey(name: 'table_id') String? tableId,
+    int? partySize,
+    String? tableId,
   }) = _ReservationUpdateRequest;
 
   factory ReservationUpdateRequest.fromJson(Map<String, dynamic> json) =>

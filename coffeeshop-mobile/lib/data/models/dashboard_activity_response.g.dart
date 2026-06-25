@@ -20,19 +20,19 @@ _$DashboardActivityResponseImpl _$$DashboardActivityResponseImplFromJson(
           .toList() ??
       const [],
   topShops:
-      (json['top_shops'] as List<dynamic>?)
+      (json['topShops'] as List<dynamic>?)
           ?.map((e) => TopShopItem.fromJson(e as Map<String, dynamic>))
           .toList() ??
       const [],
   upcomingEvents:
-      (json['upcoming_events'] as List<dynamic>?)
+      (json['upcomingEvents'] as List<dynamic>?)
           ?.map((e) => UpcomingEventItem.fromJson(e as Map<String, dynamic>))
           .toList() ??
       const [],
-  personalSummary: json['personal_summary'] == null
+  personalSummary: json['personalSummary'] == null
       ? null
       : DashboardPersonalSummary.fromJson(
-          json['personal_summary'] as Map<String, dynamic>,
+          json['personalSummary'] as Map<String, dynamic>,
         ),
   notifications:
       (json['notifications'] as List<dynamic>?)
@@ -48,9 +48,9 @@ Map<String, dynamic> _$$DashboardActivityResponseImplToJson(
 ) => <String, dynamic>{
   'aggregate': instance.aggregate,
   'activities': instance.activities,
-  'top_shops': instance.topShops,
-  'upcoming_events': instance.upcomingEvents,
-  'personal_summary': instance.personalSummary,
+  'topShops': instance.topShops,
+  'upcomingEvents': instance.upcomingEvents,
+  'personalSummary': instance.personalSummary,
   'notifications': instance.notifications,
 };
 
@@ -59,11 +59,11 @@ _$DashboardActivityItemImpl _$$DashboardActivityItemImplFromJson(
 ) => _$DashboardActivityItemImpl(
   type: json['type'] as String,
   timestamp: json['timestamp'] as String?,
-  shopId: json['shop_id'] as String?,
-  shopName: json['shop_name'] as String?,
+  shopId: json['shopId'] as String?,
+  shopName: json['shopName'] as String?,
   title: json['title'] as String?,
   body: json['body'] as String?,
-  actorName: json['actor_name'] as String?,
+  actorName: json['actorName'] as String?,
   rating: (json['rating'] as num?)?.toDouble(),
 );
 
@@ -72,86 +72,86 @@ Map<String, dynamic> _$$DashboardActivityItemImplToJson(
 ) => <String, dynamic>{
   'type': instance.type,
   'timestamp': instance.timestamp,
-  'shop_id': instance.shopId,
-  'shop_name': instance.shopName,
+  'shopId': instance.shopId,
+  'shopName': instance.shopName,
   'title': instance.title,
   'body': instance.body,
-  'actor_name': instance.actorName,
+  'actorName': instance.actorName,
   'rating': instance.rating,
 };
 
 _$DashboardAggregateImpl _$$DashboardAggregateImplFromJson(
   Map<String, dynamic> json,
 ) => _$DashboardAggregateImpl(
-  shopCount: (json['shop_count'] as num?)?.toInt() ?? 0,
-  reviewCount: (json['review_count'] as num?)?.toInt() ?? 0,
-  averageRating: (json['average_rating'] as num?)?.toDouble(),
-  eventCount: (json['event_count'] as num?)?.toInt() ?? 0,
-  memberCount: (json['member_count'] as num?)?.toInt() ?? 0,
+  shopCount: (json['shopCount'] as num?)?.toInt() ?? 0,
+  reviewCount: (json['reviewCount'] as num?)?.toInt() ?? 0,
+  averageRating: (json['averageRating'] as num?)?.toDouble(),
+  eventCount: (json['eventCount'] as num?)?.toInt() ?? 0,
+  memberCount: (json['memberCount'] as num?)?.toInt() ?? 0,
 );
 
 Map<String, dynamic> _$$DashboardAggregateImplToJson(
   _$DashboardAggregateImpl instance,
 ) => <String, dynamic>{
-  'shop_count': instance.shopCount,
-  'review_count': instance.reviewCount,
-  'average_rating': instance.averageRating,
-  'event_count': instance.eventCount,
-  'member_count': instance.memberCount,
+  'shopCount': instance.shopCount,
+  'reviewCount': instance.reviewCount,
+  'averageRating': instance.averageRating,
+  'eventCount': instance.eventCount,
+  'memberCount': instance.memberCount,
 };
 
 _$TopShopItemImpl _$$TopShopItemImplFromJson(Map<String, dynamic> json) =>
     _$TopShopItemImpl(
-      shopId: json['shop_id'] as String,
-      shopName: json['shop_name'] as String,
+      shopId: json['shopId'] as String,
+      shopName: json['shopName'] as String,
       city: json['city'] as String?,
-      averageRating: (json['average_rating'] as num?)?.toDouble(),
-      reviewCount: (json['review_count'] as num?)?.toInt() ?? 0,
+      averageRating: (json['averageRating'] as num?)?.toDouble(),
+      reviewCount: (json['reviewCount'] as num?)?.toInt() ?? 0,
     );
 
 Map<String, dynamic> _$$TopShopItemImplToJson(_$TopShopItemImpl instance) =>
     <String, dynamic>{
-      'shop_id': instance.shopId,
-      'shop_name': instance.shopName,
+      'shopId': instance.shopId,
+      'shopName': instance.shopName,
       'city': instance.city,
-      'average_rating': instance.averageRating,
-      'review_count': instance.reviewCount,
+      'averageRating': instance.averageRating,
+      'reviewCount': instance.reviewCount,
     };
 
 _$UpcomingEventItemImpl _$$UpcomingEventItemImplFromJson(
   Map<String, dynamic> json,
 ) => _$UpcomingEventItemImpl(
-  eventId: json['event_id'] as String,
-  eventName: json['event_name'] as String,
-  eventDate: json['event_date'] as String?,
-  shopId: json['shop_id'] as String?,
-  shopName: json['shop_name'] as String?,
+  eventId: json['eventId'] as String,
+  eventName: json['eventName'] as String,
+  eventDate: json['eventDate'] as String?,
+  shopId: json['shopId'] as String?,
+  shopName: json['shopName'] as String?,
 );
 
 Map<String, dynamic> _$$UpcomingEventItemImplToJson(
   _$UpcomingEventItemImpl instance,
 ) => <String, dynamic>{
-  'event_id': instance.eventId,
-  'event_name': instance.eventName,
-  'event_date': instance.eventDate,
-  'shop_id': instance.shopId,
-  'shop_name': instance.shopName,
+  'eventId': instance.eventId,
+  'eventName': instance.eventName,
+  'eventDate': instance.eventDate,
+  'shopId': instance.shopId,
+  'shopName': instance.shopName,
 };
 
 _$DashboardPersonalSummaryImpl _$$DashboardPersonalSummaryImplFromJson(
   Map<String, dynamic> json,
 ) => _$DashboardPersonalSummaryImpl(
-  favouriteShops: (json['favourite_shops'] as num?)?.toInt() ?? 0,
+  favouriteShops: (json['favouriteShops'] as num?)?.toInt() ?? 0,
   reservations: (json['reservations'] as num?)?.toInt() ?? 0,
-  reviewsWritten: (json['reviews_written'] as num?)?.toInt() ?? 0,
+  reviewsWritten: (json['reviewsWritten'] as num?)?.toInt() ?? 0,
 );
 
 Map<String, dynamic> _$$DashboardPersonalSummaryImplToJson(
   _$DashboardPersonalSummaryImpl instance,
 ) => <String, dynamic>{
-  'favourite_shops': instance.favouriteShops,
+  'favouriteShops': instance.favouriteShops,
   'reservations': instance.reservations,
-  'reviews_written': instance.reviewsWritten,
+  'reviewsWritten': instance.reviewsWritten,
 };
 
 _$DashboardNotificationImpl _$$DashboardNotificationImplFromJson(
