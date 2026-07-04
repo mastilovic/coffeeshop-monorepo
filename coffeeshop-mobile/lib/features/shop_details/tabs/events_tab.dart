@@ -2,14 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/auth/auth_notifier.dart';
 import '../../../core/utils/api_error.dart';
-import '../../../core/utils/reservation_event_utils.dart';
 import '../../../data/models/event_response_dto.dart';
 import '../../../data/services/event_api_service.dart';
 import '../../../shared/widgets/empty_state_view.dart';
-import '../../reservations/reservation_providers.dart';
-import '../../reservations/widgets/event_reservation_form.dart';
 import '../../shops/shop_providers.dart';
 
 String eventLabel(EventResponseDto event) {
@@ -42,7 +38,6 @@ class _EventsTabState extends ConsumerState<EventsTab> {
   bool _showForm = false;
   bool _isSaving = false;
   String? _editingEventId;
-  EventResponseDto? _selectedEventForRequest;
 
   final _nameController = TextEditingController();
   final _dateController = TextEditingController();
@@ -64,10 +59,6 @@ class _EventsTabState extends ConsumerState<EventsTab> {
     _showForm = false;
   }
 
-  void _cancelEventRequest() {
-    setState(() => _selectedEventForRequest = null);
-  }
-
   void _startEdit(EventResponseDto event) {
     setState(() {
       _showForm = true;
@@ -75,7 +66,6 @@ class _EventsTabState extends ConsumerState<EventsTab> {
       _nameController.text = event.eventName;
       _dateController.text = event.eventDate;
       _descriptionController.text = event.description ?? '';
-      _selectedEventForRequest = null;
     });
   }
 
@@ -159,25 +149,9 @@ class _EventsTabState extends ConsumerState<EventsTab> {
     }
   }
 
-  Set<String> _blockedEventIds() {
-    final userId = ref.read(authNotifierProvider).user?.id;
-    if (userId == null) return {};
-
-    final requests = ref.watch(myReservationRequestsProvider).valueOrNull ?? [];
-    final reservations = ref.watch(myReservationsProvider).valueOrNull ?? [];
-
-    return eventIdsBlockedForUser(
-      requests: requests,
-      reservations: reservations,
-      userId: userId,
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final events = parseShopEvents(widget.events);
-    final blocked = _blockedEventIds();
-    final canSelfReserve = !widget.canManage;
 
     return ListView(
       padding: const EdgeInsets.all(16),
@@ -240,13 +214,6 @@ class _EventsTabState extends ConsumerState<EventsTab> {
           )
         else
           ...events.map((event) {
-            final showReserve = canSelfReserve &&
-                canShowReserveButton(
-                  event: event,
-                  canManageShopContent: widget.canManage,
-                  blockedEventIds: blocked,
-                );
-
             return Card(
               margin: const EdgeInsets.only(bottom: 8),
               child: ListTile(
@@ -264,28 +231,11 @@ class _EventsTabState extends ConsumerState<EventsTab> {
                           PopupMenuItem(value: 'delete', child: Text('Delete')),
                         ],
                       )
-                    : showReserve
-                        ? TextButton(
-                            onPressed: () => setState(() => _selectedEventForRequest = event),
-                            child: const Text('Reserve'),
-                          )
-                        : const Icon(Icons.chevron_right),
+                    : const Icon(Icons.chevron_right),
                 onTap: () => context.push('/events/${event.eventId}'),
               ),
             );
           }),
-        if (_selectedEventForRequest != null) ...[
-          const SizedBox(height: 12),
-          EventReservationForm(
-            eventId: _selectedEventForRequest!.eventId,
-            shopId: widget.shopId,
-            eventName: _selectedEventForRequest!.eventName,
-            eventDate: _selectedEventForRequest!.eventDate,
-            showCancel: true,
-            onCancel: _cancelEventRequest,
-            onSuccess: _cancelEventRequest,
-          ),
-        ],
       ],
     );
   }

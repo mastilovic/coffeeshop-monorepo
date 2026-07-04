@@ -10,6 +10,7 @@ class FormSelect<T> extends StatelessWidget {
     required this.onChanged,
     this.hint,
     this.prefixIcon,
+    this.onTap,
   });
 
   final String label;
@@ -19,6 +20,7 @@ class FormSelect<T> extends StatelessWidget {
   final ValueChanged<T?> onChanged;
   final String? hint;
   final IconData? prefixIcon;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -39,6 +41,7 @@ class FormSelect<T> extends StatelessWidget {
         );
       }).toList(),
       onChanged: onChanged,
+      onTap: onTap,
     );
   }
 }

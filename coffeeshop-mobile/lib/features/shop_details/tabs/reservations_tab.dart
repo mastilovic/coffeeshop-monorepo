@@ -101,32 +101,51 @@ class _PendingReservationsTab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final asyncData = ref.watch(shopReservationRequestsProvider(shopId));
+    final requestsAsync = ref.watch(shopReservationRequestsProvider(shopId));
+    final reservationsAsync = ref.watch(shopReservationsProvider(shopId));
 
-    return asyncData.when(
-      loading: () => const LoadingIndicator(),
-      error: (e, _) => ErrorView(
-        message: e.toString(),
-        onRetry: () => ref.invalidate(shopReservationRequestsProvider(shopId)),
+    void retry() {
+      ref.invalidate(shopReservationRequestsProvider(shopId));
+      ref.invalidate(shopReservationsProvider(shopId));
+    }
+
+    if ((requestsAsync.isLoading && !requestsAsync.hasValue) ||
+        (reservationsAsync.isLoading && !reservationsAsync.hasValue)) {
+      return const LoadingIndicator();
+    }
+
+    if (requestsAsync.hasError) {
+      return ErrorView(
+        message: requestsAsync.error.toString(),
+        onRetry: retry,
+      );
+    }
+
+    if (reservationsAsync.hasError) {
+      return ErrorView(
+        message: reservationsAsync.error.toString(),
+        onRetry: retry,
+      );
+    }
+
+    final requests = requestsAsync.requireValue;
+    final reservations = reservationsAsync.requireValue;
+    final pending = requests.where((r) => r.status == 'PENDING').toList();
+
+    if (pending.isEmpty) {
+      return const EmptyStateView(icon: Icons.hourglass_empty, message: 'No pending requests.');
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: pending.length,
+      itemBuilder: (context, index) => _PendingRequestCard(
+        key: ValueKey(pending[index].id),
+        shopId: shopId,
+        request: pending[index],
+        tables: tables,
+        reservations: reservations,
       ),
-      data: (requests) {
-        final pending = requests.where((r) => r.status == 'PENDING').toList();
-        if (pending.isEmpty) {
-          return const EmptyStateView(icon: Icons.hourglass_empty, message: 'No pending requests.');
-        }
-        return ListView.builder(
-          padding: const EdgeInsets.all(16),
-          itemCount: pending.length,
-          itemBuilder: (context, index) => _PendingRequestCard(
-            request: pending[index],
-            tables: tables,
-            onAction: () {
-              ref.invalidate(shopReservationRequestsProvider(shopId));
-              ref.invalidate(shopReservationsProvider(shopId));
-            },
-          ),
-        );
-      },
     );
   }
 }
@@ -192,14 +211,17 @@ class _DeniedReservationsTab extends ConsumerWidget {
 
 class _PendingRequestCard extends ConsumerStatefulWidget {
   const _PendingRequestCard({
+    super.key,
+    required this.shopId,
     required this.request,
     required this.tables,
-    required this.onAction,
+    required this.reservations,
   });
 
+  final String shopId;
   final ReservationRequestResponseDto request;
   final List<Map<String, dynamic>> tables;
-  final VoidCallback onAction;
+  final List<Map<String, dynamic>> reservations;
 
   @override
   ConsumerState<_PendingRequestCard> createState() => _PendingRequestCardState();
@@ -209,10 +231,40 @@ class _PendingRequestCardState extends ConsumerState<_PendingRequestCard> {
   String? _selectedTableId;
   bool _isProcessing = false;
 
+  @override
+  void didUpdateWidget(covariant _PendingRequestCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.request.id != widget.request.id ||
+        oldWidget.request.partySize != widget.request.partySize) {
+      _selectedTableId = null;
+    }
+  }
+
+  /// IDs of tables already assigned to a reservation for the same event.
+  /// Standing requests (no eventId) block any reserved table at the shop.
+  Set<String> get _takenTableIds {
+    return widget.reservations
+        .where((r) =>
+            widget.request.eventId == null ||
+            r['eventId'] == widget.request.eventId)
+        .map((r) => (r['table'] as Map<String, dynamic>?)?['id'] as String?)
+        .whereType<String>()
+        .toSet();
+  }
+
+  Future<void> _refreshReservationData() async {
+    await Future.wait([
+      ref.refresh(shopReservationRequestsProvider(widget.shopId).future),
+      ref.refresh(shopReservationsProvider(widget.shopId).future),
+    ]);
+  }
+
   List<Map<String, dynamic>> get _suitableTables {
+    final taken = _takenTableIds;
     return widget.tables.where((t) {
       final capacity = t['capacity'] as int? ?? 0;
-      return capacity >= widget.request.partySize;
+      final id = t['id'] as String?;
+      return capacity >= widget.request.partySize && !taken.contains(id);
     }).toList();
   }
 
@@ -230,7 +282,7 @@ class _PendingRequestCardState extends ConsumerState<_PendingRequestCard> {
             widget.request.id,
             tableId: _selectedTableId,
           );
-      widget.onAction();
+      await _refreshReservationData();
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -246,7 +298,7 @@ class _PendingRequestCardState extends ConsumerState<_PendingRequestCard> {
     setState(() => _isProcessing = true);
     try {
       await ref.read(reservationRequestApiServiceProvider).deny(widget.request.id);
-      widget.onAction();
+      await _refreshReservationData();
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -262,6 +314,11 @@ class _PendingRequestCardState extends ConsumerState<_PendingRequestCard> {
   Widget build(BuildContext context) {
     final userName = widget.request.user?['name'] as String? ?? 'Guest';
     final suitable = _suitableTables;
+
+    if (_selectedTableId != null &&
+        !suitable.any((t) => t['id'] == _selectedTableId)) {
+      _selectedTableId = null;
+    }
 
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
@@ -289,6 +346,7 @@ class _PendingRequestCardState extends ConsumerState<_PendingRequestCard> {
                   final table = suitable.firstWhere((t) => t['id'] == id);
                   return 'Table ${table['number']} (cap ${table['capacity']})';
                 },
+                onTap: () => ref.invalidate(shopReservationsProvider(widget.shopId)),
                 onChanged: (v) => setState(() => _selectedTableId = v),
               ),
             const SizedBox(height: 8),

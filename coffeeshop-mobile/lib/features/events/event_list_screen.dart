@@ -2,15 +2,12 @@ import 'package:flutter/material.dart' hide SearchBar;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../core/auth/auth_notifier.dart';
 import '../../core/auth/user_permissions.dart';
-import '../../core/utils/reservation_event_utils.dart';
 import '../../data/models/event_response_dto.dart';
 import '../../shared/widgets/empty_state_view.dart';
 import '../../shared/widgets/error_view.dart';
 import '../../shared/widgets/loading_indicator.dart';
 import '../../shared/widgets/search_bar.dart';
-import '../reservations/reservation_providers.dart';
 import 'event_providers.dart';
 
 class EventListScreen extends ConsumerWidget {
@@ -21,16 +18,6 @@ class EventListScreen extends ConsumerWidget {
     final eventsAsync = ref.watch(eventListProvider);
     final permissions = ref.watch(userPermissionsProvider).valueOrNull;
     final canCreate = permissions?.canCreateEvent ?? false;
-    final userId = ref.watch(authNotifierProvider).user?.id;
-    final requests = ref.watch(myReservationRequestsProvider).valueOrNull ?? [];
-    final reservations = ref.watch(myReservationsProvider).valueOrNull ?? [];
-    final blocked = userId == null
-        ? <String>{}
-        : eventIdsBlockedForUser(
-            requests: requests,
-            reservations: reservations,
-            userId: userId,
-          );
 
     return Scaffold(
       appBar: AppBar(
@@ -84,10 +71,7 @@ class EventListScreen extends ConsumerWidget {
                       final event = events[index];
                       return Card(
                         margin: const EdgeInsets.only(bottom: 8),
-                        child: _EventListTile(
-                          event: event,
-                          blockedEventIds: blocked,
-                        ),
+                        child: _EventListTile(event: event),
                       );
                     },
                   ),
@@ -101,29 +85,13 @@ class EventListScreen extends ConsumerWidget {
   }
 }
 
-class _EventListTile extends ConsumerWidget {
-  const _EventListTile({
-    required this.event,
-    required this.blockedEventIds,
-  });
+class _EventListTile extends StatelessWidget {
+  const _EventListTile({required this.event});
 
   final EventResponseDto event;
-  final Set<String> blockedEventIds;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final shopId = event.shopId;
-    final permissions = ref.watch(userPermissionsProvider).valueOrNull;
-    final canManageShopContent = shopId != null
-        ? permissions?.canManageContent(shopId) ?? false
-        : false;
-    final showReserve = shopId != null &&
-        canShowReserveButton(
-          event: event,
-          canManageShopContent: canManageShopContent,
-          blockedEventIds: blockedEventIds,
-        );
-
+  Widget build(BuildContext context) {
     return ListTile(
       onTap: () => context.push('/events/${event.eventId}'),
       leading: const Icon(Icons.event, color: Colors.orange, size: 32),
@@ -141,14 +109,7 @@ class _EventListTile extends ConsumerWidget {
             ),
         ],
       ),
-      trailing: showReserve
-          ? TextButton(
-              onPressed: () {
-                context.push('/reservations?shopId=$shopId&eventId=${event.eventId}');
-              },
-              child: const Text('Reserve'),
-            )
-          : const Icon(Icons.chevron_right),
+      trailing: const Icon(Icons.chevron_right),
     );
   }
 }

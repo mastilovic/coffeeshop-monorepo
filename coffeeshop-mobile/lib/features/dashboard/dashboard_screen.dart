@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/auth/auth_notifier.dart';
+import '../../core/auth/auth_service.dart';
 import '../../core/auth/user_permissions.dart';
 import '../../core/network/api_exception.dart';
 import '../../data/models/dashboard_activity_response.dart';

@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 
-enum UserRole { customer, shop_owner, admin }
+enum UserRole {
+  customer,
+  shop_owner,
+  admin;
 
-extension UserRoleParsing on UserRole {
-  factory UserRole.fromString(String raw) {
+  static UserRole fromString(String raw) {
     switch (raw.toUpperCase()) {
       case 'CUSTOMER':
         return UserRole.customer;

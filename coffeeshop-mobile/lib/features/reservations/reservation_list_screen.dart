@@ -36,14 +36,6 @@ class _ReservationListScreenState extends ConsumerState<ReservationListScreen> {
   bool _appliedQueryPrefill = false;
 
   @override
-  void initState() {
-    super.initState();
-    if (widget.initialShopId != null && widget.initialEventId != null) {
-      _showRequestForm = true;
-    }
-  }
-
-  @override
   Widget build(BuildContext context) {
     final isOwner = isShopOwner(ref);
 
@@ -232,6 +224,12 @@ class _ManageShopsPanel extends ConsumerWidget {
               margin: const EdgeInsets.only(bottom: 8),
               child: ExpansionTile(
                 title: Text(shop.name),
+                onExpansionChanged: (expanded) {
+                  if (expanded) {
+                    ref.invalidate(shopReservationRequestsProvider(shop.id));
+                    ref.invalidate(shopReservationsProvider(shop.id));
+                  }
+                },
                 children: [
                   SizedBox(
                     height: 400,
