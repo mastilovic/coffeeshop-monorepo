@@ -224,6 +224,77 @@ func TestShop_PaginatedSearch_ReturnsPageResponse(t *testing.T) {
 	}
 }
 
+func TestShop_PaginatedSearch_FiltersByCity(t *testing.T) {
+	h := setupTestHarness(t)
+	ownerID := h.createUser(t, "City Filter Owner", "city-filter@example.com", "SHOP_OWNER")
+	token := h.tokenForUser(ownerID, []string{"SHOP_OWNER"})
+
+	h.doJSON(http.MethodPost, "/api/v2/shop", map[string]interface{}{
+		"name": "Apatin Shop", "address": "1 St", "city": "Apatin", "phoneNumber": "123",
+	}, token)
+	h.doJSON(http.MethodPost, "/api/v2/shop", map[string]interface{}{
+		"name": "Beograd Shop", "address": "2 St", "city": "Beograd", "phoneNumber": "456",
+	}, token)
+	h.doJSON(http.MethodPost, "/api/v2/shop", map[string]interface{}{
+		"name": "Another Apatin", "address": "3 St", "city": "Apatin", "phoneNumber": "789",
+	}, token)
+
+	w := h.doJSON(http.MethodGet, "/api/v2/shop?city=Apatin&page=0&size=10", nil, token)
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d; body: %s", w.Code, w.Body.String())
+	}
+
+	var page map[string]interface{}
+	json.Unmarshal(w.Body.Bytes(), &page)
+	if page["totalElements"].(float64) != 2 {
+		t.Errorf("expected totalElements=2, got %v", page["totalElements"])
+	}
+
+	content := page["content"].([]interface{})
+	for _, item := range content {
+		shop := item.(map[string]interface{})
+		if shop["city"] != "Apatin" {
+			t.Errorf("expected city Apatin, got %v", shop["city"])
+		}
+	}
+}
+
+func TestShop_PaginatedSearch_FiltersByCityAndQuery(t *testing.T) {
+	h := setupTestHarness(t)
+	ownerID := h.createUser(t, "City Query Owner", "city-query@example.com", "SHOP_OWNER")
+	token := h.tokenForUser(ownerID, []string{"SHOP_OWNER"})
+
+	h.doJSON(http.MethodPost, "/api/v2/shop", map[string]interface{}{
+		"name": "Alpha Apatin", "address": "1 St", "city": "Apatin", "phoneNumber": "123",
+	}, token)
+	h.doJSON(http.MethodPost, "/api/v2/shop", map[string]interface{}{
+		"name": "Beta Apatin", "address": "2 St", "city": "Apatin", "phoneNumber": "456",
+	}, token)
+	h.doJSON(http.MethodPost, "/api/v2/shop", map[string]interface{}{
+		"name": "Alpha Beograd", "address": "3 St", "city": "Beograd", "phoneNumber": "789",
+	}, token)
+
+	w := h.doJSON(http.MethodGet, "/api/v2/shop?q=alpha&city=Apatin&page=0&size=10", nil, token)
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d; body: %s", w.Code, w.Body.String())
+	}
+
+	var page map[string]interface{}
+	json.Unmarshal(w.Body.Bytes(), &page)
+	if page["totalElements"].(float64) != 1 {
+		t.Errorf("expected totalElements=1, got %v", page["totalElements"])
+	}
+
+	content := page["content"].([]interface{})
+	if len(content) != 1 {
+		t.Fatalf("expected 1 shop, got %d", len(content))
+	}
+	shop := content[0].(map[string]interface{})
+	if shop["name"] != "Alpha Apatin" {
+		t.Errorf("expected Alpha Apatin, got %v", shop["name"])
+	}
+}
+
 // ===== Shop Mine Tests =====
 
 func TestShop_Mine_RequiresAuth(t *testing.T) {
@@ -252,6 +323,22 @@ func TestShop_Mine_ReturnsOwnedShops(t *testing.T) {
 	json.Unmarshal(w.Body.Bytes(), &shops)
 	if len(shops) != 1 {
 		t.Errorf("expected 1 owned shop, got %d", len(shops))
+	}
+}
+
+func TestShop_Mine_ReturnsEmptyForCustomer(t *testing.T) {
+	h := setupTestHarness(t)
+	customerID := h.createUser(t, "Mine Customer", "mine-customer@example.com", "CUSTOMER")
+	token := h.tokenForUser(customerID, []string{"CUSTOMER"})
+
+	w := h.doJSON(http.MethodGet, "/api/v2/shop/mine", nil, token)
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", w.Code)
+	}
+	var shops []map[string]interface{}
+	json.Unmarshal(w.Body.Bytes(), &shops)
+	if len(shops) != 0 {
+		t.Errorf("expected 0 owned shops for customer, got %d", len(shops))
 	}
 }
 
@@ -889,6 +976,200 @@ func TestCommunity_GetPosts(t *testing.T) {
 	w := h.doJSON(http.MethodGet, "/api/v2/shop/"+shopID+"/community/posts?page=0&size=10", nil, "")
 	if w.Code != http.StatusOK {
 		t.Errorf("expected 200, got %d; body: %s", w.Code, w.Body.String())
+	}
+}
+
+// ===== Shop Staff Authorization Tests =====
+
+// createShopForOwner creates a shop owned by ownerID and returns its ID.
+func (h *testHarness) createShopForOwner(t *testing.T, ownerID, ownerToken, name string) string {
+	t.Helper()
+	w := h.doJSON(http.MethodPost, "/api/v2/shop", map[string]interface{}{
+		"name": name, "address": "1 St", "city": "Beograd", "phoneNumber": "123",
+		"ownerUserId": ownerID,
+	}, ownerToken)
+	if w.Code != http.StatusCreated {
+		t.Fatalf("create shop: expected 201, got %d; body: %s", w.Code, w.Body.String())
+	}
+	var shop map[string]interface{}
+	json.Unmarshal(w.Body.Bytes(), &shop)
+	return shop["id"].(string)
+}
+
+func TestShopStaffAuthz_CustomerCannotManageShopResources(t *testing.T) {
+	h := setupTestHarness(t)
+	ownerID := h.createUser(t, "Authz Owner", "authz-owner@example.com", "SHOP_OWNER")
+	ownerToken := h.tokenForUser(ownerID, []string{"SHOP_OWNER"})
+	customerID := h.createUser(t, "Authz Customer", "authz-customer@example.com", "CUSTOMER")
+	customerToken := h.tokenForUser(customerID, []string{"CUSTOMER"})
+
+	shopID := h.createShopForOwner(t, ownerID, ownerToken, "Authz Shop")
+
+	menuW := h.doJSON(http.MethodPost, "/api/v2/menu", map[string]interface{}{
+		"shopId": shopID,
+	}, ownerToken)
+	if menuW.Code != http.StatusCreated {
+		t.Fatalf("owner create menu: expected 201, got %d; body: %s", menuW.Code, menuW.Body.String())
+	}
+	var menu map[string]interface{}
+	json.Unmarshal(menuW.Body.Bytes(), &menu)
+	menuID := menu["id"].(string)
+
+	cases := []struct {
+		name   string
+		method string
+		path   string
+		body   map[string]interface{}
+	}{
+		{"create table", http.MethodPost, "/api/v2/table", map[string]interface{}{
+			"number": 9, "capacity": 4, "shopId": shopID,
+		}},
+		{"create menu", http.MethodPost, "/api/v2/menu", map[string]interface{}{
+			"shopId": shopID,
+		}},
+		{"create menu item", http.MethodPost, "/api/v2/menu-item", map[string]interface{}{
+			"name": "Latte", "price": 3.5, "priceCurrency": "EUR", "itemType": "DRINK", "menuId": menuID,
+		}},
+		{"create event", http.MethodPost, "/api/v2/event", map[string]interface{}{
+			"eventName": "Blocked Event", "eventDate": "2026-08-01", "description": "x", "shopId": shopID,
+		}},
+		{"create announcement", http.MethodPost, "/api/v2/shop/" + shopID + "/community/announcements", map[string]interface{}{
+			"body": "Blocked announcement",
+		}},
+		{"assign employee", http.MethodPost, "/api/v2/shop-employees", map[string]interface{}{
+			"shopId": shopID, "userId": customerID,
+		}},
+	}
+	for _, tc := range cases {
+		w := h.doJSON(tc.method, tc.path, tc.body, customerToken)
+		if w.Code != http.StatusForbidden {
+			t.Errorf("%s: expected 403 for customer, got %d; body: %s", tc.name, w.Code, w.Body.String())
+			continue
+		}
+		var resp map[string]interface{}
+		json.Unmarshal(w.Body.Bytes(), &resp)
+		if msg, _ := resp["message"].(string); msg == "" {
+			t.Errorf("%s: expected error message in 403 body, got: %s", tc.name, w.Body.String())
+		}
+	}
+}
+
+func TestShopStaffAuthz_EmployeeCanManageContentButNotEmployeesOrShop(t *testing.T) {
+	h := setupTestHarness(t)
+	ownerID := h.createUser(t, "Emp Authz Owner", "emp-authz-owner@example.com", "SHOP_OWNER")
+	ownerToken := h.tokenForUser(ownerID, []string{"SHOP_OWNER"})
+	employeeID := h.createUser(t, "Emp Authz Employee", "emp-authz-emp@example.com", "SHOP_OWNER")
+	employeeToken := h.tokenForUser(employeeID, []string{"SHOP_OWNER"})
+	otherID := h.createUser(t, "Emp Authz Other", "emp-authz-other@example.com", "CUSTOMER")
+
+	shopID := h.createShopForOwner(t, ownerID, ownerToken, "Emp Authz Shop")
+
+	assignW := h.doJSON(http.MethodPost, "/api/v2/shop-employees", map[string]interface{}{
+		"shopId": shopID, "userId": employeeID,
+	}, ownerToken)
+	if assignW.Code != http.StatusCreated {
+		t.Fatalf("owner assign employee: expected 201, got %d; body: %s", assignW.Code, assignW.Body.String())
+	}
+
+	// Employees can manage shop content.
+	w := h.doJSON(http.MethodPost, "/api/v2/table", map[string]interface{}{
+		"number": 5, "capacity": 2, "shopId": shopID,
+	}, employeeToken)
+	if w.Code != http.StatusCreated {
+		t.Errorf("employee create table: expected 201, got %d; body: %s", w.Code, w.Body.String())
+	}
+
+	w = h.doJSON(http.MethodPost, "/api/v2/menu", map[string]interface{}{
+		"shopId": shopID,
+	}, employeeToken)
+	if w.Code != http.StatusCreated {
+		t.Errorf("employee create menu: expected 201, got %d; body: %s", w.Code, w.Body.String())
+	}
+
+	w = h.doJSON(http.MethodPost, "/api/v2/event", map[string]interface{}{
+		"eventName": "Emp Event", "eventDate": "2026-08-01", "description": "x", "shopId": shopID,
+	}, employeeToken)
+	if w.Code != http.StatusCreated {
+		t.Errorf("employee create event: expected 201, got %d; body: %s", w.Code, w.Body.String())
+	}
+
+	w = h.doJSON(http.MethodPost, "/api/v2/shop/"+shopID+"/community/announcements", map[string]interface{}{
+		"body": "Employee announcement",
+	}, employeeToken)
+	if w.Code != http.StatusCreated {
+		t.Errorf("employee create announcement: expected 201, got %d; body: %s", w.Code, w.Body.String())
+	}
+
+	// Employees cannot manage employees or delete the shop.
+	w = h.doJSON(http.MethodPost, "/api/v2/shop-employees", map[string]interface{}{
+		"shopId": shopID, "userId": otherID,
+	}, employeeToken)
+	if w.Code != http.StatusForbidden {
+		t.Errorf("employee assign employee: expected 403, got %d; body: %s", w.Code, w.Body.String())
+	}
+
+	w = h.doJSON(http.MethodDelete, "/api/v2/shop-employees", map[string]interface{}{
+		"shopId": shopID, "userId": employeeID,
+	}, employeeToken)
+	if w.Code != http.StatusForbidden {
+		t.Errorf("employee remove employee: expected 403, got %d; body: %s", w.Code, w.Body.String())
+	}
+
+	w = h.doJSON(http.MethodDelete, "/api/v2/shop/"+shopID, nil, employeeToken)
+	if w.Code != http.StatusForbidden {
+		t.Errorf("employee delete shop: expected 403, got %d; body: %s", w.Code, w.Body.String())
+	}
+}
+
+func TestEvent_CreateWithoutShopID_IsBadRequest(t *testing.T) {
+	h := setupTestHarness(t)
+	ownerID := h.createUser(t, "NoShop Owner", "noshop-owner@example.com", "SHOP_OWNER")
+	token := h.tokenForUser(ownerID, []string{"SHOP_OWNER"})
+
+	w := h.doJSON(http.MethodPost, "/api/v2/event", map[string]interface{}{
+		"eventName": "Orphan Event", "eventDate": "2026-08-01", "description": "x",
+	}, token)
+	if w.Code != http.StatusBadRequest {
+		t.Errorf("expected 400 for event create without shopId, got %d; body: %s", w.Code, w.Body.String())
+	}
+}
+
+func TestEvent_ShoplessEvent_OnlyAdminCanModify(t *testing.T) {
+	h := setupTestHarness(t)
+	ownerID := h.createUser(t, "Legacy Owner", "legacy-owner@example.com", "SHOP_OWNER")
+	ownerToken := h.tokenForUser(ownerID, []string{"SHOP_OWNER"})
+	adminID := h.createUser(t, "Legacy Admin", "legacy-admin@example.com", "ADMIN")
+	adminToken := h.tokenForUser(adminID, []string{"admin"})
+
+	// Seed a legacy event without a shop directly in the DB.
+	eventID := uuid.New().String()
+	h.db.Exec(
+		"INSERT INTO event (event_id, event_name, event_date, description, shop_id) VALUES (?, ?, ?, ?, NULL)",
+		eventID, "Legacy Event", "2026-08-01", "legacy",
+	)
+
+	updateBody := map[string]interface{}{
+		"eventName": "Renamed", "eventDate": "2026-08-02", "description": "y",
+	}
+
+	w := h.doJSON(http.MethodPut, "/api/v2/event/"+eventID, updateBody, ownerToken)
+	if w.Code != http.StatusForbidden {
+		t.Errorf("non-admin update shopless event: expected 403, got %d; body: %s", w.Code, w.Body.String())
+	}
+
+	w = h.doJSON(http.MethodDelete, "/api/v2/event/"+eventID, nil, ownerToken)
+	if w.Code != http.StatusForbidden {
+		t.Errorf("non-admin delete shopless event: expected 403, got %d; body: %s", w.Code, w.Body.String())
+	}
+
+	w = h.doJSON(http.MethodPut, "/api/v2/event/"+eventID, updateBody, adminToken)
+	if w.Code != http.StatusOK {
+		t.Errorf("admin update shopless event: expected 200, got %d; body: %s", w.Code, w.Body.String())
+	}
+
+	w = h.doJSON(http.MethodDelete, "/api/v2/event/"+eventID, nil, adminToken)
+	if w.Code != http.StatusNoContent {
+		t.Errorf("admin delete shopless event: expected 204, got %d; body: %s", w.Code, w.Body.String())
 	}
 }
 

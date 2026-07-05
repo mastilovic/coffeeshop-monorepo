@@ -19,6 +19,10 @@ sealed class ApiException with _$ApiException implements Exception {
     required String message,
   }) = UnauthorizedException;
 
+  const factory ApiException.forbiddenException({
+    required String message,
+  }) = ForbiddenException;
+
   const factory ApiException.validationException({
     required String message,
     required Map<String, List<String>>? errors,
@@ -49,6 +53,11 @@ sealed class ApiException with _$ApiException implements Exception {
         if (statusCode == 401) {
           return ApiException.unauthorizedException(
             message: _extractMessage(data) ?? 'Session expired. Please login again.',
+          );
+        } else if (statusCode == 403) {
+          return ApiException.forbiddenException(
+            message: _extractMessage(data) ??
+                "You don't have permission to perform this action.",
           );
         } else if (statusCode == 422 || statusCode == 400) {
           return ApiException.validationException(

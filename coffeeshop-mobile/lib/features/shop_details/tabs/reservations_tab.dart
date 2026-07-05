@@ -283,6 +283,9 @@ class _PendingRequestCardState extends ConsumerState<_PendingRequestCard> {
             tableId: _selectedTableId,
           );
       await _refreshReservationData();
+      ref.invalidate(myReservationRequestsProvider);
+      ref.invalidate(myReservationsProvider);
+      ref.invalidate(allOwnerReservationRequestsProvider);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -299,6 +302,9 @@ class _PendingRequestCardState extends ConsumerState<_PendingRequestCard> {
     try {
       await ref.read(reservationRequestApiServiceProvider).deny(widget.request.id);
       await _refreshReservationData();
+      ref.invalidate(myReservationRequestsProvider);
+      ref.invalidate(myReservationsProvider);
+      ref.invalidate(allOwnerReservationRequestsProvider);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../core/auth/user_permissions.dart';
 import '../../data/models/shop_response_dto.dart';
@@ -53,13 +54,19 @@ class _ShopDetailContent extends ConsumerWidget {
     }
 
     return _buildScaffold(
+      context,
       ref,
       canManageContent: permissions.canManageContent(shopId),
       canManageShop: permissions.canManageShop(shopId),
     );
   }
 
-  Widget _buildScaffold(WidgetRef ref, {required bool canManageContent, required bool canManageShop}) {
+  Widget _buildScaffold(
+    BuildContext context,
+    WidgetRef ref, {
+    required bool canManageContent,
+    required bool canManageShop,
+  }) {
     final tabs = <String>[
       'Community',
       'Menu',
@@ -75,6 +82,14 @@ class _ShopDetailContent extends ConsumerWidget {
       child: Scaffold(
         appBar: AppBar(
           title: Text(shop.name),
+          actions: [
+            if (canManageShop)
+              IconButton(
+                icon: const Icon(Icons.edit_outlined),
+                tooltip: 'Edit shop',
+                onPressed: () => context.push('/shops/$shopId/edit'),
+              ),
+          ],
           bottom: TabBar(
             isScrollable: true,
             tabs: tabs.map((t) => Tab(text: t)).toList(),

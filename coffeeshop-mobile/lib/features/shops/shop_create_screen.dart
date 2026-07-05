@@ -2,18 +2,23 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../core/auth/user_permissions.dart';
 import '../../core/auth/auth_notifier.dart';
+import '../../core/auth/user_permissions.dart';
 import '../../core/network/api_exception.dart';
 import '../../core/utils/validators.dart';
 import '../../data/models/shop_response_dto.dart';
 import '../../data/services/shop_api_service.dart';
+import '../../shared/widgets/city_search_select.dart';
 import '../../shared/widgets/empty_state_view.dart';
-import '../../shared/widgets/form_select.dart';
+import '../shop_details/shop_manage_permission.dart';
 import 'shop_providers.dart';
 
 class ShopCreateScreen extends ConsumerStatefulWidget {
-  const ShopCreateScreen({super.key});
+  const ShopCreateScreen({super.key, this.shopId});
+
+  final String? shopId;
+
+  bool get isEditing => shopId != null;
 
   @override
   ConsumerState<ShopCreateScreen> createState() => _ShopCreateScreenState();
@@ -28,10 +33,44 @@ class _ShopCreateScreenState extends ConsumerState<ShopCreateScreen> {
   String? _selectedCity;
   String? _cityError;
   bool _isLoading = false;
+  bool _isLoadingShop = false;
 
   bool get _canCreateShop {
     final permissions = ref.watch(userPermissionsProvider).valueOrNull;
     return permissions?.canCreateShop ?? false;
+  }
+
+  bool _canEditShop(String shopId) {
+    final permissions = ref.watch(userPermissionsProvider).valueOrNull;
+    return permissions?.canManageShop(shopId) ?? false;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.isEditing) {
+      _loadShopForEdit();
+    }
+  }
+
+  Future<void> _loadShopForEdit() async {
+    setState(() => _isLoadingShop = true);
+    try {
+      final data = await ref.read(shopApiServiceProvider).getById(widget.shopId!);
+      final shop = ShopResponseDto.fromJson(data);
+      _nameController.text = shop.name;
+      _addressController.text = shop.address;
+      _phoneController.text = shop.phoneNumber ?? '';
+      _selectedCity = shop.city;
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to load shop details')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoadingShop = false);
+    }
   }
 
   @override
@@ -48,6 +87,7 @@ class _ShopCreateScreenState extends ConsumerState<ShopCreateScreen> {
         networkException: (message, _) => message,
         serverException: (message, _) => message,
         unauthorizedException: (message) => message,
+        forbiddenException: (message) => message,
         validationException: (message, _) => message,
         unknownException: (message) => message,
       );
@@ -56,21 +96,11 @@ class _ShopCreateScreenState extends ConsumerState<ShopCreateScreen> {
     return error.toString().replaceFirst('Exception: ', '');
   }
 
-  Future<void> _handleCreate() async {
+  Future<void> _handleSubmit() async {
     if (!_formKey.currentState!.validate()) return;
 
     if (_selectedCity == null) {
       setState(() => _cityError = 'City is required');
-      return;
-    }
-
-    final userId = ref.read(authNotifierProvider).user?.id;
-    if (userId == null) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('You must be logged in to create a shop')),
-        );
-      }
       return;
     }
 
@@ -80,6 +110,38 @@ class _ShopCreateScreenState extends ConsumerState<ShopCreateScreen> {
     });
 
     try {
+      if (widget.isEditing) {
+        await ref.read(shopApiServiceProvider).update(widget.shopId!, {
+          'name': _nameController.text.trim(),
+          'address': _addressController.text.trim(),
+          'city': _selectedCity!,
+          'phoneNumber': _phoneController.text.trim().isEmpty
+              ? null
+              : _phoneController.text.trim(),
+        });
+        ref.invalidate(shopDetailProvider(widget.shopId!));
+        ref.invalidate(shopListProvider);
+        ref.invalidate(ownedShopsProvider);
+
+        if (mounted) {
+          context.pop();
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Shop updated')),
+          );
+        }
+        return;
+      }
+
+      final userId = ref.read(authNotifierProvider).user?.id;
+      if (userId == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('You must be logged in to create a shop')),
+          );
+        }
+        return;
+      }
+
       final request = ShopCreateRequest(
         name: _nameController.text.trim(),
         address: _addressController.text.trim(),
@@ -95,6 +157,7 @@ class _ShopCreateScreenState extends ConsumerState<ShopCreateScreen> {
           .create(request.toJson());
 
       ref.invalidate(shopListProvider);
+      ref.invalidate(ownedShopsProvider);
 
       if (mounted) {
         context.pop();
@@ -105,7 +168,13 @@ class _ShopCreateScreenState extends ConsumerState<ShopCreateScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to create shop: ${_formatError(e)}')),
+          SnackBar(
+            content: Text(
+              widget.isEditing
+                  ? 'Failed to update shop: ${_formatError(e)}'
+                  : 'Failed to create shop: ${_formatError(e)}',
+            ),
+          ),
         );
       }
     } finally {
@@ -115,7 +184,19 @@ class _ShopCreateScreenState extends ConsumerState<ShopCreateScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (!_canCreateShop) {
+    if (widget.isEditing) {
+      if (!_canEditShop(widget.shopId!)) {
+        return Scaffold(
+          appBar: AppBar(title: const Text('Edit Shop')),
+          body: EmptyStateView(
+            icon: Icons.lock_outline,
+            message: 'You do not have permission to edit this shop.',
+            actionLabel: 'Go back',
+            onAction: () => context.pop(),
+          ),
+        );
+      }
+    } else if (!_canCreateShop) {
       return Scaffold(
         appBar: AppBar(title: const Text('Create Shop')),
         body: EmptyStateView(
@@ -127,84 +208,44 @@ class _ShopCreateScreenState extends ConsumerState<ShopCreateScreen> {
       );
     }
 
-    final citiesAsync = ref.watch(citiesProvider);
-
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Create Shop'),
+        title: Text(widget.isEditing ? 'Edit Shop' : 'Create Shop'),
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                TextFormField(
-                  controller: _nameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Name',
-                    prefixIcon: Icon(Icons.store),
-                  ),
-                  textInputAction: TextInputAction.next,
-                  validator: (value) => Validators.required(value, 'Name'),
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _addressController,
-                  decoration: const InputDecoration(
-                    labelText: 'Address',
-                    prefixIcon: Icon(Icons.location_on_outlined),
-                  ),
-                  textInputAction: TextInputAction.next,
-                  validator: (value) => Validators.required(value, 'Address'),
-                ),
-                const SizedBox(height: 16),
-                citiesAsync.when(
-                  loading: () => const InputDecorator(
-                    decoration: InputDecoration(
-                      labelText: 'City',
-                      prefixIcon: Icon(Icons.location_city_outlined),
-                    ),
-                    child: Row(
-                      children: [
-                        SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        ),
-                        SizedBox(width: 12),
-                        Text('Loading cities...'),
-                      ],
-                    ),
-                  ),
-                  error: (error, _) => Column(
+        child: _isLoadingShop
+            ? const Center(child: CircularProgressIndicator())
+            : SingleChildScrollView(
+                padding: const EdgeInsets.all(24),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Text(
-                        'Failed to load cities: $error',
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.error,
+                      TextFormField(
+                        controller: _nameController,
+                        decoration: const InputDecoration(
+                          labelText: 'Name',
+                          prefixIcon: Icon(Icons.store),
                         ),
+                        textInputAction: TextInputAction.next,
+                        validator: (value) => Validators.required(value, 'Name'),
                       ),
-                      const SizedBox(height: 8),
-                      OutlinedButton(
-                        onPressed: () => ref.invalidate(citiesProvider),
-                        child: const Text('Retry'),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: _addressController,
+                        decoration: const InputDecoration(
+                          labelText: 'Address',
+                          prefixIcon: Icon(Icons.location_on_outlined),
+                        ),
+                        textInputAction: TextInputAction.next,
+                        validator: (value) => Validators.required(value, 'Address'),
                       ),
-                    ],
-                  ),
-                  data: (cities) => Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      FormSelect<String>(
-                        label: 'City',
-                        hint: 'Select a city',
+                      const SizedBox(height: 16),
+                      CitySearchSelect(
                         value: _selectedCity,
-                        items: cities,
-                        itemLabel: (city) => city,
-                        prefixIcon: Icons.location_city_outlined,
+                        hint: 'Select a city',
+                        errorText: _cityError,
                         onChanged: (value) {
                           setState(() {
                             _selectedCity = value;
@@ -212,52 +253,36 @@ class _ShopCreateScreenState extends ConsumerState<ShopCreateScreen> {
                           });
                         },
                       ),
-                      if (_cityError != null) ...[
-                        const SizedBox(height: 4),
-                        Padding(
-                          padding: const EdgeInsets.only(left: 12),
-                          child: Text(
-                            _cityError!,
-                            style: TextStyle(
-                              color: Theme.of(context).colorScheme.error,
-                              fontSize: 12,
-                            ),
-                          ),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: _phoneController,
+                        decoration: const InputDecoration(
+                          labelText: 'Phone (optional)',
+                          prefixIcon: Icon(Icons.phone_outlined),
                         ),
-                      ],
+                        keyboardType: TextInputType.phone,
+                        textInputAction: TextInputAction.done,
+                      ),
+                      const SizedBox(height: 32),
+                      FilledButton(
+                        onPressed: _isLoading ? null : _handleSubmit,
+                        child: _isLoading
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(strokeWidth: 2),
+                              )
+                            : Text(widget.isEditing ? 'Save Changes' : 'Create'),
+                      ),
+                      const SizedBox(height: 8),
+                      TextButton(
+                        onPressed: _isLoading ? null : () => context.pop(),
+                        child: const Text('Cancel'),
+                      ),
                     ],
                   ),
                 ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _phoneController,
-                  decoration: const InputDecoration(
-                    labelText: 'Phone (optional)',
-                    prefixIcon: Icon(Icons.phone_outlined),
-                  ),
-                  keyboardType: TextInputType.phone,
-                  textInputAction: TextInputAction.done,
-                ),
-                const SizedBox(height: 32),
-                FilledButton(
-                  onPressed: _isLoading ? null : _handleCreate,
-                  child: _isLoading
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Text('Create'),
-                ),
-                const SizedBox(height: 8),
-                TextButton(
-                  onPressed: _isLoading ? null : () => context.pop(),
-                  child: const Text('Cancel'),
-                ),
-              ],
-            ),
-          ),
-        ),
+              ),
       ),
     );
   }

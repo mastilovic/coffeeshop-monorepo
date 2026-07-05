@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../core/auth/auth_notifier.dart';
 import '../../core/auth/auth_service.dart';
@@ -24,6 +25,7 @@ class DashboardScreen extends ConsumerWidget {
         networkException: (message, _) => message,
         serverException: (message, _) => message,
         unauthorizedException: (message) => message,
+        forbiddenException: (message) => message,
         validationException: (message, _) => message,
         unknownException: (message) => message,
       );
@@ -91,7 +93,7 @@ class _DashboardBody extends ConsumerWidget {
                       ? data.notifications
                       : data.notifications.where((n) {
                           final type = n.type;
-                          return type != 'reservation_request' && type != 'review';
+                          return type != 'pending_requests' && type != 'new_reviews';
                         }).toList(),
                 ),
               ],
@@ -119,6 +121,23 @@ class _NotificationsBanner extends StatelessWidget {
   const _NotificationsBanner({required this.notifications});
 
   final List<DashboardNotification> notifications;
+
+  void _onNotificationTap(BuildContext context, DashboardNotification notification) {
+    final link = notification.link;
+    if (link != null && link.isNotEmpty) {
+      context.go(link);
+      return;
+    }
+
+    switch (notification.type) {
+      case 'pending_requests':
+        context.go('/reservations');
+      case 'new_reviews':
+        context.go('/shops');
+      default:
+        break;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -150,40 +169,47 @@ class _NotificationsBanner extends StatelessWidget {
             const SizedBox(height: 8),
             ...notifications.map((n) => Padding(
                   padding: const EdgeInsets.only(bottom: 4),
-                  child: Row(
-                    children: [
-                      Icon(
-                        _iconForType(n.type),
-                        size: 16,
-                        color: Theme.of(context).colorScheme.onPrimaryContainer,
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          n.message,
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: Theme.of(context).colorScheme.onPrimaryContainer,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(8),
+                    onTap: () => _onNotificationTap(context, n),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      child: Row(
+                        children: [
+                          Icon(
+                            _iconForType(n.type),
+                            size: 16,
+                            color: Theme.of(context).colorScheme.onPrimaryContainer,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              n.message,
+                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: Theme.of(context).colorScheme.onPrimaryContainer,
+                                  ),
+                            ),
+                          ),
+                          if (n.count > 0)
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 2,
                               ),
-                        ),
+                              decoration: BoxDecoration(
+                                color: Theme.of(context).colorScheme.primary,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Text(
+                                n.count.toString(),
+                                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                      color: Theme.of(context).colorScheme.onPrimary,
+                                    ),
+                              ),
+                            ),
+                        ],
                       ),
-                      if (n.count > 0)
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.primary,
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Text(
-                            n.count.toString(),
-                            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                  color: Theme.of(context).colorScheme.onPrimary,
-                                ),
-                          ),
-                        ),
-                    ],
+                    ),
                   ),
                 )),
           ],
@@ -194,9 +220,9 @@ class _NotificationsBanner extends StatelessWidget {
 
   IconData _iconForType(String type) {
     switch (type) {
-      case 'reservation_request':
+      case 'pending_requests':
         return Icons.event_seat;
-      case 'review':
+      case 'new_reviews':
         return Icons.rate_review;
       default:
         return Icons.notifications;

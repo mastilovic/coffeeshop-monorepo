@@ -25,6 +25,10 @@ class ReservationRequestResponseDto with _$ReservationRequestResponseDto {
       _$ReservationRequestResponseDtoFromJson(json);
 }
 
+extension ReservationRequestResponseDtoX on ReservationRequestResponseDto {
+  String? get resolvedShopId => shopId ?? shop?['id'] as String?;
+}
+
 @freezed
 class ReservationRequestCreateRequest with _$ReservationRequestCreateRequest {
   const factory ReservationRequestCreateRequest({

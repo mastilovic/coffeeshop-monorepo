@@ -7,6 +7,7 @@ import '../../core/auth/user_permissions.dart';
 import '../../core/utils/api_error.dart';
 import '../../data/models/shop_response_dto.dart';
 import '../../data/services/shop_api_service.dart';
+import '../../shared/widgets/city_search_select.dart';
 import '../../shared/widgets/confirm_dialog.dart';
 import '../../shared/widgets/empty_state_view.dart';
 import '../../shared/widgets/error_view.dart';
@@ -14,12 +15,25 @@ import '../../shared/widgets/loading_indicator.dart';
 import '../../shared/widgets/pagination_controls.dart';
 import '../../shared/widgets/search_bar.dart';
 import '../../shared/widgets/shop_card.dart';
+import '../dashboard/dashboard_provider.dart';
 import '../shop_details/shop_manage_permission.dart';
 import 'shop_providers.dart';
 
 bool isShopFavourite(WidgetRef ref, String shopId) {
   final favourites = ref.watch(authNotifierProvider).user?.favouriteShops ?? [];
   return favourites.any((shop) => shop.id == shopId);
+}
+
+(List<ShopResponseDto> favourites, List<ShopResponseDto> others) splitShopsByFavourite(
+  WidgetRef ref,
+  List<ShopResponseDto> shops,
+) {
+  final favouriteShops = <ShopResponseDto>[];
+  final otherShops = <ShopResponseDto>[];
+  for (final shop in shops) {
+    (isShopFavourite(ref, shop.id) ? favouriteShops : otherShops).add(shop);
+  }
+  return (favouriteShops, otherShops);
 }
 
 bool matchesShopFilters(ShopResponseDto shop, ShopListParams params) {
@@ -47,7 +61,6 @@ class ShopListScreen extends ConsumerStatefulWidget {
 
 class _ShopListScreenState extends ConsumerState<ShopListScreen> {
   final _searchController = TextEditingController();
-  int? _selectedCityIndex;
 
   bool _canCreateShop(WidgetRef ref) {
     final permissions = ref.watch(userPermissionsProvider).valueOrNull;
@@ -70,7 +83,7 @@ class _ShopListScreenState extends ConsumerState<ShopListScreen> {
         await api.addFavourite(shop.id);
       }
       await ref.read(authNotifierProvider.notifier).refreshProfile();
-      ref.invalidate(shopListProvider);
+      ref.invalidate(dashboardProvider);
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -155,7 +168,7 @@ class _ShopListScreenState extends ConsumerState<ShopListScreen> {
   @override
   Widget build(BuildContext context) {
     final shopListAsync = ref.watch(shopListProvider);
-    final citiesAsync = ref.watch(citiesProvider);
+    final params = ref.watch(shopListParamsProvider);
     ref.watch(ownedShopsProvider);
 
     return Scaffold(
@@ -176,46 +189,28 @@ class _ShopListScreenState extends ConsumerState<ShopListScreen> {
               controller: _searchController,
               hintText: 'Search shops...',
               onChanged: (String value) {
-                ref.read(shopListParamsProvider.notifier).state =
-                    ref.read(shopListParamsProvider).copyWith(query: value, page: 0);
+                ref.read(shopListParamsProvider.notifier).update(
+                      (current) => current.copyWith(query: value, page: 0),
+                    );
               },
             ),
           ),
-          citiesAsync.when(
-            loading: () => const SizedBox.shrink(),
-            error: (_, __) => const SizedBox.shrink(),
-            data: (cities) {
-              if (cities.isEmpty) return const SizedBox.shrink();
-              final tabs = ['All', ...cities];
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: SizedBox(
-                  height: 40,
-                  child: ListView.separated(
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    itemCount: tabs.length,
-                    separatorBuilder: (_, __) => const SizedBox(width: 8),
-                    itemBuilder: (context, index) {
-                      final isSelected = index == (_selectedCityIndex ?? 0);
-                      return ChoiceChip(
-                        label: Text(tabs[index]),
-                        selected: isSelected,
-                        onSelected: (_) {
-                          setState(() => _selectedCityIndex = index);
-                          final params = ref.read(shopListParamsProvider);
-                          ref.read(shopListParamsProvider.notifier).state =
-                              params.copyWith(
-                            city: index == 0 ? null : tabs[index],
-                            page: 0,
-                          );
-                        },
-                      );
-                    },
-                  ),
-                ),
-              );
-            },
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+            child: CitySearchSelect(
+              value: params.city,
+              allowAll: true,
+              hint: 'All cities',
+              onChanged: (city) {
+                ref.read(shopListParamsProvider.notifier).update(
+                      (current) => current.copyWith(
+                        city: city,
+                        clearCity: city == null,
+                        page: 0,
+                      ),
+                    );
+              },
+            ),
           ),
           Expanded(
             child: shopListAsync.when(
@@ -225,15 +220,25 @@ class _ShopListScreenState extends ConsumerState<ShopListScreen> {
                 onRetry: () => ref.invalidate(shopListProvider),
               ),
               data: (result) {
-                final owned = ref.watch(ownedShopsProvider).valueOrNull ?? [];
-                final params = ref.watch(shopListParamsProvider);
+                final isShopOwner =
+                    ref.watch(userPermissionsProvider).valueOrNull?.isShopOwner ??
+                        false;
+                final owned = isShopOwner
+                    ? (ref.watch(ownedShopsProvider).valueOrNull ?? [])
+                    : <ShopResponseDto>[];
                 final ownedIds = owned.map((shop) => shop.id).toSet();
                 final myShops =
                     owned.where((shop) => matchesShopFilters(shop, params)).toList();
-                final otherShops =
-                    result.shops.where((shop) => !ownedIds.contains(shop.id)).toList();
+                final otherShops = result.shops
+                    .where((shop) => !ownedIds.contains(shop.id))
+                    .where((shop) => matchesShopFilters(shop, params))
+                    .toList();
+                final (favouriteOtherShops, remainingOtherShops) =
+                    splitShopsByFavourite(ref, otherShops);
 
-                if (myShops.isEmpty && otherShops.isEmpty) {
+                if (myShops.isEmpty &&
+                    favouriteOtherShops.isEmpty &&
+                    remainingOtherShops.isEmpty) {
                   return const EmptyStateView(
                     icon: Icons.store,
                     message: 'No shops found',
@@ -267,14 +272,29 @@ class _ShopListScreenState extends ConsumerState<ShopListScreen> {
                                     ),
                                   ),
                                 ],
-                                if (otherShops.isNotEmpty) ...[
+                                if (favouriteOtherShops.isNotEmpty) ...[
                                   SliverToBoxAdapter(
-                                    child: _buildSectionTitle('All shops'),
+                                    child: _buildSectionTitle('Your communities'),
+                                  ),
+                                  SliverPadding(
+                                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                                    sliver: _buildShopGrid(
+                                      shops: favouriteOtherShops,
+                                      crossAxisCount: crossAxisCount,
+                                      isOwned: false,
+                                    ),
+                                  ),
+                                ],
+                                if (remainingOtherShops.isNotEmpty) ...[
+                                  SliverToBoxAdapter(
+                                    child: _buildSectionTitle(
+                                      favouriteOtherShops.isNotEmpty ? 'All shops' : 'Shops',
+                                    ),
                                   ),
                                   SliverPadding(
                                     padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                                     sliver: _buildShopGrid(
-                                      shops: otherShops,
+                                      shops: remainingOtherShops,
                                       crossAxisCount: crossAxisCount,
                                       isOwned: false,
                                     ),
@@ -284,12 +304,12 @@ class _ShopListScreenState extends ConsumerState<ShopListScreen> {
                             ),
                           ),
                           PaginationControls(
-                            currentPage: ref.read(shopListParamsProvider).page,
+                            currentPage: params.page,
                             totalPages: result.totalPages,
                             onPageChanged: (page) {
-                              final params = ref.read(shopListParamsProvider);
-                              ref.read(shopListParamsProvider.notifier).state =
-                                  params.copyWith(page: page);
+                              ref.read(shopListParamsProvider.notifier).update(
+                                    (current) => current.copyWith(page: page),
+                                  );
                             },
                           ),
                         ],

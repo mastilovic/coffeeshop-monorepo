@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart' hide SearchBar;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/auth/auth_notifier.dart';
 import '../../core/auth/user_permissions.dart';
 import '../../core/auth/user_role.dart';
-import '../../core/auth/auth_notifier.dart';
+import '../../core/utils/api_error.dart';
 import '../../data/models/user_list_item_dto.dart';
+import '../../data/services/user_api_service.dart';
 import '../../shared/widgets/confirm_dialog.dart';
 import '../../shared/widgets/empty_state_view.dart';
 import '../../shared/widgets/error_view.dart';
 import '../../shared/widgets/loading_indicator.dart';
+import '../../shared/widgets/form_select.dart';
 import '../../shared/widgets/search_bar.dart';
 import 'user_providers.dart';
 
@@ -100,6 +103,8 @@ class _UserTile extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final permissions = ref.watch(userPermissionsProvider).valueOrNull;
     final isAdmin = permissions?.isAdmin ?? false;
+    final currentUserId = ref.watch(authNotifierProvider).user?.id;
+    final canEdit = isAdmin || user.id == currentUserId;
 
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
@@ -127,15 +132,20 @@ class _UserTile extends ConsumerWidget {
                 style: Theme.of(context).textTheme.labelSmall,
               ),
             ),
-            if (isAdmin)
+            if (canEdit || isAdmin)
               PopupMenuButton<String>(
                 onSelected: (value) {
-                  if (value == 'delete') {
+                  if (value == 'edit') {
+                    _showEditDialog(context, ref, isAdmin);
+                  } else if (value == 'delete') {
                     _confirmDelete(context, ref);
                   }
                 },
                 itemBuilder: (context) => [
-                  const PopupMenuItem(value: 'delete', child: Text('Delete')),
+                  if (canEdit)
+                    const PopupMenuItem(value: 'edit', child: Text('Edit')),
+                  if (isAdmin)
+                    const PopupMenuItem(value: 'delete', child: Text('Delete')),
                 ],
               ),
           ],
@@ -144,8 +154,121 @@ class _UserTile extends ConsumerWidget {
     );
   }
 
-  Color _colorForType(String type, BuildContext context) {
-    return UserRole.fromString(type).displayColor(context);
+  Future<void> _showEditDialog(BuildContext context, WidgetRef ref, bool isAdmin) async {
+    Map<String, dynamic> userData;
+    try {
+      userData = await ref.read(userApiServiceProvider).getById(user.id);
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to load user: ${formatApiError(e)}')),
+        );
+      }
+      return;
+    }
+
+    final nameController = TextEditingController(text: user.name);
+    final usernameController = TextEditingController(text: user.username);
+    final emailController = TextEditingController(text: userData['email'] as String? ?? '');
+    var selectedUserType = user.userType;
+
+    if (!context.mounted) {
+      nameController.dispose();
+      usernameController.dispose();
+      emailController.dispose();
+      return;
+    }
+
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: Text('Edit ${user.name}'),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: nameController,
+                      decoration: const InputDecoration(labelText: 'Name'),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: usernameController,
+                      decoration: const InputDecoration(labelText: 'Username'),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: emailController,
+                      decoration: const InputDecoration(labelText: 'Email'),
+                      keyboardType: TextInputType.emailAddress,
+                    ),
+                    if (isAdmin) ...[
+                      const SizedBox(height: 12),
+                      FormSelect<String>(
+                        label: 'Account type',
+                        value: selectedUserType,
+                        items: UserRole.values.map((role) => role.name).toList(),
+                        itemLabel: (value) => UserRole.fromString(value).displayName,
+                        onChanged: (value) {
+                          if (value != null) {
+                            setDialogState(() => selectedUserType = value);
+                          }
+                        },
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext),
+                  child: const Text('Cancel'),
+                ),
+                FilledButton(
+                  onPressed: () async {
+                    try {
+                      final payload = <String, dynamic>{
+                        'name': nameController.text.trim(),
+                        'username': usernameController.text.trim(),
+                        'email': emailController.text.trim(),
+                      };
+                      if (isAdmin) {
+                        payload['userType'] = selectedUserType;
+                      }
+                      await ref.read(userApiServiceProvider).update(user.id, payload);
+                      ref.invalidate(userListProvider);
+                      if (user.id == ref.read(authNotifierProvider).user?.id) {
+                        await ref.read(authNotifierProvider.notifier).refreshProfile();
+                      }
+                      if (dialogContext.mounted) Navigator.pop(dialogContext);
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('User updated')),
+                        );
+                      }
+                    } catch (e) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Failed to update user: ${formatApiError(e)}')),
+                        );
+                      }
+                    }
+                  },
+                  child: const Text('Save'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    nameController.dispose();
+    usernameController.dispose();
+    emailController.dispose();
   }
 
   void _confirmDelete(BuildContext context, WidgetRef ref) async {
@@ -157,7 +280,21 @@ class _UserTile extends ConsumerWidget {
       isDestructive: true,
     );
     if (confirmed) {
-      ref.read(deleteUserProvider(user.id));
+      try {
+        await ref.read(userApiServiceProvider).delete(user.id);
+        ref.invalidate(userListProvider);
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('User deleted')),
+          );
+        }
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Failed to delete user: ${formatApiError(e)}')),
+          );
+        }
+      }
     }
   }
 }

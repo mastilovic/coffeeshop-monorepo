@@ -34,6 +34,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         networkException: (message, _) => message,
         serverException: (message, _) => message,
         unauthorizedException: (message) => message,
+        forbiddenException: (message) => message,
         validationException: (message, _) => message,
         unknownException: (message) => message,
       );

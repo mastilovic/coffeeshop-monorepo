@@ -266,6 +266,11 @@ func (h *ShopHandler) paginatedSearch(w http.ResponseWriter, r *http.Request, pa
 		query = query.Where("LOWER(name) LIKE ? OR LOWER(city) LIKE ?", like, like)
 	}
 
+	city := strings.TrimSpace(r.URL.Query().Get("city"))
+	if city != "" {
+		query = query.Where("city = ?", city)
+	}
+
 	var total int64
 	if err := query.Count(&total).Error; err != nil {
 		apperror.WriteError(w, apperror.Internal("Failed to count shops"))

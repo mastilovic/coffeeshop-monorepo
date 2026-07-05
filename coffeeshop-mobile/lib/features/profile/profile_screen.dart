@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../core/auth/auth_notifier.dart';
 import '../../core/auth/auth_service.dart';
@@ -10,15 +11,30 @@ import '../../data/services/review_api_service.dart';
 import '../../data/services/user_api_service.dart';
 
 final _userReservationsCountProvider = FutureProvider<int>((ref) async {
+  final userId = ref.watch(authNotifierProvider).user?.id;
+  if (userId == null) return 0;
+
   final api = ref.watch(reservationApiServiceProvider);
   final data = await api.getAll();
-  return data.length;
+  return data.where((entry) {
+    final user = entry['user'] as Map<String, dynamic>?;
+    final id = user?['id'] as String? ?? entry['userId'] as String?;
+    return id == userId;
+  }).length;
 });
 
 final _userReviewsCountProvider = FutureProvider<int>((ref) async {
+  final userId = ref.watch(authNotifierProvider).user?.id;
+  if (userId == null) return 0;
+
   final api = ref.watch(reviewApiServiceProvider);
   final data = await api.getAll();
-  return data.length;
+  return data.where((entry) {
+    final json = entry as Map<String, dynamic>;
+    final user = json['user'] as Map<String, dynamic>?;
+    final id = user?['id'] as String? ?? json['userId'] as String?;
+    return id == userId;
+  }).length;
 });
 
 class ProfileScreen extends ConsumerStatefulWidget {
@@ -136,6 +152,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     _buildViewMode(context, authState),
                   ],
                   const SizedBox(height: 32),
+                  OutlinedButton.icon(
+                    onPressed: () => context.push('/users'),
+                    icon: const Icon(Icons.people_outline),
+                    label: const Text('Browse Users'),
+                  ),
+                  const SizedBox(height: 16),
                   OutlinedButton.icon(
                     onPressed: () async {
                       await ref.read(authNotifierProvider.notifier).logout();

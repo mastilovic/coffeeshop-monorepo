@@ -128,6 +128,15 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                       final id = state.pathParameters['id']!;
                       return ShopDetailScreen(shopId: id);
                     },
+                    routes: [
+                      GoRoute(
+                        path: 'edit',
+                        builder: (context, state) {
+                          final id = state.pathParameters['id']!;
+                          return ShopCreateScreen(shopId: id);
+                        },
+                      ),
+                    ],
                   ),
                 ],
               ),

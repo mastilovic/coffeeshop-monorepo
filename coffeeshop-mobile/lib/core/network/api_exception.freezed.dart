@@ -23,6 +23,7 @@ mixin _$ApiException {
     required TResult Function(String message, int? statusCode) networkException,
     required TResult Function(String message, int? statusCode) serverException,
     required TResult Function(String message) unauthorizedException,
+    required TResult Function(String message) forbiddenException,
     required TResult Function(String message, Map<String, List<String>>? errors)
     validationException,
     required TResult Function(String message) unknownException,
@@ -32,6 +33,7 @@ mixin _$ApiException {
     TResult? Function(String message, int? statusCode)? networkException,
     TResult? Function(String message, int? statusCode)? serverException,
     TResult? Function(String message)? unauthorizedException,
+    TResult? Function(String message)? forbiddenException,
     TResult? Function(String message, Map<String, List<String>>? errors)?
     validationException,
     TResult? Function(String message)? unknownException,
@@ -41,6 +43,7 @@ mixin _$ApiException {
     TResult Function(String message, int? statusCode)? networkException,
     TResult Function(String message, int? statusCode)? serverException,
     TResult Function(String message)? unauthorizedException,
+    TResult Function(String message)? forbiddenException,
     TResult Function(String message, Map<String, List<String>>? errors)?
     validationException,
     TResult Function(String message)? unknownException,
@@ -52,6 +55,7 @@ mixin _$ApiException {
     required TResult Function(ServerException value) serverException,
     required TResult Function(UnauthorizedException value)
     unauthorizedException,
+    required TResult Function(ForbiddenException value) forbiddenException,
     required TResult Function(ValidationException value) validationException,
     required TResult Function(UnknownException value) unknownException,
   }) => throw _privateConstructorUsedError;
@@ -60,6 +64,7 @@ mixin _$ApiException {
     TResult? Function(NetworkException value)? networkException,
     TResult? Function(ServerException value)? serverException,
     TResult? Function(UnauthorizedException value)? unauthorizedException,
+    TResult? Function(ForbiddenException value)? forbiddenException,
     TResult? Function(ValidationException value)? validationException,
     TResult? Function(UnknownException value)? unknownException,
   }) => throw _privateConstructorUsedError;
@@ -68,6 +73,7 @@ mixin _$ApiException {
     TResult Function(NetworkException value)? networkException,
     TResult Function(ServerException value)? serverException,
     TResult Function(UnauthorizedException value)? unauthorizedException,
+    TResult Function(ForbiddenException value)? forbiddenException,
     TResult Function(ValidationException value)? validationException,
     TResult Function(UnknownException value)? unknownException,
     required TResult orElse(),
@@ -206,6 +212,7 @@ class _$NetworkExceptionImpl implements NetworkException {
     required TResult Function(String message, int? statusCode) networkException,
     required TResult Function(String message, int? statusCode) serverException,
     required TResult Function(String message) unauthorizedException,
+    required TResult Function(String message) forbiddenException,
     required TResult Function(String message, Map<String, List<String>>? errors)
     validationException,
     required TResult Function(String message) unknownException,
@@ -219,6 +226,7 @@ class _$NetworkExceptionImpl implements NetworkException {
     TResult? Function(String message, int? statusCode)? networkException,
     TResult? Function(String message, int? statusCode)? serverException,
     TResult? Function(String message)? unauthorizedException,
+    TResult? Function(String message)? forbiddenException,
     TResult? Function(String message, Map<String, List<String>>? errors)?
     validationException,
     TResult? Function(String message)? unknownException,
@@ -232,6 +240,7 @@ class _$NetworkExceptionImpl implements NetworkException {
     TResult Function(String message, int? statusCode)? networkException,
     TResult Function(String message, int? statusCode)? serverException,
     TResult Function(String message)? unauthorizedException,
+    TResult Function(String message)? forbiddenException,
     TResult Function(String message, Map<String, List<String>>? errors)?
     validationException,
     TResult Function(String message)? unknownException,
@@ -250,6 +259,7 @@ class _$NetworkExceptionImpl implements NetworkException {
     required TResult Function(ServerException value) serverException,
     required TResult Function(UnauthorizedException value)
     unauthorizedException,
+    required TResult Function(ForbiddenException value) forbiddenException,
     required TResult Function(ValidationException value) validationException,
     required TResult Function(UnknownException value) unknownException,
   }) {
@@ -262,6 +272,7 @@ class _$NetworkExceptionImpl implements NetworkException {
     TResult? Function(NetworkException value)? networkException,
     TResult? Function(ServerException value)? serverException,
     TResult? Function(UnauthorizedException value)? unauthorizedException,
+    TResult? Function(ForbiddenException value)? forbiddenException,
     TResult? Function(ValidationException value)? validationException,
     TResult? Function(UnknownException value)? unknownException,
   }) {
@@ -274,6 +285,7 @@ class _$NetworkExceptionImpl implements NetworkException {
     TResult Function(NetworkException value)? networkException,
     TResult Function(ServerException value)? serverException,
     TResult Function(UnauthorizedException value)? unauthorizedException,
+    TResult Function(ForbiddenException value)? forbiddenException,
     TResult Function(ValidationException value)? validationException,
     TResult Function(UnknownException value)? unknownException,
     required TResult orElse(),
@@ -392,6 +404,7 @@ class _$ServerExceptionImpl implements ServerException {
     required TResult Function(String message, int? statusCode) networkException,
     required TResult Function(String message, int? statusCode) serverException,
     required TResult Function(String message) unauthorizedException,
+    required TResult Function(String message) forbiddenException,
     required TResult Function(String message, Map<String, List<String>>? errors)
     validationException,
     required TResult Function(String message) unknownException,
@@ -405,6 +418,7 @@ class _$ServerExceptionImpl implements ServerException {
     TResult? Function(String message, int? statusCode)? networkException,
     TResult? Function(String message, int? statusCode)? serverException,
     TResult? Function(String message)? unauthorizedException,
+    TResult? Function(String message)? forbiddenException,
     TResult? Function(String message, Map<String, List<String>>? errors)?
     validationException,
     TResult? Function(String message)? unknownException,
@@ -418,6 +432,7 @@ class _$ServerExceptionImpl implements ServerException {
     TResult Function(String message, int? statusCode)? networkException,
     TResult Function(String message, int? statusCode)? serverException,
     TResult Function(String message)? unauthorizedException,
+    TResult Function(String message)? forbiddenException,
     TResult Function(String message, Map<String, List<String>>? errors)?
     validationException,
     TResult Function(String message)? unknownException,
@@ -436,6 +451,7 @@ class _$ServerExceptionImpl implements ServerException {
     required TResult Function(ServerException value) serverException,
     required TResult Function(UnauthorizedException value)
     unauthorizedException,
+    required TResult Function(ForbiddenException value) forbiddenException,
     required TResult Function(ValidationException value) validationException,
     required TResult Function(UnknownException value) unknownException,
   }) {
@@ -448,6 +464,7 @@ class _$ServerExceptionImpl implements ServerException {
     TResult? Function(NetworkException value)? networkException,
     TResult? Function(ServerException value)? serverException,
     TResult? Function(UnauthorizedException value)? unauthorizedException,
+    TResult? Function(ForbiddenException value)? forbiddenException,
     TResult? Function(ValidationException value)? validationException,
     TResult? Function(UnknownException value)? unknownException,
   }) {
@@ -460,6 +477,7 @@ class _$ServerExceptionImpl implements ServerException {
     TResult Function(NetworkException value)? networkException,
     TResult Function(ServerException value)? serverException,
     TResult Function(UnauthorizedException value)? unauthorizedException,
+    TResult Function(ForbiddenException value)? forbiddenException,
     TResult Function(ValidationException value)? validationException,
     TResult Function(UnknownException value)? unknownException,
     required TResult orElse(),
@@ -568,6 +586,7 @@ class _$UnauthorizedExceptionImpl implements UnauthorizedException {
     required TResult Function(String message, int? statusCode) networkException,
     required TResult Function(String message, int? statusCode) serverException,
     required TResult Function(String message) unauthorizedException,
+    required TResult Function(String message) forbiddenException,
     required TResult Function(String message, Map<String, List<String>>? errors)
     validationException,
     required TResult Function(String message) unknownException,
@@ -581,6 +600,7 @@ class _$UnauthorizedExceptionImpl implements UnauthorizedException {
     TResult? Function(String message, int? statusCode)? networkException,
     TResult? Function(String message, int? statusCode)? serverException,
     TResult? Function(String message)? unauthorizedException,
+    TResult? Function(String message)? forbiddenException,
     TResult? Function(String message, Map<String, List<String>>? errors)?
     validationException,
     TResult? Function(String message)? unknownException,
@@ -594,6 +614,7 @@ class _$UnauthorizedExceptionImpl implements UnauthorizedException {
     TResult Function(String message, int? statusCode)? networkException,
     TResult Function(String message, int? statusCode)? serverException,
     TResult Function(String message)? unauthorizedException,
+    TResult Function(String message)? forbiddenException,
     TResult Function(String message, Map<String, List<String>>? errors)?
     validationException,
     TResult Function(String message)? unknownException,
@@ -612,6 +633,7 @@ class _$UnauthorizedExceptionImpl implements UnauthorizedException {
     required TResult Function(ServerException value) serverException,
     required TResult Function(UnauthorizedException value)
     unauthorizedException,
+    required TResult Function(ForbiddenException value) forbiddenException,
     required TResult Function(ValidationException value) validationException,
     required TResult Function(UnknownException value) unknownException,
   }) {
@@ -624,6 +646,7 @@ class _$UnauthorizedExceptionImpl implements UnauthorizedException {
     TResult? Function(NetworkException value)? networkException,
     TResult? Function(ServerException value)? serverException,
     TResult? Function(UnauthorizedException value)? unauthorizedException,
+    TResult? Function(ForbiddenException value)? forbiddenException,
     TResult? Function(ValidationException value)? validationException,
     TResult? Function(UnknownException value)? unknownException,
   }) {
@@ -636,6 +659,7 @@ class _$UnauthorizedExceptionImpl implements UnauthorizedException {
     TResult Function(NetworkException value)? networkException,
     TResult Function(ServerException value)? serverException,
     TResult Function(UnauthorizedException value)? unauthorizedException,
+    TResult Function(ForbiddenException value)? forbiddenException,
     TResult Function(ValidationException value)? validationException,
     TResult Function(UnknownException value)? unknownException,
     required TResult orElse(),
@@ -660,6 +684,184 @@ abstract class UnauthorizedException implements ApiException {
   @JsonKey(includeFromJson: false, includeToJson: false)
   _$$UnauthorizedExceptionImplCopyWith<_$UnauthorizedExceptionImpl>
   get copyWith => throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class _$$ForbiddenExceptionImplCopyWith<$Res>
+    implements $ApiExceptionCopyWith<$Res> {
+  factory _$$ForbiddenExceptionImplCopyWith(
+    _$ForbiddenExceptionImpl value,
+    $Res Function(_$ForbiddenExceptionImpl) then,
+  ) = __$$ForbiddenExceptionImplCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call({String message});
+}
+
+/// @nodoc
+class __$$ForbiddenExceptionImplCopyWithImpl<$Res>
+    extends _$ApiExceptionCopyWithImpl<$Res, _$ForbiddenExceptionImpl>
+    implements _$$ForbiddenExceptionImplCopyWith<$Res> {
+  __$$ForbiddenExceptionImplCopyWithImpl(
+    _$ForbiddenExceptionImpl _value,
+    $Res Function(_$ForbiddenExceptionImpl) _then,
+  ) : super(_value, _then);
+
+  /// Create a copy of ApiException
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({Object? message = null}) {
+    return _then(
+      _$ForbiddenExceptionImpl(
+        message: null == message
+            ? _value.message
+            : message // ignore: cast_nullable_to_non_nullable
+                  as String,
+      ),
+    );
+  }
+}
+
+/// @nodoc
+
+class _$ForbiddenExceptionImpl implements ForbiddenException {
+  const _$ForbiddenExceptionImpl({required this.message});
+
+  @override
+  final String message;
+
+  @override
+  String toString() {
+    return 'ApiException.forbiddenException(message: $message)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$ForbiddenExceptionImpl &&
+            (identical(other.message, message) || other.message == message));
+  }
+
+  @override
+  int get hashCode => Object.hash(runtimeType, message);
+
+  /// Create a copy of ApiException
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$ForbiddenExceptionImplCopyWith<_$ForbiddenExceptionImpl> get copyWith =>
+      __$$ForbiddenExceptionImplCopyWithImpl<_$ForbiddenExceptionImpl>(
+        this,
+        _$identity,
+      );
+
+  @override
+  @optionalTypeArgs
+  TResult when<TResult extends Object?>({
+    required TResult Function(String message, int? statusCode) networkException,
+    required TResult Function(String message, int? statusCode) serverException,
+    required TResult Function(String message) unauthorizedException,
+    required TResult Function(String message) forbiddenException,
+    required TResult Function(String message, Map<String, List<String>>? errors)
+    validationException,
+    required TResult Function(String message) unknownException,
+  }) {
+    return forbiddenException(message);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? whenOrNull<TResult extends Object?>({
+    TResult? Function(String message, int? statusCode)? networkException,
+    TResult? Function(String message, int? statusCode)? serverException,
+    TResult? Function(String message)? unauthorizedException,
+    TResult? Function(String message)? forbiddenException,
+    TResult? Function(String message, Map<String, List<String>>? errors)?
+    validationException,
+    TResult? Function(String message)? unknownException,
+  }) {
+    return forbiddenException?.call(message);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeWhen<TResult extends Object?>({
+    TResult Function(String message, int? statusCode)? networkException,
+    TResult Function(String message, int? statusCode)? serverException,
+    TResult Function(String message)? unauthorizedException,
+    TResult Function(String message)? forbiddenException,
+    TResult Function(String message, Map<String, List<String>>? errors)?
+    validationException,
+    TResult Function(String message)? unknownException,
+    required TResult orElse(),
+  }) {
+    if (forbiddenException != null) {
+      return forbiddenException(message);
+    }
+    return orElse();
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult map<TResult extends Object?>({
+    required TResult Function(NetworkException value) networkException,
+    required TResult Function(ServerException value) serverException,
+    required TResult Function(UnauthorizedException value)
+    unauthorizedException,
+    required TResult Function(ForbiddenException value) forbiddenException,
+    required TResult Function(ValidationException value) validationException,
+    required TResult Function(UnknownException value) unknownException,
+  }) {
+    return forbiddenException(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? mapOrNull<TResult extends Object?>({
+    TResult? Function(NetworkException value)? networkException,
+    TResult? Function(ServerException value)? serverException,
+    TResult? Function(UnauthorizedException value)? unauthorizedException,
+    TResult? Function(ForbiddenException value)? forbiddenException,
+    TResult? Function(ValidationException value)? validationException,
+    TResult? Function(UnknownException value)? unknownException,
+  }) {
+    return forbiddenException?.call(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeMap<TResult extends Object?>({
+    TResult Function(NetworkException value)? networkException,
+    TResult Function(ServerException value)? serverException,
+    TResult Function(UnauthorizedException value)? unauthorizedException,
+    TResult Function(ForbiddenException value)? forbiddenException,
+    TResult Function(ValidationException value)? validationException,
+    TResult Function(UnknownException value)? unknownException,
+    required TResult orElse(),
+  }) {
+    if (forbiddenException != null) {
+      return forbiddenException(this);
+    }
+    return orElse();
+  }
+}
+
+abstract class ForbiddenException implements ApiException {
+  const factory ForbiddenException({required final String message}) =
+      _$ForbiddenExceptionImpl;
+
+  @override
+  String get message;
+
+  /// Create a copy of ApiException
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  _$$ForbiddenExceptionImplCopyWith<_$ForbiddenExceptionImpl> get copyWith =>
+      throw _privateConstructorUsedError;
 }
 
 /// @nodoc
@@ -761,6 +963,7 @@ class _$ValidationExceptionImpl implements ValidationException {
     required TResult Function(String message, int? statusCode) networkException,
     required TResult Function(String message, int? statusCode) serverException,
     required TResult Function(String message) unauthorizedException,
+    required TResult Function(String message) forbiddenException,
     required TResult Function(String message, Map<String, List<String>>? errors)
     validationException,
     required TResult Function(String message) unknownException,
@@ -774,6 +977,7 @@ class _$ValidationExceptionImpl implements ValidationException {
     TResult? Function(String message, int? statusCode)? networkException,
     TResult? Function(String message, int? statusCode)? serverException,
     TResult? Function(String message)? unauthorizedException,
+    TResult? Function(String message)? forbiddenException,
     TResult? Function(String message, Map<String, List<String>>? errors)?
     validationException,
     TResult? Function(String message)? unknownException,
@@ -787,6 +991,7 @@ class _$ValidationExceptionImpl implements ValidationException {
     TResult Function(String message, int? statusCode)? networkException,
     TResult Function(String message, int? statusCode)? serverException,
     TResult Function(String message)? unauthorizedException,
+    TResult Function(String message)? forbiddenException,
     TResult Function(String message, Map<String, List<String>>? errors)?
     validationException,
     TResult Function(String message)? unknownException,
@@ -805,6 +1010,7 @@ class _$ValidationExceptionImpl implements ValidationException {
     required TResult Function(ServerException value) serverException,
     required TResult Function(UnauthorizedException value)
     unauthorizedException,
+    required TResult Function(ForbiddenException value) forbiddenException,
     required TResult Function(ValidationException value) validationException,
     required TResult Function(UnknownException value) unknownException,
   }) {
@@ -817,6 +1023,7 @@ class _$ValidationExceptionImpl implements ValidationException {
     TResult? Function(NetworkException value)? networkException,
     TResult? Function(ServerException value)? serverException,
     TResult? Function(UnauthorizedException value)? unauthorizedException,
+    TResult? Function(ForbiddenException value)? forbiddenException,
     TResult? Function(ValidationException value)? validationException,
     TResult? Function(UnknownException value)? unknownException,
   }) {
@@ -829,6 +1036,7 @@ class _$ValidationExceptionImpl implements ValidationException {
     TResult Function(NetworkException value)? networkException,
     TResult Function(ServerException value)? serverException,
     TResult Function(UnauthorizedException value)? unauthorizedException,
+    TResult Function(ForbiddenException value)? forbiddenException,
     TResult Function(ValidationException value)? validationException,
     TResult Function(UnknownException value)? unknownException,
     required TResult orElse(),
@@ -936,6 +1144,7 @@ class _$UnknownExceptionImpl implements UnknownException {
     required TResult Function(String message, int? statusCode) networkException,
     required TResult Function(String message, int? statusCode) serverException,
     required TResult Function(String message) unauthorizedException,
+    required TResult Function(String message) forbiddenException,
     required TResult Function(String message, Map<String, List<String>>? errors)
     validationException,
     required TResult Function(String message) unknownException,
@@ -949,6 +1158,7 @@ class _$UnknownExceptionImpl implements UnknownException {
     TResult? Function(String message, int? statusCode)? networkException,
     TResult? Function(String message, int? statusCode)? serverException,
     TResult? Function(String message)? unauthorizedException,
+    TResult? Function(String message)? forbiddenException,
     TResult? Function(String message, Map<String, List<String>>? errors)?
     validationException,
     TResult? Function(String message)? unknownException,
@@ -962,6 +1172,7 @@ class _$UnknownExceptionImpl implements UnknownException {
     TResult Function(String message, int? statusCode)? networkException,
     TResult Function(String message, int? statusCode)? serverException,
     TResult Function(String message)? unauthorizedException,
+    TResult Function(String message)? forbiddenException,
     TResult Function(String message, Map<String, List<String>>? errors)?
     validationException,
     TResult Function(String message)? unknownException,
@@ -980,6 +1191,7 @@ class _$UnknownExceptionImpl implements UnknownException {
     required TResult Function(ServerException value) serverException,
     required TResult Function(UnauthorizedException value)
     unauthorizedException,
+    required TResult Function(ForbiddenException value) forbiddenException,
     required TResult Function(ValidationException value) validationException,
     required TResult Function(UnknownException value) unknownException,
   }) {
@@ -992,6 +1204,7 @@ class _$UnknownExceptionImpl implements UnknownException {
     TResult? Function(NetworkException value)? networkException,
     TResult? Function(ServerException value)? serverException,
     TResult? Function(UnauthorizedException value)? unauthorizedException,
+    TResult? Function(ForbiddenException value)? forbiddenException,
     TResult? Function(ValidationException value)? validationException,
     TResult? Function(UnknownException value)? unknownException,
   }) {
@@ -1004,6 +1217,7 @@ class _$UnknownExceptionImpl implements UnknownException {
     TResult Function(NetworkException value)? networkException,
     TResult Function(ServerException value)? serverException,
     TResult Function(UnauthorizedException value)? unauthorizedException,
+    TResult Function(ForbiddenException value)? forbiddenException,
     TResult Function(ValidationException value)? validationException,
     TResult Function(UnknownException value)? unknownException,
     required TResult orElse(),

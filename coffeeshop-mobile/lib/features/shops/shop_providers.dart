@@ -23,10 +23,21 @@ class ShopListParams {
   }) {
     return ShopListParams(
       query: query ?? this.query,
-      city: clearCity ? null : city ?? this.city,
+      city: clearCity ? null : (city ?? this.city),
       page: page ?? this.page,
     );
   }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ShopListParams &&
+          query == other.query &&
+          city == other.city &&
+          page == other.page;
+
+  @override
+  int get hashCode => Object.hash(query, city, page);
 }
 
 class ShopListResult {
@@ -51,6 +62,7 @@ final shopListProvider = FutureProvider<ShopListResult>((ref) async {
 
   final data = await apiService.getShops(
     q: params.query.isEmpty ? null : params.query,
+    city: params.city,
     page: params.page,
   );
 

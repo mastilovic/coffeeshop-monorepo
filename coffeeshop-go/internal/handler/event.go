@@ -201,11 +201,13 @@ func (h *EventHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if req.ShopID != nil && *req.ShopID != "" {
-		if err := h.authorizer.RequireShopOwnerOrEmployeeOrAdmin(r.Context(), *req.ShopID); err != nil {
-			apperror.WriteError(w, err)
-			return
-		}
+	if req.ShopID == nil || *req.ShopID == "" {
+		apperror.WriteError(w, apperror.BadRequest("shopId is required"))
+		return
+	}
+	if err := h.authorizer.RequireShopOwnerOrEmployeeOrAdmin(r.Context(), *req.ShopID); err != nil {
+		apperror.WriteError(w, err)
+		return
 	}
 
 	event := model.Event{
@@ -237,6 +239,12 @@ func (h *EventHandler) Update(w http.ResponseWriter, r *http.Request) {
 
 	if existing.ShopID != nil && *existing.ShopID != "" {
 		if err := h.authorizer.RequireShopOwnerOrEmployeeOrAdmin(r.Context(), *existing.ShopID); err != nil {
+			apperror.WriteError(w, err)
+			return
+		}
+	} else {
+		// Legacy events without a shop can only be managed by admins.
+		if err := h.authorizer.RequireAdmin(r.Context()); err != nil {
 			apperror.WriteError(w, err)
 			return
 		}
@@ -272,6 +280,12 @@ func (h *EventHandler) Delete(w http.ResponseWriter, r *http.Request) {
 
 	if existing.ShopID != nil && *existing.ShopID != "" {
 		if err := h.authorizer.RequireShopOwnerOrEmployeeOrAdmin(r.Context(), *existing.ShopID); err != nil {
+			apperror.WriteError(w, err)
+			return
+		}
+	} else {
+		// Legacy events without a shop can only be managed by admins.
+		if err := h.authorizer.RequireAdmin(r.Context()); err != nil {
 			apperror.WriteError(w, err)
 			return
 		}
