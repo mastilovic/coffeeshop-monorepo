@@ -1,10 +1,12 @@
-import { Component, input, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, input, OnInit, signal } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs';
-import { DatePipe, NgFor, NgIf } from '@angular/common';
+import { NgFor, NgIf } from '@angular/common';
 import { AuthService } from '../../services/auth.service';
 import { ProfileService } from '../../services/profile.service';
 import { ShopEmployeeService } from '../../services/shop-employee.service';
+import { SubscriptionService } from '../../services/subscription.service';
 import { UserService } from '../../services/user.service';
 import { ShopEmployeeDto } from '../../models/shop-employee.model';
 import { UserListItemDto } from '../../models/user.model';
@@ -12,7 +14,7 @@ import { UserListItemDto } from '../../models/user.model';
 @Component({
   selector: 'app-employee-management',
   standalone: true,
-  imports: [ReactiveFormsModule, NgFor, NgIf, DatePipe],
+  imports: [ReactiveFormsModule, NgFor, NgIf, RouterLink],
   template: `
     <div class="employee-management">
       <h3>Employees</h3>
@@ -36,26 +38,35 @@ import { UserListItemDto } from '../../models/user.model';
       </div>
 
       <div *ngIf="canManage()" class="add-employee">
-        <h4>Add Employee</h4>
-        <input
-          type="text"
-          [formControl]="searchControl"
-          placeholder="Search users by name or email..."
-          class="search-input"
-        />
-        <div *ngIf="searchResults().length > 0" class="search-results">
-          <div
-            *ngFor="let user of searchResults()"
-            class="search-result-item"
-            (click)="addEmployee(user)"
-          >
-            <span>{{ user.name }}</span>
-            <span class="user-email">{{ user.username }}</span>
+        <div class="add-employee-header">
+          <h4>Add Employee</h4>
+          <span *ngIf="employeesQuotaLabel() as quota" class="quota-label">{{ quota }}</span>
+        </div>
+        <ng-container *ngIf="canAddEmployee(); else employeeUpgrade">
+          <input
+            type="text"
+            [formControl]="searchControl"
+            placeholder="Search users by name or email..."
+            class="search-input"
+          />
+          <div *ngIf="searchResults().length > 0" class="search-results">
+            <div
+              *ngFor="let user of searchResults()"
+              class="search-result-item"
+              (click)="addEmployee(user)"
+            >
+              <span>{{ user.name }}</span>
+              <span class="user-email">{{ user.username }}</span>
+            </div>
           </div>
-        </div>
-        <div *ngIf="searchControl.value && searchResults().length === 0 && !searching()" class="no-results">
-          No users found.
-        </div>
+          <div *ngIf="searchControl.value && searchResults().length === 0 && !searching()" class="no-results">
+            No users found.
+          </div>
+        </ng-container>
+        <ng-template #employeeUpgrade>
+          <p class="upgrade-hint">Employee seats require Growth or higher.</p>
+          <a routerLink="/profile/billing" class="upgrade-link">Upgrade to Growth</a>
+        </ng-template>
       </div>
     </div>
   `,
@@ -175,10 +186,41 @@ import { UserListItemDto } from '../../models/user.model';
       font-size: 1rem;
       color: #e0e0e0;
     }
+    .add-employee-header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 0.75rem;
+      margin-bottom: 0.5rem;
+    }
+    .quota-label {
+      font-size: 0.8125rem;
+      color: #888;
+    }
+    .upgrade-hint {
+      margin: 0 0 0.5rem;
+      color: #888;
+      font-size: 0.875rem;
+    }
+    .upgrade-link {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: #d4a574;
+      text-decoration: none;
+    }
+    .upgrade-link:hover {
+      text-decoration: underline;
+    }
   `],
 })
 export class EmployeeManagementComponent implements OnInit {
   shopId = input.required<string>();
+
+  private readonly authService = inject(AuthService);
+  private readonly profileService = inject(ProfileService);
+  private readonly shopEmployeeService = inject(ShopEmployeeService);
+  private readonly subscriptionService = inject(SubscriptionService);
+  private readonly userService = inject(UserService);
 
   searchControl = new FormControl('', { nonNullable: true });
 
@@ -186,12 +228,20 @@ export class EmployeeManagementComponent implements OnInit {
   searchResults = signal<UserListItemDto[]>([]);
   searching = signal(false);
 
-  constructor(
-    private readonly authService: AuthService,
-    private readonly profileService: ProfileService,
-    private readonly shopEmployeeService: ShopEmployeeService,
-    private readonly userService: UserService,
-  ) {}
+  readonly canAddEmployee = computed(() => {
+    if (!this.canManage()) return false;
+    if (!this.subscriptionService.canUseFeature('employee_assign')) return false;
+    const limit = this.subscriptionService.getLimit('employees');
+    if (!limit || limit.max < 0) return true;
+    return limit.used < limit.max;
+  });
+
+  readonly employeesQuotaLabel = computed(() => {
+    if (!this.canManage()) return null;
+    const limit = this.subscriptionService.getLimit('employees');
+    if (!limit || limit.max < 0) return null;
+    return `${limit.used} / ${limit.max} employees`;
+  });
 
   ngOnInit(): void {
     this.loadEmployees();

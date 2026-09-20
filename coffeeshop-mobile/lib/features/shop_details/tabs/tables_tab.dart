@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/auth/user_permissions.dart';
 import '../../../core/utils/api_error.dart';
 import '../../../data/services/table_api_service.dart';
 import '../../../shared/widgets/empty_state_view.dart';
+import '../../../shared/widgets/upgrade_prompt.dart';
 import '../../shops/shop_providers.dart';
 
 class TablesTab extends ConsumerStatefulWidget {
@@ -112,28 +114,40 @@ class _TablesTabState extends ConsumerState<TablesTab> {
   @override
   Widget build(BuildContext context) {
     final tables = widget.tables ?? [];
+    final permissions = ref.watch(userPermissionsProvider).valueOrNull;
+    final canAdd = widget.canManage && (permissions?.canAddTable ?? true);
+    final showUpgrade = widget.canManage && (permissions?.showTablesUpgrade ?? false);
+    final quotaLabel = permissions?.tablesQuotaLabel;
 
     return Column(
       children: [
         if (widget.canManage)
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-            child: Row(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Expanded(
-                  child: FilledButton.tonalIcon(
-                    onPressed: () => setState(() {
-                      _showForm = !_showForm;
-                      if (!_showForm) _resetForm();
-                    }),
-                    icon: Icon(_showForm ? Icons.close : Icons.add),
-                    label: Text(_showForm ? 'Cancel' : 'Add Table'),
+                if (quotaLabel != null) UsageQuotaLabel(label: quotaLabel),
+                if (showUpgrade) ...[
+                  const UpgradePromptBanner(
+                    message: 'Table limit reached. Upgrade for more tables.',
                   ),
+                  const SizedBox(height: 8),
+                ],
+                FilledButton.tonalIcon(
+                  onPressed: canAdd
+                      ? () => setState(() {
+                            _showForm = !_showForm;
+                            if (!_showForm) _resetForm();
+                          })
+                      : null,
+                  icon: Icon(_showForm ? Icons.close : Icons.add),
+                  label: Text(_showForm ? 'Cancel' : 'Add Table'),
                 ),
               ],
             ),
           ),
-        if (_showForm && widget.canManage)
+        if (_showForm && widget.canManage && canAdd)
           Padding(
             padding: const EdgeInsets.all(16),
             child: Card(
@@ -167,8 +181,8 @@ class _TablesTabState extends ConsumerState<TablesTab> {
               ? EmptyStateView(
                   icon: Icons.table_bar,
                   message: 'No tables.',
-                  actionLabel: widget.canManage && !_showForm ? 'Add Table' : null,
-                  onAction: widget.canManage && !_showForm ? () => setState(() => _showForm = true) : null,
+                  actionLabel: canAdd && !_showForm ? 'Add Table' : null,
+                  onAction: canAdd && !_showForm ? () => setState(() => _showForm = true) : null,
                 )
               : GridView.builder(
                   padding: const EdgeInsets.all(16),

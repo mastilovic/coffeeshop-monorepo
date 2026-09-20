@@ -9,17 +9,29 @@ import (
 	"github.com/mastilovic/coffeeshop-go/internal/apperror"
 	"github.com/mastilovic/coffeeshop-go/internal/auth"
 	"github.com/mastilovic/coffeeshop-go/internal/model"
+	"github.com/mastilovic/coffeeshop-go/internal/subscription"
 	"gorm.io/gorm"
 )
 
 type ShopEmployeeHandler struct {
-	db          *gorm.DB
-	authorizer  *auth.ShopAuthorizer
-	currentUser *auth.CurrentUserService
+	db           *gorm.DB
+	authorizer   *auth.ShopAuthorizer
+	currentUser  *auth.CurrentUserService
+	entitlements *subscription.EntitlementService
 }
 
-func NewShopEmployeeHandler(db *gorm.DB, authorizer *auth.ShopAuthorizer, currentUser *auth.CurrentUserService) *ShopEmployeeHandler {
-	return &ShopEmployeeHandler{db: db, authorizer: authorizer, currentUser: currentUser}
+func NewShopEmployeeHandler(
+	db *gorm.DB,
+	authorizer *auth.ShopAuthorizer,
+	currentUser *auth.CurrentUserService,
+	entitlements *subscription.EntitlementService,
+) *ShopEmployeeHandler {
+	return &ShopEmployeeHandler{
+		db:           db,
+		authorizer:   authorizer,
+		currentUser:  currentUser,
+		entitlements: entitlements,
+	}
 }
 
 type assignEmployeeRequest struct {
@@ -55,6 +67,10 @@ func (h *ShopEmployeeHandler) Assign(w http.ResponseWriter, r *http.Request) {
 
 	if err := h.authorizer.RequireShopOwnerOrAdmin(r.Context(), req.ShopID); err != nil {
 		apperror.WriteError(w, err)
+		return
+	}
+
+	if !h.requireEmployeeAssign(w, r, req.ShopID) {
 		return
 	}
 
@@ -227,4 +243,39 @@ func (h *ShopEmployeeHandler) GetMyEmployeeShops(w http.ResponseWriter, r *http.
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(shops)
+}
+
+func (h *ShopEmployeeHandler) requireEmployeeAssign(w http.ResponseWriter, r *http.Request, shopID string) bool {
+	user, err := h.currentUser.RequireCurrentUser(r.Context())
+	if err != nil {
+		apperror.WriteError(w, err)
+		return false
+	}
+
+	userID, err := uuid.Parse(user.ID)
+	if err != nil {
+		apperror.WriteError(w, apperror.Internal("Invalid user ID"))
+		return false
+	}
+
+	shopUUID, err := uuid.Parse(shopID)
+	if err != nil {
+		apperror.WriteError(w, apperror.Internal("Invalid shop ID"))
+		return false
+	}
+
+	isAdmin := h.authorizer.IsAdmin(r.Context())
+	if !subscription.RequireFeature(
+		w, r, h.entitlements,
+		userID, shopUUID, isAdmin,
+		subscription.FeatureEmployeeAssign,
+	) {
+		return false
+	}
+
+	return subscription.RequireLimit(
+		w, r, h.entitlements,
+		userID, shopUUID,
+		subscription.LimitEmployees, isAdmin,
+	)
 }

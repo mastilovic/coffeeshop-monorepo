@@ -3,11 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/auth/user_permissions.dart';
-import '../../data/models/event_response_dto.dart';
 import '../../shared/widgets/empty_state_view.dart';
 import '../../shared/widgets/error_view.dart';
+import '../../shared/widgets/event_list_card.dart';
 import '../../shared/widgets/loading_indicator.dart';
+import '../../shared/widgets/pagination_controls.dart';
 import '../../shared/widgets/search_bar.dart';
+import '../../shared/widgets/upgrade_prompt.dart';
 import 'event_providers.dart';
 
 class EventListScreen extends ConsumerWidget {
@@ -16,22 +18,37 @@ class EventListScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final eventsAsync = ref.watch(eventListProvider);
+    final filter = ref.watch(eventFilterProvider);
     final permissions = ref.watch(userPermissionsProvider).valueOrNull;
-    final canCreate = permissions?.canCreateEvent ?? false;
+    final canCreate = permissions?.canCreateEventWithSubscription ?? false;
+    final showUpgrade = permissions?.showEventCreateUpgrade ?? false;
+    final eventsQuota = permissions?.eventsQuotaLabel;
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Events'),
         actions: [
-          if (canCreate)
+          if (permissions?.canCreateEvent ?? false)
             IconButton(
               icon: const Icon(Icons.add),
-              onPressed: () => context.push('/events/new'),
+              onPressed: canCreate ? () => context.push('/events/new') : null,
             ),
         ],
       ),
       body: Column(
         children: [
+          if (showUpgrade)
+            const Padding(
+              padding: EdgeInsets.fromLTRB(16, 8, 16, 0),
+              child: UpgradePromptBanner(
+                message: 'Create events with a Growth plan or higher.',
+              ),
+            ),
+          if (eventsQuota != null)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+              child: UsageQuotaLabel(label: eventsQuota),
+            ),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
             child: SearchBar(
@@ -51,65 +68,57 @@ class EventListScreen extends ConsumerWidget {
                 message: error.toString(),
                 onRetry: () => ref.invalidate(eventListProvider),
               ),
-              data: (events) {
-                if (events.isEmpty) {
-                  return const EmptyStateView(
+              data: (result) {
+                if (result.events.isEmpty) {
+                  return EmptyStateView(
                     icon: Icons.event,
                     message: 'No events found',
+                    actionLabel: 'Browse shops',
+                    onAction: () => context.go('/shops'),
                   );
                 }
 
-                return RefreshIndicator(
-                  onRefresh: () async {
-                    ref.invalidate(eventListProvider);
-                    await ref.read(eventListProvider.future);
-                  },
-                  child: ListView.builder(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: events.length,
-                    itemBuilder: (context, index) {
-                      final event = events[index];
-                      return Card(
-                        margin: const EdgeInsets.only(bottom: 8),
-                        child: _EventListTile(event: event),
-                      );
-                    },
-                  ),
+                return Column(
+                  children: [
+                    Expanded(
+                      child: RefreshIndicator(
+                        onRefresh: () async {
+                          ref.invalidate(eventListProvider);
+                          await ref.read(eventListProvider.future);
+                        },
+                        child: ListView.builder(
+                          padding: const EdgeInsets.all(16),
+                          itemCount: result.events.length,
+                          itemBuilder: (context, index) {
+                            final event = result.events[index];
+                            return EventListCard(
+                              eventId: event.eventId,
+                              eventName: event.eventName,
+                              eventDate: event.eventDate,
+                              shopId: event.shopId,
+                              shopName: event.shopName,
+                              shopCity: event.shopCity,
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                    PaginationControls(
+                      currentPage: filter.page,
+                      totalPages: result.totalPages,
+                      onPageChanged: (page) {
+                        final current = ref.read(eventFilterProvider);
+                        ref.read(eventFilterProvider.notifier).state =
+                            current.copyWith(page: page);
+                      },
+                    ),
+                  ],
                 );
               },
             ),
           ),
         ],
       ),
-    );
-  }
-}
-
-class _EventListTile extends StatelessWidget {
-  const _EventListTile({required this.event});
-
-  final EventResponseDto event;
-
-  @override
-  Widget build(BuildContext context) {
-    return ListTile(
-      onTap: () => context.push('/events/${event.eventId}'),
-      leading: const Icon(Icons.event, color: Colors.orange, size: 32),
-      title: Text(event.eventName, style: Theme.of(context).textTheme.titleSmall),
-      subtitle: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(event.eventDate, style: Theme.of(context).textTheme.bodySmall),
-          if (event.shopName?.isNotEmpty == true)
-            Text(
-              event.shopName!,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
-            ),
-        ],
-      ),
-      trailing: const Icon(Icons.chevron_right),
     );
   }
 }

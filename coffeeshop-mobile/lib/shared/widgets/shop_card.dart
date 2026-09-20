@@ -1,5 +1,25 @@
 import 'package:flutter/material.dart';
 
+import 'image_with_placeholder.dart';
+import 'loyalty_badge.dart';
+
+/// Returns a display label for shop ratings.
+///
+/// Shows a numeric rating when [rating] is non-null and > 0 and [reviewCount]
+/// is > 0; otherwise returns "No rating yet".
+String shopRatingLabel({double? rating, int? reviewCount}) {
+  final reviews = reviewCount ?? 0;
+  if (rating == null || rating <= 0 || reviews <= 0) {
+    return 'No rating yet';
+  }
+  return '${rating.toStringAsFixed(1)} ($reviews)';
+}
+
+bool shopHasRating({double? rating, int? reviewCount}) {
+  final reviews = reviewCount ?? 0;
+  return rating != null && rating > 0 && reviews > 0;
+}
+
 class ShopCard extends StatelessWidget {
   const ShopCard({
     super.key,
@@ -9,6 +29,7 @@ class ShopCard extends StatelessWidget {
     this.reviewCount,
     this.memberCount,
     this.imageUrl,
+    this.loyaltyPlanType,
     this.isFavourite = false,
     this.isOwned = false,
     this.onTap,
@@ -23,6 +44,7 @@ class ShopCard extends StatelessWidget {
   final int? reviewCount;
   final int? memberCount;
   final String? imageUrl;
+  final String? loyaltyPlanType;
   final bool isFavourite;
   final bool isOwned;
   final VoidCallback? onTap;
@@ -35,137 +57,175 @@ class ShopCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final hasRating = shopHasRating(rating: rating, reviewCount: reviewCount);
+    final ratingText = shopRatingLabel(rating: rating, reviewCount: reviewCount);
     final cardShape = isOwned
         ? RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
             side: BorderSide(color: theme.colorScheme.primary, width: 2),
           )
-        : null;
+        : RoundedRectangleBorder(borderRadius: BorderRadius.circular(12));
 
     return Card(
       clipBehavior: Clip.antiAlias,
       shape: cardShape,
+      margin: EdgeInsets.zero,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Expanded(
-            child: InkWell(
-              onTap: onTap,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
+          InkWell(
+            onTap: onTap,
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Stack(
-                    children: [
-                      AspectRatio(
-                        aspectRatio: 16 / 10,
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: theme.colorScheme.primaryContainer,
-                          ),
-                          child: Center(
-                            child: Icon(
-                              Icons.store,
-                              size: 48,
-                              color: theme.colorScheme.onPrimaryContainer,
-                            ),
-                          ),
-                        ),
-                      ),
-                      if (isOwned)
-                        Positioned(
-                          top: 4,
-                          left: 4,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 6,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: theme.colorScheme.primary,
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: Text(
-                              'Your Shop',
-                              style: theme.textTheme.labelSmall?.copyWith(
-                                color: theme.colorScheme.onPrimary,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ),
-                      if (onFavouriteToggle != null)
-                        Positioned(
-                          top: 4,
-                          right: 4,
-                          child: IconButton(
-                            onPressed: onFavouriteToggle,
-                            icon: Icon(
-                              isFavourite ? Icons.favorite : Icons.favorite_border,
-                              color: isFavourite ? Colors.red : Colors.white,
-                            ),
-                            style: IconButton.styleFrom(
-                              backgroundColor: Colors.black26,
-                            ),
-                          ),
-                        ),
-                    ],
+                  ImageWithPlaceholder(
+                    imageUrl: imageUrl,
+                    width: 56,
+                    height: 56,
+                    borderRadius: BorderRadius.circular(8),
+                    placeholderIcon: Icons.store,
                   ),
-                  Padding(
-                    padding: const EdgeInsets.all(12),
+                  const SizedBox(width: 12),
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          name,
-                          style: theme.textTheme.titleSmall,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        if (city != null) ...[
-                          const SizedBox(height: 2),
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.location_on,
-                                size: 14,
-                                color: theme.colorScheme.onSurfaceVariant,
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                name,
+                                style: theme.textTheme.titleSmall,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
-                              const SizedBox(width: 4),
-                              Expanded(
+                            ),
+                            if (isOwned) ...[
+                              const SizedBox(width: 6),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: theme.colorScheme.primary,
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
                                 child: Text(
-                                  city!,
-                                  style: theme.textTheme.bodySmall?.copyWith(
-                                        color: theme.colorScheme.onSurfaceVariant,
-                                      ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
+                                  'Your Shop',
+                                  style: theme.textTheme.labelSmall?.copyWith(
+                                    color: theme.colorScheme.onPrimary,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                               ),
                             ],
-                          ),
-                        ],
-                        if (rating != null) ...[
-                          const SizedBox(height: 4),
+                            if (onFavouriteToggle != null)
+                              IconButton(
+                                onPressed: onFavouriteToggle,
+                                icon: Icon(
+                                  isFavourite
+                                      ? Icons.favorite
+                                      : Icons.favorite_border,
+                                  color: isFavourite
+                                      ? Colors.red
+                                      : theme.colorScheme.onSurfaceVariant,
+                                ),
+                                visualDensity: VisualDensity.compact,
+                                constraints: const BoxConstraints(
+                                  minWidth: 36,
+                                  minHeight: 36,
+                                ),
+                                padding: EdgeInsets.zero,
+                              ),
+                          ],
+                        ),
+                        if (city != null || memberCount != null) ...[
+                          const SizedBox(height: 2),
                           Row(
                             children: [
-                              const Icon(Icons.star, size: 14, color: Colors.amber),
-                              const SizedBox(width: 2),
-                              Text(
-                                rating!.toStringAsFixed(1),
-                                style: theme.textTheme.bodySmall,
-                              ),
-                              if (reviewCount != null) ...[
-                                const SizedBox(width: 4),
+                              if (city != null) ...[
+                                Icon(
+                                  Icons.location_on,
+                                  size: 14,
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                ),
+                                const SizedBox(width: 2),
+                                Flexible(
+                                  child: Text(
+                                    city!,
+                                    style: theme.textTheme.bodySmall?.copyWith(
+                                      color: theme.colorScheme.onSurfaceVariant,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                              if (city != null && memberCount != null)
                                 Text(
-                                  '($reviewCount)',
+                                  ' · ',
                                   style: theme.textTheme.bodySmall?.copyWith(
-                                        color: theme.colorScheme.onSurfaceVariant,
-                                      ),
+                                    color: theme.colorScheme.onSurfaceVariant,
+                                  ),
+                                ),
+                              if (memberCount != null) ...[
+                                Icon(
+                                  Icons.people_outline,
+                                  size: 14,
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                ),
+                                const SizedBox(width: 2),
+                                Text(
+                                  '$memberCount members',
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    color: theme.colorScheme.onSurfaceVariant,
+                                  ),
                                 ),
                               ],
                             ],
                           ),
                         ],
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            if (hasRating)
+                              const Icon(
+                                Icons.star,
+                                size: 14,
+                                color: Colors.amber,
+                              )
+                            else
+                              Icon(
+                                Icons.star_outline,
+                                size: 14,
+                                color: theme.colorScheme.onSurfaceVariant,
+                              ),
+                            const SizedBox(width: 2),
+                            Flexible(
+                              child: Text(
+                                ratingText,
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: hasRating
+                                      ? null
+                                      : theme.colorScheme.onSurfaceVariant,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            if (loyaltyPlanType != null) ...[
+                              const SizedBox(width: 8),
+                              LoyaltyBadge(
+                                planType: loyaltyPlanType!,
+                                compact: true,
+                              ),
+                            ],
+                          ],
+                        ),
                       ],
                     ),
                   ),

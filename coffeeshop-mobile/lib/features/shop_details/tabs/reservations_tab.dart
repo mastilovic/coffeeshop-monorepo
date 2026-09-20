@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/auth/user_permissions.dart';
 import '../../../core/utils/api_error.dart';
+import '../../../core/utils/reservation_event_utils.dart';
 import '../../../data/models/reservation_request_response_dto.dart';
 import '../../../data/services/reservation_api_service.dart';
 import '../../../data/services/reservation_request_api_service.dart';
@@ -9,6 +11,7 @@ import '../../../shared/widgets/empty_state_view.dart';
 import '../../../shared/widgets/error_view.dart';
 import '../../../shared/widgets/form_select.dart';
 import '../../../shared/widgets/loading_indicator.dart';
+import '../../../shared/widgets/upgrade_prompt.dart';
 import '../../reservations/reservation_providers.dart';
 
 final shopReservationRequestsProvider =
@@ -39,7 +42,7 @@ class ReservationsTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     if (!canManage) {
-      return const _CustomerReservationsView();
+      return _CustomerReservationsView(shopId: shopId);
     }
 
     return DefaultTabController(
@@ -69,7 +72,9 @@ class ReservationsTab extends ConsumerWidget {
 }
 
 class _CustomerReservationsView extends ConsumerWidget {
-  const _CustomerReservationsView();
+  const _CustomerReservationsView({required this.shopId});
+
+  final String shopId;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -77,16 +82,44 @@ class _CustomerReservationsView extends ConsumerWidget {
 
     return requestsAsync.when(
       loading: () => const LoadingIndicator(),
-      error: (e, _) => ErrorView(message: e.toString(), onRetry: () => ref.invalidate(myReservationRequestsProvider)),
+      error: (e, _) => ErrorView(
+        message: e.toString(),
+        onRetry: () => ref.invalidate(myReservationRequestsProvider),
+      ),
       data: (requests) {
-        final pending = requests.where((r) => r.status == 'PENDING').toList();
-        if (pending.isEmpty) {
-          return const EmptyStateView(icon: Icons.event_seat, message: 'No pending reservation requests.');
-        }
-        return ListView.builder(
-          padding: const EdgeInsets.all(16),
-          itemCount: pending.length,
-          itemBuilder: (context, index) => _RequestCard(request: pending[index]),
+        final pending = requests
+            .where((r) => r.status == 'PENDING' && r.resolvedShopId == shopId)
+            .toList();
+
+        return Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+              child: SizedBox(
+                width: double.infinity,
+                child: FilledButton.tonalIcon(
+                  onPressed: () => openReservationRequest(context, shopId: shopId),
+                  icon: const Icon(Icons.add),
+                  label: const Text('Request reservation'),
+                ),
+              ),
+            ),
+            Expanded(
+              child: pending.isEmpty
+                  ? EmptyStateView(
+                      icon: Icons.event_seat,
+                      message: 'No pending reservation requests for this shop.',
+                      actionLabel: 'Request reservation',
+                      onAction: () => openReservationRequest(context, shopId: shopId),
+                    )
+                  : ListView.builder(
+                      padding: const EdgeInsets.all(16),
+                      itemCount: pending.length,
+                      itemBuilder: (context, index) =>
+                          _RequestCard(request: pending[index]),
+                    ),
+            ),
+          ],
         );
       },
     );
@@ -320,6 +353,8 @@ class _PendingRequestCardState extends ConsumerState<_PendingRequestCard> {
   Widget build(BuildContext context) {
     final userName = widget.request.user?['name'] as String? ?? 'Guest';
     final suitable = _suitableTables;
+    final permissions = ref.watch(userPermissionsProvider).valueOrNull;
+    final canManageReservations = permissions?.canManageReservations ?? false;
 
     if (_selectedTableId != null &&
         !suitable.any((t) => t['id'] == _selectedTableId)) {
@@ -353,26 +388,38 @@ class _PendingRequestCardState extends ConsumerState<_PendingRequestCard> {
                   return 'Table ${table['number']} (cap ${table['capacity']})';
                 },
                 onTap: () => ref.invalidate(shopReservationsProvider(widget.shopId)),
-                onChanged: (v) => setState(() => _selectedTableId = v),
+                onChanged: (v) {
+                  if (canManageReservations) {
+                    setState(() => _selectedTableId = v);
+                  }
+                },
               ),
             const SizedBox(height: 8),
             Row(
               children: [
                 Expanded(
                   child: FilledButton(
-                    onPressed: _isProcessing || suitable.isEmpty ? null : _accept,
+                    onPressed: _isProcessing || suitable.isEmpty || !canManageReservations
+                        ? null
+                        : _accept,
                     child: const Text('Accept'),
                   ),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: OutlinedButton(
-                    onPressed: _isProcessing ? null : _deny,
+                    onPressed: _isProcessing || !canManageReservations ? null : _deny,
                     child: const Text('Deny'),
                   ),
                 ),
               ],
             ),
+            if (!canManageReservations) ...[
+              const SizedBox(height: 8),
+              const UpgradePromptBanner(
+                message: 'Accepting reservations requires Growth or higher.',
+              ),
+            ],
           ],
         ),
       ),

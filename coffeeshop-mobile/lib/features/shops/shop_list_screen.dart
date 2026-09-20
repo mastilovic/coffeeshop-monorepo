@@ -15,6 +15,7 @@ import '../../shared/widgets/loading_indicator.dart';
 import '../../shared/widgets/pagination_controls.dart';
 import '../../shared/widgets/search_bar.dart';
 import '../../shared/widgets/shop_card.dart';
+import '../../shared/widgets/loyalty_badge.dart';
 import '../dashboard/dashboard_provider.dart';
 import '../shop_details/shop_manage_permission.dart';
 import 'shop_providers.dart';
@@ -127,41 +128,13 @@ class _ShopListScreenState extends ConsumerState<ShopListScreen> {
       rating: shop.averageRating,
       reviewCount: shop.reviewCount,
       memberCount: shop.memberCount,
+      loyaltyPlanType: loyaltyPlanType(shop.loyaltyPlan),
       isOwned: isOwned,
       isFavourite: isShopFavourite(ref, shop.id),
       onTap: () => context.push('/shops/${shop.id}'),
       onFavouriteToggle: isOwned ? null : (canManage ? null : () => _toggleFavourite(shop)),
       onEmployees: canManage ? () => context.push('/shops/${shop.id}') : null,
       onDelete: canManage ? () => _deleteShop(shop) : null,
-    );
-  }
-
-  SliverGrid _buildShopGrid({
-    required List<ShopResponseDto> shops,
-    required int crossAxisCount,
-    required bool isOwned,
-  }) {
-    return SliverGrid(
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: crossAxisCount,
-        childAspectRatio: 0.68,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
-      ),
-      delegate: SliverChildBuilderDelegate(
-        (context, index) => _buildShopCard(shops[index], isOwned: isOwned),
-        childCount: shops.length,
-      ),
-    );
-  }
-
-  Widget _buildSectionTitle(String title) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-      child: Text(
-        title,
-        style: Theme.of(context).textTheme.titleMedium,
-      ),
     );
   }
 
@@ -236,9 +209,15 @@ class _ShopListScreenState extends ConsumerState<ShopListScreen> {
                 final (favouriteOtherShops, remainingOtherShops) =
                     splitShopsByFavourite(ref, otherShops);
 
-                if (myShops.isEmpty &&
-                    favouriteOtherShops.isEmpty &&
-                    remainingOtherShops.isEmpty) {
+                final orderedShops = <({ShopResponseDto shop, bool isOwned})>[
+                  ...myShops.map((shop) => (shop: shop, isOwned: true)),
+                  ...favouriteOtherShops
+                      .map((shop) => (shop: shop, isOwned: false)),
+                  ...remainingOtherShops
+                      .map((shop) => (shop: shop, isOwned: false)),
+                ];
+
+                if (orderedShops.isEmpty) {
                   return const EmptyStateView(
                     icon: Icons.store,
                     message: 'No shops found',
@@ -251,70 +230,39 @@ class _ShopListScreenState extends ConsumerState<ShopListScreen> {
                     ref.invalidate(ownedShopsProvider);
                     await ref.read(shopListProvider.future);
                   },
-                  child: LayoutBuilder(
-                    builder: (context, constraints) {
-                      final crossAxisCount = constraints.maxWidth > 600 ? 3 : 2;
-                      return Column(
-                        children: [
-                          Expanded(
-                            child: CustomScrollView(
-                              slivers: [
-                                if (myShops.isNotEmpty) ...[
-                                  SliverToBoxAdapter(
-                                    child: _buildSectionTitle('My shops'),
-                                  ),
-                                  SliverPadding(
-                                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-                                    sliver: _buildShopGrid(
-                                      shops: myShops,
-                                      crossAxisCount: crossAxisCount,
-                                      isOwned: true,
-                                    ),
-                                  ),
-                                ],
-                                if (favouriteOtherShops.isNotEmpty) ...[
-                                  SliverToBoxAdapter(
-                                    child: _buildSectionTitle('Your communities'),
-                                  ),
-                                  SliverPadding(
-                                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-                                    sliver: _buildShopGrid(
-                                      shops: favouriteOtherShops,
-                                      crossAxisCount: crossAxisCount,
-                                      isOwned: false,
-                                    ),
-                                  ),
-                                ],
-                                if (remainingOtherShops.isNotEmpty) ...[
-                                  SliverToBoxAdapter(
-                                    child: _buildSectionTitle(
-                                      favouriteOtherShops.isNotEmpty ? 'All shops' : 'Shops',
-                                    ),
-                                  ),
-                                  SliverPadding(
-                                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                                    sliver: _buildShopGrid(
-                                      shops: remainingOtherShops,
-                                      crossAxisCount: crossAxisCount,
-                                      isOwned: false,
-                                    ),
-                                  ),
-                                ],
-                              ],
-                            ),
-                          ),
-                          PaginationControls(
-                            currentPage: params.page,
-                            totalPages: result.totalPages,
-                            onPageChanged: (page) {
-                              ref.read(shopListParamsProvider.notifier).update(
-                                    (current) => current.copyWith(page: page),
+                  child: Column(
+                    children: [
+                      Expanded(
+                        child: CustomScrollView(
+                          slivers: [
+                            SliverPadding(
+                              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                              sliver: SliverList.separated(
+                                itemCount: orderedShops.length,
+                                separatorBuilder: (_, __) =>
+                                    const SizedBox(height: 10),
+                                itemBuilder: (context, index) {
+                                  final entry = orderedShops[index];
+                                  return _buildShopCard(
+                                    entry.shop,
+                                    isOwned: entry.isOwned,
                                   );
-                            },
-                          ),
-                        ],
-                      );
-                    },
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      PaginationControls(
+                        currentPage: params.page,
+                        totalPages: result.totalPages,
+                        onPageChanged: (page) {
+                          ref.read(shopListParamsProvider.notifier).update(
+                                (current) => current.copyWith(page: page),
+                              );
+                        },
+                      ),
+                    ],
                   ),
                 );
               },

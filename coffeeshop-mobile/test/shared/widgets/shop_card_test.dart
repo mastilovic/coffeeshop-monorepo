@@ -7,6 +7,27 @@ void main() {
     return MaterialApp(home: Scaffold(body: child));
   }
 
+  group('shopRatingLabel', () {
+    test('returns formatted rating when rating and reviews exist', () {
+      expect(
+        shopRatingLabel(rating: 4.5, reviewCount: 42),
+        '4.5 (42)',
+      );
+    });
+
+    test('returns No rating yet when rating is null', () {
+      expect(shopRatingLabel(rating: null, reviewCount: 5), 'No rating yet');
+    });
+
+    test('returns No rating yet when rating is zero', () {
+      expect(shopRatingLabel(rating: 0, reviewCount: 5), 'No rating yet');
+    });
+
+    test('returns No rating yet when review count is zero', () {
+      expect(shopRatingLabel(rating: 4.5, reviewCount: 0), 'No rating yet');
+    });
+  });
+
   group('ShopCard', () {
     testWidgets('renders shop name', (tester) async {
       await tester.pumpWidget(
@@ -35,6 +56,17 @@ void main() {
       expect(find.byIcon(Icons.location_on), findsNothing);
     });
 
+    testWidgets('renders member count when provided', (tester) async {
+      await tester.pumpWidget(
+        buildTestWidget(
+          const ShopCard(name: 'Central Perk', memberCount: 12),
+        ),
+      );
+
+      expect(find.text('12 members'), findsOneWidget);
+      expect(find.byIcon(Icons.people_outline), findsOneWidget);
+    });
+
     testWidgets('renders rating and review count', (tester) async {
       await tester.pumpWidget(
         buildTestWidget(
@@ -46,17 +78,37 @@ void main() {
         ),
       );
 
-      expect(find.text('4.5'), findsOneWidget);
-      expect(find.text('(42)'), findsOneWidget);
+      expect(find.text('4.5 (42)'), findsOneWidget);
       expect(find.byIcon(Icons.star), findsOneWidget);
     });
 
-    testWidgets('does not render rating when null', (tester) async {
+    testWidgets('shows No rating yet when rating is null', (tester) async {
       await tester.pumpWidget(
         buildTestWidget(const ShopCard(name: 'Central Perk')),
       );
 
-      expect(find.byIcon(Icons.star), findsNothing);
+      expect(find.text('No rating yet'), findsOneWidget);
+      expect(find.byIcon(Icons.star_outline), findsOneWidget);
+    });
+
+    testWidgets('shows No rating yet when rating is zero', (tester) async {
+      await tester.pumpWidget(
+        buildTestWidget(
+          const ShopCard(name: 'Central Perk', rating: 0, reviewCount: 3),
+        ),
+      );
+
+      expect(find.text('No rating yet'), findsOneWidget);
+    });
+
+    testWidgets('shows No rating yet when review count is zero', (tester) async {
+      await tester.pumpWidget(
+        buildTestWidget(
+          const ShopCard(name: 'Central Perk', rating: 4.5, reviewCount: 0),
+        ),
+      );
+
+      expect(find.text('No rating yet'), findsOneWidget);
     });
 
     testWidgets('renders favourite border when not favourited', (tester) async {
@@ -182,6 +234,50 @@ void main() {
       final shape = card.shape as RoundedRectangleBorder?;
       expect(shape, isNotNull);
       expect(shape!.side.width, 2);
+      expect(find.text('Your Shop'), findsOneWidget);
+    });
+
+    testWidgets('shows Loyalty badge for BASIC plan', (tester) async {
+      await tester.pumpWidget(
+        buildTestWidget(
+          const ShopCard(name: 'Rewards Shop', loyaltyPlanType: 'BASIC'),
+        ),
+      );
+
+      expect(find.text('Loyalty'), findsOneWidget);
+      expect(find.byIcon(Icons.card_giftcard), findsOneWidget);
+    });
+
+    testWidgets('shows Premium Loyalty badge for PREMIUM plan', (tester) async {
+      await tester.pumpWidget(
+        buildTestWidget(
+          const ShopCard(name: 'VIP Shop', loyaltyPlanType: 'PREMIUM'),
+        ),
+      );
+
+      expect(find.text('Premium Loyalty'), findsOneWidget);
+    });
+
+    testWidgets('shows Premium Loyalty badge for VIP plan', (tester) async {
+      await tester.pumpWidget(
+        buildTestWidget(
+          const ShopCard(name: 'VIP Shop', loyaltyPlanType: 'VIP'),
+        ),
+      );
+
+      expect(find.text('Premium Loyalty'), findsOneWidget);
+    });
+
+    testWidgets('hides loyalty badge when plan type is null', (tester) async {
+      await tester.pumpWidget(
+        buildTestWidget(
+          const ShopCard(name: 'Plain Shop'),
+        ),
+      );
+
+      expect(find.text('Loyalty'), findsNothing);
+      expect(find.text('Premium Loyalty'), findsNothing);
+      expect(find.byIcon(Icons.card_giftcard), findsNothing);
     });
   });
 }

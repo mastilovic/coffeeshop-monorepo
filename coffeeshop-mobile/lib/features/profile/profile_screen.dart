@@ -9,6 +9,7 @@ import '../../core/utils/extensions.dart';
 import '../../data/services/reservation_api_service.dart';
 import '../../data/services/review_api_service.dart';
 import '../../data/services/user_api_service.dart';
+import '../billing/billing_screen.dart';
 
 final _userReservationsCountProvider = FutureProvider<int>((ref) async {
   final userId = ref.watch(authNotifierProvider).user?.id;
@@ -152,12 +153,22 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     _buildViewMode(context, authState),
                   ],
                   const SizedBox(height: 32),
-                  OutlinedButton.icon(
-                    onPressed: () => context.push('/users'),
-                    icon: const Icon(Icons.people_outline),
-                    label: const Text('Browse Users'),
-                  ),
-                  const SizedBox(height: 16),
+                  if (showBillingForRole(authState.role)) ...[
+                    OutlinedButton.icon(
+                      onPressed: () => context.push('/profile/billing'),
+                      icon: const Icon(Icons.credit_card_outlined),
+                      label: const Text('Billing & Plans'),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+                  if (authState.role == UserRole.admin) ...[
+                    OutlinedButton.icon(
+                      onPressed: () => context.push('/users'),
+                      icon: const Icon(Icons.people_outline),
+                      label: const Text('Browse Users'),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
                   OutlinedButton.icon(
                     onPressed: () async {
                       await ref.read(authNotifierProvider.notifier).logout();
@@ -314,18 +325,21 @@ class _StatsRow extends StatelessWidget {
           label: 'Favourites',
           value: favourites,
           color: Colors.red,
+          onTap: () => context.go('/shops'),
         ),
         _StatItem(
           icon: Icons.calendar_month,
           label: 'Reservations',
           value: reservations,
           color: Theme.of(context).colorScheme.primary,
+          onTap: () => context.go('/reservations'),
         ),
         _StatItem(
           icon: Icons.star,
           label: 'Reviews',
           value: reviews,
           color: Colors.amber,
+          onTap: () => context.go('/shops'),
         ),
       ],
     );
@@ -338,30 +352,39 @@ class _StatItem extends StatelessWidget {
     required this.label,
     required this.value,
     required this.color,
+    required this.onTap,
   });
 
   final IconData icon;
   final String label;
   final String value;
   final Color color;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Icon(icon, color: color, size: 28),
-        const SizedBox(height: 4),
-        Text(
-          value,
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        child: Column(
+          children: [
+            Icon(icon, color: color, size: 28),
+            const SizedBox(height: 4),
+            Text(
+              value,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+            ),
+            Text(
+              label,
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ],
         ),
-        Text(
-          label,
-          style: Theme.of(context).textTheme.bodySmall,
-        ),
-      ],
+      ),
     );
   }
 }

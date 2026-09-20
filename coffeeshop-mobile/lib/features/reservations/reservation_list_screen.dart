@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/auth/auth_notifier.dart';
 import '../../core/auth/user_permissions.dart';
 import '../../core/utils/api_error.dart';
+import '../../core/utils/extensions.dart';
 import '../../core/utils/reservation_event_utils.dart';
 import '../../data/models/event_response_dto.dart';
 import '../../data/models/reservation_request_response_dto.dart';
@@ -26,18 +27,47 @@ class ReservationListScreen extends ConsumerStatefulWidget {
     super.key,
     this.initialShopId,
     this.initialEventId,
+    this.openRequest = false,
   });
 
   final String? initialShopId;
   final String? initialEventId;
+  final bool openRequest;
 
   @override
   ConsumerState<ReservationListScreen> createState() => _ReservationListScreenState();
 }
 
 class _ReservationListScreenState extends ConsumerState<ReservationListScreen> {
-  bool _showRequestForm = false;
+  late bool _showRequestForm;
   bool _appliedQueryPrefill = false;
+
+  static bool _shouldOpenForm(ReservationListScreen widget) =>
+      widget.openRequest ||
+      widget.initialShopId != null ||
+      widget.initialEventId != null;
+
+  @override
+  void initState() {
+    super.initState();
+    _showRequestForm = _shouldOpenForm(widget);
+  }
+
+  @override
+  void didUpdateWidget(covariant ReservationListScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final paramsChanged = widget.initialShopId != oldWidget.initialShopId ||
+        widget.initialEventId != oldWidget.initialEventId ||
+        widget.openRequest != oldWidget.openRequest;
+    if (paramsChanged && _shouldOpenForm(widget)) {
+      setState(() {
+        _showRequestForm = true;
+        _appliedQueryPrefill = false;
+      });
+    }
+  }
+
+  void _openRequestForm() => setState(() => _showRequestForm = true);
 
   @override
   Widget build(BuildContext context) {
@@ -68,6 +98,9 @@ class _ReservationListScreenState extends ConsumerState<ReservationListScreen> {
               if (_showRequestForm)
                 Expanded(
                   child: _ReservationRequestForm(
+                    key: ValueKey(
+                      '${widget.initialShopId}-${widget.initialEventId}-$_appliedQueryPrefill',
+                    ),
                     onClose: () => setState(() => _showRequestForm = false),
                     initialShopId: widget.initialShopId,
                     initialEventId: widget.initialEventId,
@@ -79,8 +112,8 @@ class _ReservationListScreenState extends ConsumerState<ReservationListScreen> {
                 Expanded(
                   child: TabBarView(
                     children: [
-                      _MyRequestsPanel(),
-                      const _MyReservationsPanel(),
+                      _MyRequestsPanel(onRequestReservation: _openRequestForm),
+                      _MyReservationsPanel(onRequestReservation: _openRequestForm),
                       _ManageShopsPanel(),
                     ],
                   ),
@@ -106,6 +139,9 @@ class _ReservationListScreenState extends ConsumerState<ReservationListScreen> {
           if (_showRequestForm)
             Expanded(
               child: _ReservationRequestForm(
+                key: ValueKey(
+                  '${widget.initialShopId}-${widget.initialEventId}-$_appliedQueryPrefill',
+                ),
                 onClose: () => setState(() => _showRequestForm = false),
                 initialShopId: widget.initialShopId,
                 initialEventId: widget.initialEventId,
@@ -123,8 +159,8 @@ class _ReservationListScreenState extends ConsumerState<ReservationListScreen> {
                     Expanded(
                       child: TabBarView(
                         children: [
-                          _MyRequestsPanel(),
-                          const _MyReservationsPanel(),
+                          _MyRequestsPanel(onRequestReservation: _openRequestForm),
+                          _MyReservationsPanel(onRequestReservation: _openRequestForm),
                         ],
                       ),
                     ),
@@ -139,6 +175,10 @@ class _ReservationListScreenState extends ConsumerState<ReservationListScreen> {
 }
 
 class _MyRequestsPanel extends ConsumerWidget {
+  const _MyRequestsPanel({required this.onRequestReservation});
+
+  final VoidCallback onRequestReservation;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final asyncData = ref.watch(myReservationRequestsProvider);
@@ -148,7 +188,12 @@ class _MyRequestsPanel extends ConsumerWidget {
       error: (e, _) => ErrorView(message: e.toString(), onRetry: () => ref.invalidate(myReservationRequestsProvider)),
       data: (requests) {
         if (requests.isEmpty) {
-          return const EmptyStateView(icon: Icons.send, message: 'No reservation requests.');
+          return EmptyStateView(
+            icon: Icons.send,
+            message: 'No reservation requests.',
+            actionLabel: 'Request a reservation',
+            onAction: onRequestReservation,
+          );
         }
         return ListView.builder(
           padding: const EdgeInsets.all(16),
@@ -156,12 +201,26 @@ class _MyRequestsPanel extends ConsumerWidget {
           itemBuilder: (context, index) {
             final req = requests[index];
             final shopName = req.shop?['name'] as String? ?? 'Shop';
+            final eventDateLine = formatEventDateWithRelative(req.eventDate);
             return Card(
               margin: const EdgeInsets.only(bottom: 8),
               child: ListTile(
                 title: Text(shopName),
-                subtitle: Text('Party of ${req.partySize} · ${req.status}'),
-                trailing: req.eventName != null ? Text(req.eventName!, style: Theme.of(context).textTheme.bodySmall) : null,
+                subtitle: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Party of ${req.partySize} · ${req.status}'),
+                    if (eventDateLine != null)
+                      Text(
+                        eventDateLine,
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                  ],
+                ),
+                isThreeLine: eventDateLine != null,
+                trailing: req.eventName != null
+                    ? Text(req.eventName!, style: Theme.of(context).textTheme.bodySmall)
+                    : null,
               ),
             );
           },
@@ -172,7 +231,9 @@ class _MyRequestsPanel extends ConsumerWidget {
 }
 
 class _MyReservationsPanel extends ConsumerWidget {
-  const _MyReservationsPanel();
+  const _MyReservationsPanel({required this.onRequestReservation});
+
+  final VoidCallback onRequestReservation;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -183,7 +244,12 @@ class _MyReservationsPanel extends ConsumerWidget {
       error: (e, _) => ErrorView(message: e.toString(), onRetry: () => ref.invalidate(myReservationsProvider)),
       data: (reservations) {
         if (reservations.isEmpty) {
-          return const EmptyStateView(icon: Icons.confirmation_number, message: 'No reservations.');
+          return EmptyStateView(
+            icon: Icons.confirmation_number,
+            message: 'No reservations.',
+            actionLabel: 'Request a reservation',
+            onAction: onRequestReservation,
+          );
         }
         return ListView.builder(
           padding: const EdgeInsets.all(16),
@@ -192,11 +258,23 @@ class _MyReservationsPanel extends ConsumerWidget {
             final res = reservations[index];
             final shop = res['shop'] as Map<String, dynamic>?;
             final shopName = shop?['name'] as String? ?? 'Shop';
+            final eventDateLine = formatEventDateWithRelative(res['eventDate'] as String?);
             return Card(
               margin: const EdgeInsets.only(bottom: 8),
               child: ListTile(
                 title: Text(shopName),
-                subtitle: Text('Party of ${res['partySize'] ?? '?'}'),
+                subtitle: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Party of ${res['partySize'] ?? '?'}'),
+                    if (eventDateLine != null)
+                      Text(
+                        eventDateLine,
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                  ],
+                ),
+                isThreeLine: eventDateLine != null,
                 trailing: res['eventName'] != null
                     ? Text(res['eventName'] as String, style: Theme.of(context).textTheme.bodySmall)
                     : null,
@@ -321,6 +399,7 @@ class _PendingCountBadge extends StatelessWidget {
 
 class _ReservationRequestForm extends ConsumerStatefulWidget {
   const _ReservationRequestForm({
+    super.key,
     required this.onClose,
     this.initialShopId,
     this.initialEventId,
@@ -425,11 +504,7 @@ class _ReservationRequestFormState extends ConsumerState<_ReservationRequestForm
   }
 
   Future<List<ShopResponseDto>> _loadAllShops() async {
-    final data = await ref.read(shopApiServiceProvider).getShops(size: 100);
-    return (data['content'] as List<dynamic>?)
-            ?.map((e) => ShopResponseDto.fromJson(e as Map<String, dynamic>))
-            .toList() ??
-        [];
+    return ref.read(shopApiServiceProvider).getAllShops();
   }
 
   void _applyPrefillIfNeeded() {

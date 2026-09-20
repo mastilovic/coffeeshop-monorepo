@@ -33,6 +33,13 @@ func SetupTestDB(t *testing.T) *gorm.DB {
 		&model.CommunityPost{},
 		&model.Reservation{},
 		&model.ReservationRequest{},
+		&model.PlanTierCatalog{},
+		&model.FeatureCatalog{},
+		&model.PlanTierFeature{},
+		&model.OwnerSubscription{},
+		&model.OwnerSubscriptionFeature{},
+		&model.ShopSubscription{},
+		&model.ShopUsage{},
 	)
 
 	db.Exec("CREATE TABLE IF NOT EXISTS users (id TEXT PRIMARY KEY, name TEXT, username TEXT, email TEXT, password TEXT, user_type TEXT, keycloak_subject TEXT)")

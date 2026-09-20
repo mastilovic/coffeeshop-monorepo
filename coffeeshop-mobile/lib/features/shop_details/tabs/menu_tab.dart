@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/auth/user_permissions.dart';
 import '../../../core/utils/api_error.dart';
 import '../../../data/services/menu_item_api_service.dart';
 import '../../../data/services/shop_api_service.dart';
 import '../../../shared/widgets/empty_state_view.dart';
 import '../../../shared/widgets/form_select.dart';
+import '../../../shared/widgets/upgrade_prompt.dart';
 import '../../shops/shop_providers.dart';
 
 const _menuItemTypes = ['FOOD', 'DRINK', 'DESSERT', 'OTHER'];
@@ -184,12 +186,29 @@ class _MenuTabState extends ConsumerState<MenuTab> {
 
   @override
   Widget build(BuildContext context) {
+    final permissions = ref.watch(userPermissionsProvider).valueOrNull;
+    final canCreateMenu = widget.canManage && (permissions?.canCreateMenu ?? true);
+    final showUpgrade = widget.canManage && (permissions?.showMenusUpgrade ?? false);
+    final quotaLabel = permissions?.menusQuotaLabel;
+
     if (widget.menu == null) {
-      return EmptyStateView(
-        icon: Icons.restaurant_menu,
-        message: 'No menu yet.',
-        actionLabel: widget.canManage ? 'Create Menu' : null,
-        onAction: widget.canManage && !_isSaving ? _createMenu : null,
+      return ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          if (widget.canManage && quotaLabel != null) UsageQuotaLabel(label: quotaLabel),
+          if (showUpgrade) ...[
+            const UpgradePromptBanner(
+              message: 'Menu limit reached. Upgrade for more menus.',
+            ),
+            const SizedBox(height: 12),
+          ],
+          EmptyStateView(
+            icon: Icons.restaurant_menu,
+            message: 'No menu yet.',
+            actionLabel: canCreateMenu ? 'Create Menu' : null,
+            onAction: canCreateMenu && !_isSaving ? _createMenu : null,
+          ),
+        ],
       );
     }
 
@@ -200,6 +219,13 @@ class _MenuTabState extends ConsumerState<MenuTab> {
       padding: const EdgeInsets.all(16),
       children: [
         if (widget.canManage) ...[
+          if (quotaLabel != null) UsageQuotaLabel(label: quotaLabel),
+          if (showUpgrade) ...[
+            const UpgradePromptBanner(
+              message: 'Menu limit reached. Upgrade for more menus.',
+            ),
+            const SizedBox(height: 12),
+          ],
           Row(
             children: [
               Expanded(

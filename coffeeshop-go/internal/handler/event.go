@@ -14,16 +14,33 @@ import (
 	"github.com/mastilovic/coffeeshop-go/internal/apperror"
 	"github.com/mastilovic/coffeeshop-go/internal/auth"
 	"github.com/mastilovic/coffeeshop-go/internal/model"
+	"github.com/mastilovic/coffeeshop-go/internal/repository"
+	"github.com/mastilovic/coffeeshop-go/internal/subscription"
 	"gorm.io/gorm"
 )
 
 type EventHandler struct {
-	db         *gorm.DB
-	authorizer *auth.ShopAuthorizer
+	db           *gorm.DB
+	currentUser  *auth.CurrentUserService
+	authorizer   *auth.ShopAuthorizer
+	entitlements *subscription.EntitlementService
+	subRepo      *repository.SubscriptionRepository
 }
 
-func NewEventHandler(db *gorm.DB, authorizer *auth.ShopAuthorizer) *EventHandler {
-	return &EventHandler{db: db, authorizer: authorizer}
+func NewEventHandler(
+	db *gorm.DB,
+	currentUser *auth.CurrentUserService,
+	authorizer *auth.ShopAuthorizer,
+	entitlements *subscription.EntitlementService,
+	subRepo *repository.SubscriptionRepository,
+) *EventHandler {
+	return &EventHandler{
+		db:           db,
+		currentUser:  currentUser,
+		authorizer:   authorizer,
+		entitlements: entitlements,
+		subRepo:      subRepo,
+	}
 }
 
 type eventCreateRequest struct {
@@ -90,7 +107,7 @@ func (h *EventHandler) GetAll(w http.ResponseWriter, r *http.Request) {
 
 func (h *EventHandler) listByShop(w http.ResponseWriter, r *http.Request, shopID string) {
 	var events []model.Event
-	if err := h.db.WithContext(r.Context()).Where("shop_id = ?", shopID).Find(&events).Error; err != nil {
+	if err := h.db.WithContext(r.Context()).Where("shop_id = ?", shopID).Order("event_date ASC").Find(&events).Error; err != nil {
 		apperror.WriteError(w, apperror.Internal("Failed to fetch events"))
 		return
 	}
@@ -155,7 +172,8 @@ func (h *EventHandler) paginatedSearch(w http.ResponseWriter, r *http.Request) {
 		query = query.Where("event_date >= ?", dateFrom)
 	}
 	if dateTo != "" {
-		query = query.Where("event_date <= ?", dateTo)
+		// dateTo is yyyy-MM-dd; include the whole calendar day for ISO timestamps.
+		query = query.Where("event_date <= ?", dateTo+"T23:59:59.999999999")
 	}
 
 	var total int64
@@ -166,7 +184,7 @@ func (h *EventHandler) paginatedSearch(w http.ResponseWriter, r *http.Request) {
 
 	var events []model.Event
 	offset := page * size
-	if err := query.Order("event_date DESC").Offset(offset).Limit(size).Find(&events).Error; err != nil {
+	if err := query.Order("event_date ASC").Offset(offset).Limit(size).Find(&events).Error; err != nil {
 		apperror.WriteError(w, apperror.Internal("Failed to fetch events"))
 		return
 	}
@@ -209,6 +227,9 @@ func (h *EventHandler) Create(w http.ResponseWriter, r *http.Request) {
 		apperror.WriteError(w, err)
 		return
 	}
+	if !h.requireEventCreate(w, r, *req.ShopID) {
+		return
+	}
 
 	event := model.Event{
 		EventID:     uuid.New().String(),
@@ -223,9 +244,51 @@ func (h *EventHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	now := time.Now().UTC()
+	periodStart := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, time.UTC)
+	if _, err := h.subRepo.IncrementEventsCreated(r.Context(), *req.ShopID, periodStart); err != nil {
+		apperror.WriteError(w, apperror.Internal("Failed to update event usage"))
+		return
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(enrichEvent(r.Context(), h.db, event))
+}
+
+func (h *EventHandler) requireEventCreate(w http.ResponseWriter, r *http.Request, shopID string) bool {
+	user, err := h.currentUser.RequireCurrentUser(r.Context())
+	if err != nil {
+		apperror.WriteError(w, err)
+		return false
+	}
+
+	userID, err := uuid.Parse(user.ID)
+	if err != nil {
+		apperror.WriteError(w, apperror.Internal("Invalid user ID"))
+		return false
+	}
+
+	shopUUID, err := uuid.Parse(shopID)
+	if err != nil {
+		apperror.WriteError(w, apperror.BadRequest("Invalid shop ID"))
+		return false
+	}
+
+	isAdmin := h.authorizer.IsAdmin(r.Context())
+	if !subscription.RequireFeature(
+		w, r, h.entitlements,
+		userID, shopUUID, isAdmin,
+		subscription.FeatureEventCreate,
+	) {
+		return false
+	}
+
+	return subscription.RequireLimit(
+		w, r, h.entitlements,
+		userID, shopUUID,
+		subscription.LimitEvents, isAdmin,
+	)
 }
 
 // Update handles PUT /event/{eventId}.

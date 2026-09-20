@@ -10,6 +10,7 @@ import (
 	"github.com/mastilovic/coffeeshop-go/internal/apperror"
 	"github.com/mastilovic/coffeeshop-go/internal/auth"
 	"github.com/mastilovic/coffeeshop-go/internal/model"
+	"github.com/mastilovic/coffeeshop-go/internal/subscription"
 	"gorm.io/gorm"
 )
 
@@ -17,10 +18,21 @@ type ReviewHandler struct {
 	db             *gorm.DB
 	currentUserSvc *auth.CurrentUserService
 	authorizer     *auth.ShopAuthorizer
+	entitlements   *subscription.EntitlementService
 }
 
-func NewReviewHandler(db *gorm.DB, currentUserSvc *auth.CurrentUserService, authorizer *auth.ShopAuthorizer) *ReviewHandler {
-	return &ReviewHandler{db: db, currentUserSvc: currentUserSvc, authorizer: authorizer}
+func NewReviewHandler(
+	db *gorm.DB,
+	currentUserSvc *auth.CurrentUserService,
+	authorizer *auth.ShopAuthorizer,
+	entitlements *subscription.EntitlementService,
+) *ReviewHandler {
+	return &ReviewHandler{
+		db:             db,
+		currentUserSvc: currentUserSvc,
+		authorizer:     authorizer,
+		entitlements:   entitlements,
+	}
 }
 
 type reviewCreateRequest struct {
@@ -165,6 +177,9 @@ func (h *ReviewHandler) Delete(w http.ResponseWriter, r *http.Request) {
 			apperror.WriteError(w, err)
 			return
 		}
+		if !h.requireReviewModerate(w, r, *existing.ShopID) {
+			return
+		}
 	}
 
 	result := h.db.WithContext(r.Context()).Delete(&model.Review{}, "id = ?", id)
@@ -177,6 +192,33 @@ func (h *ReviewHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *ReviewHandler) requireReviewModerate(w http.ResponseWriter, r *http.Request, shopID string) bool {
+	user, err := h.currentUserSvc.RequireCurrentUser(r.Context())
+	if err != nil {
+		apperror.WriteError(w, err)
+		return false
+	}
+
+	userID, err := uuid.Parse(user.ID)
+	if err != nil {
+		apperror.WriteError(w, apperror.Internal("Invalid user ID"))
+		return false
+	}
+
+	shopUUID, err := uuid.Parse(shopID)
+	if err != nil {
+		apperror.WriteError(w, apperror.Internal("Invalid shop ID"))
+		return false
+	}
+
+	return subscription.RequireFeature(
+		w, r, h.entitlements,
+		userID, shopUUID,
+		h.authorizer.IsAdmin(r.Context()),
+		subscription.FeatureReviewModerate,
+	)
 }
 
 func (h *ReviewHandler) GetComments(w http.ResponseWriter, r *http.Request) {

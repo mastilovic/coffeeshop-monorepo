@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/auth/user_permissions.dart';
 import '../../core/utils/api_error.dart';
+import '../../core/utils/extensions.dart';
+import '../../core/utils/reservation_event_utils.dart';
 import '../../data/services/event_api_service.dart';
 import '../../shared/widgets/error_view.dart';
 import '../../shared/widgets/loading_indicator.dart';
@@ -42,43 +44,74 @@ class EventDetailScreen extends ConsumerWidget {
           message: error.toString(),
           onRetry: () => ref.invalidate(eventDetailProvider(eventId)),
         ),
-        data: (event) => ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            Text(eventLabel(event), style: Theme.of(context).textTheme.headlineSmall),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                const Icon(Icons.calendar_today, size: 18),
-                const SizedBox(width: 8),
-                Text(event.eventDate),
-              ],
-            ),
-            if (event.shopName != null) ...[
+        data: (event) {
+          final canReserve =
+              event.shopId != null && canReserveForEvent(event);
+          final shopLabel = formatEventShopLabel(
+            event.shopName,
+            shopCity: event.shopCity,
+          );
+
+          return ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              Text(
+                eventLabel(event),
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+              ),
               const SizedBox(height: 8),
               Row(
                 children: [
-                  const Icon(Icons.store, size: 18),
+                  const Icon(Icons.calendar_today, size: 18),
                   const SizedBox(width: 8),
-                  Expanded(child: Text(event.shopName!)),
+                  Expanded(
+                    child: Text(formatEventDateTime(event.eventDate)),
+                  ),
                 ],
               ),
+              if (shopLabel != null) ...[
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    const Icon(Icons.store, size: 18),
+                    const SizedBox(width: 8),
+                    Expanded(child: Text(shopLabel)),
+                  ],
+                ),
+              ],
+              if (event.description != null &&
+                  event.description!.isNotEmpty) ...[
+                const SizedBox(height: 16),
+                Text(
+                  'Description',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(height: 4),
+                Text(event.description!),
+              ],
+              if (canReserve) ...[
+                const SizedBox(height: 24),
+                FilledButton(
+                  onPressed: () => openReservationRequest(
+                    context,
+                    shopId: event.shopId,
+                    eventId: event.eventId,
+                  ),
+                  child: const Text('Reserve'),
+                ),
+              ],
+              if (event.shopId != null) ...[
+                SizedBox(height: canReserve ? 12 : 24),
+                FilledButton.tonal(
+                  onPressed: () => context.push('/shops/${event.shopId}'),
+                  child: const Text('View Shop'),
+                ),
+              ],
             ],
-            if (event.description != null && event.description!.isNotEmpty) ...[
-              const SizedBox(height: 16),
-              Text('Description', style: Theme.of(context).textTheme.titleMedium),
-              const SizedBox(height: 4),
-              Text(event.description!),
-            ],
-            if (event.shopId != null) ...[
-              const SizedBox(height: 24),
-              FilledButton.tonal(
-                onPressed: () => context.push('/shops/${event.shopId}'),
-                child: const Text('View Shop'),
-              ),
-            ],
-          ],
-        ),
+          );
+        },
       ),
     );
   }
@@ -89,8 +122,14 @@ class EventDetailScreen extends ConsumerWidget {
       builder: (context) => AlertDialog(
         title: const Text('Delete event?'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
-          FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Delete')),
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Delete'),
+          ),
         ],
       ),
     );

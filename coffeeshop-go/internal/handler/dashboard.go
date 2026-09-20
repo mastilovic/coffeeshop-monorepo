@@ -8,9 +8,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/mastilovic/coffeeshop-go/internal/apperror"
 	"github.com/mastilovic/coffeeshop-go/internal/auth"
 	"github.com/mastilovic/coffeeshop-go/internal/model"
+	"github.com/mastilovic/coffeeshop-go/internal/subscription"
 	"gorm.io/gorm"
 )
 
@@ -18,10 +20,21 @@ type DashboardHandler struct {
 	db             *gorm.DB
 	currentUserSvc *auth.CurrentUserService
 	authorizer     *auth.ShopAuthorizer
+	entitlements   *subscription.EntitlementService
 }
 
-func NewDashboardHandler(db *gorm.DB, currentUserSvc *auth.CurrentUserService, authorizer *auth.ShopAuthorizer) *DashboardHandler {
-	return &DashboardHandler{db: db, currentUserSvc: currentUserSvc, authorizer: authorizer}
+func NewDashboardHandler(
+	db *gorm.DB,
+	currentUserSvc *auth.CurrentUserService,
+	authorizer *auth.ShopAuthorizer,
+	entitlements *subscription.EntitlementService,
+) *DashboardHandler {
+	return &DashboardHandler{
+		db:             db,
+		currentUserSvc: currentUserSvc,
+		authorizer:     authorizer,
+		entitlements:   entitlements,
+	}
 }
 
 type dashboardActivityResponse struct {
@@ -106,6 +119,325 @@ func (h *DashboardHandler) GetActivity(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(resp)
+}
+
+type dashboardAnalyticsAggregate struct {
+	ShopCount                      int      `json:"shopCount"`
+	ReservationCount               int      `json:"reservationCount"`
+	PendingReservationRequestCount int      `json:"pendingReservationRequestCount"`
+	EventCount                     int      `json:"eventCount"`
+	ReviewCount                    int      `json:"reviewCount"`
+	AverageRating                  *float64 `json:"averageRating"`
+	CommunityPostCount             int      `json:"communityPostCount"`
+	MemberCount                    int      `json:"memberCount"`
+	EmployeeCount                  int      `json:"employeeCount"`
+	TableCount                     int      `json:"tableCount"`
+	MenuCount                      int      `json:"menuCount"`
+}
+
+type dashboardShopAnalytics struct {
+	ShopID                         string   `json:"shopId"`
+	ShopName                       string   `json:"shopName"`
+	City                           string   `json:"city"`
+	ReservationCount               int      `json:"reservationCount"`
+	PendingReservationRequestCount int      `json:"pendingReservationRequestCount"`
+	EventCount                     int      `json:"eventCount"`
+	ReviewCount                    int      `json:"reviewCount"`
+	AverageRating                  *float64 `json:"averageRating"`
+	CommunityPostCount             int      `json:"communityPostCount"`
+	MemberCount                    int      `json:"memberCount"`
+	EmployeeCount                  int      `json:"employeeCount"`
+	TableCount                     int      `json:"tableCount"`
+	MenuCount                      int      `json:"menuCount"`
+}
+
+type dashboardAnalyticsResponse struct {
+	Aggregate dashboardAnalyticsAggregate `json:"aggregate"`
+	Shops     []dashboardShopAnalytics  `json:"shops"`
+}
+
+func emptyDashboardAnalyticsResponse() dashboardAnalyticsResponse {
+	return dashboardAnalyticsResponse{
+		Aggregate: dashboardAnalyticsAggregate{},
+		Shops:     []dashboardShopAnalytics{},
+	}
+}
+
+func (h *DashboardHandler) GetAnalytics(w http.ResponseWriter, r *http.Request) {
+	user, err := h.currentUserSvc.RequireCurrentUser(r.Context())
+	if err != nil {
+		apperror.WriteError(w, err)
+		return
+	}
+
+	if !h.requireAnalytics(w, r, user) {
+		return
+	}
+
+	shopIDs, err := h.resolveAnalyticsShopScope(r.Context(), user.ID, r.URL.Query().Get("shopId"))
+	if err != nil {
+		apperror.WriteError(w, err)
+		return
+	}
+
+	resp := h.buildAnalyticsResponse(r.Context(), shopIDs)
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(resp)
+}
+
+func (h *DashboardHandler) requireAnalytics(w http.ResponseWriter, r *http.Request, user *auth.User) bool {
+	userID, err := uuid.Parse(user.ID)
+	if err != nil {
+		apperror.WriteError(w, apperror.Internal("Invalid user ID"))
+		return false
+	}
+
+	isAdmin := h.authorizer.IsAdmin(r.Context())
+	if isAdmin {
+		return true
+	}
+
+	if shopID, err := h.firstManagedShopID(r.Context(), user.ID); err == nil {
+		return subscription.RequireFeature(
+			w, r, h.entitlements,
+			userID, shopID, false,
+			subscription.FeatureAnalytics,
+		)
+	}
+
+	entitlements, err := h.entitlements.ResolveEntitlements(r.Context(), userID, false)
+	if err != nil {
+		apperror.WriteError(w, apperror.Internal("Failed to resolve entitlements"))
+		return false
+	}
+	if entitlements[subscription.FeatureAnalytics] {
+		return true
+	}
+
+	_, hint := h.entitlements.CanUse(r.Context(), userID, uuid.Nil, subscription.FeatureAnalytics, false)
+	apperror.WriteError(w, subscription.PaymentRequiredForFeature(subscription.FeatureAnalytics, hint))
+	return false
+}
+
+func (h *DashboardHandler) firstManagedShopID(ctx context.Context, userID string) (uuid.UUID, error) {
+	var link model.UserShop
+	err := h.db.WithContext(ctx).
+		Where("user_id = ? AND relationship_type = ?", userID, model.RelationshipTypeOwner).
+		First(&link).Error
+	if err == nil {
+		return uuid.Parse(link.ShopID)
+	}
+	err = h.db.WithContext(ctx).
+		Where("user_id = ? AND relationship_type = ?", userID, model.RelationshipTypeEmployee).
+		First(&link).Error
+	if err != nil {
+		return uuid.UUID{}, err
+	}
+	return uuid.Parse(link.ShopID)
+}
+
+func (h *DashboardHandler) resolveAnalyticsShopScope(ctx context.Context, userID, shopIDFilter string) ([]string, error) {
+	if shopIDFilter != "" {
+		if h.authorizer.IsAdmin(ctx) {
+			return []string{shopIDFilter}, nil
+		}
+		var count int64
+		h.db.WithContext(ctx).Model(&model.UserShop{}).
+			Where("user_id = ? AND shop_id = ? AND relationship_type IN ?",
+				userID, shopIDFilter,
+				[]string{model.RelationshipTypeOwner, model.RelationshipTypeEmployee},
+			).
+			Count(&count)
+		if count == 0 {
+			return nil, apperror.Forbidden("You do not have access to this shop")
+		}
+		return []string{shopIDFilter}, nil
+	}
+
+	if h.authorizer.IsAdmin(ctx) {
+		var ids []string
+		h.db.WithContext(ctx).Model(&model.Shop{}).Pluck("id", &ids)
+		return ids, nil
+	}
+
+	var ids []string
+	h.db.WithContext(ctx).Model(&model.UserShop{}).
+		Where("user_id = ? AND relationship_type IN ?",
+			userID, []string{model.RelationshipTypeOwner, model.RelationshipTypeEmployee},
+		).
+		Pluck("shop_id", &ids)
+	return ids, nil
+}
+
+func (h *DashboardHandler) buildAnalyticsResponse(ctx context.Context, shopIDs []string) dashboardAnalyticsResponse {
+	if len(shopIDs) == 0 {
+		return emptyDashboardAnalyticsResponse()
+	}
+
+	shopNames := h.loadShopDetails(ctx, shopIDs)
+	shops := make([]dashboardShopAnalytics, 0, len(shopIDs))
+	agg := dashboardAnalyticsAggregate{ShopCount: len(shopIDs)}
+
+	for _, shopID := range shopIDs {
+		metrics := h.computeShopAnalytics(ctx, shopID)
+		details := shopNames[shopID]
+		shop := dashboardShopAnalytics{
+			ShopID:                         shopID,
+			ShopName:                       details.Name,
+			City:                           details.City,
+			ReservationCount:               metrics.ReservationCount,
+			PendingReservationRequestCount: metrics.PendingReservationRequestCount,
+			EventCount:                     metrics.EventCount,
+			ReviewCount:                    metrics.ReviewCount,
+			AverageRating:                  metrics.AverageRating,
+			CommunityPostCount:             metrics.CommunityPostCount,
+			MemberCount:                    metrics.MemberCount,
+			EmployeeCount:                  metrics.EmployeeCount,
+			TableCount:                     metrics.TableCount,
+			MenuCount:                      metrics.MenuCount,
+		}
+		shops = append(shops, shop)
+
+		agg.ReservationCount += metrics.ReservationCount
+		agg.PendingReservationRequestCount += metrics.PendingReservationRequestCount
+		agg.EventCount += metrics.EventCount
+		agg.ReviewCount += metrics.ReviewCount
+		agg.CommunityPostCount += metrics.CommunityPostCount
+		agg.MemberCount += metrics.MemberCount
+		agg.EmployeeCount += metrics.EmployeeCount
+		agg.TableCount += metrics.TableCount
+		agg.MenuCount += metrics.MenuCount
+	}
+
+	sort.Slice(shops, func(i, j int) bool {
+		return strings.ToLower(shops[i].ShopName) < strings.ToLower(shops[j].ShopName)
+	})
+
+	agg.AverageRating = h.computeAverageRating(ctx, shopIDs)
+
+	return dashboardAnalyticsResponse{
+		Aggregate: agg,
+		Shops:     shops,
+	}
+}
+
+type shopDetail struct {
+	Name string
+	City string
+}
+
+type shopAnalyticsMetrics struct {
+	ReservationCount               int
+	PendingReservationRequestCount int
+	EventCount                     int
+	ReviewCount                    int
+	AverageRating                  *float64
+	CommunityPostCount             int
+	MemberCount                    int
+	EmployeeCount                  int
+	TableCount                     int
+	MenuCount                      int
+}
+
+func (h *DashboardHandler) computeShopAnalytics(ctx context.Context, shopID string) shopAnalyticsMetrics {
+	var metrics shopAnalyticsMetrics
+
+	var reservationCount int64
+	h.db.WithContext(ctx).Model(&model.Reservation{}).
+		Where("shop_id = ?", shopID).
+		Count(&reservationCount)
+	metrics.ReservationCount = int(reservationCount)
+
+	var pendingCount int64
+	h.db.WithContext(ctx).Model(&model.ReservationRequest{}).
+		Where("shop_id = ? AND status = ?", shopID, "PENDING").
+		Count(&pendingCount)
+	metrics.PendingReservationRequestCount = int(pendingCount)
+
+	var eventCount int64
+	h.db.WithContext(ctx).Model(&model.Event{}).
+		Where("shop_id = ?", shopID).
+		Count(&eventCount)
+	metrics.EventCount = int(eventCount)
+
+	var reviewCount int64
+	h.db.WithContext(ctx).Model(&model.Review{}).
+		Where("shop_id = ?", shopID).
+		Count(&reviewCount)
+	metrics.ReviewCount = int(reviewCount)
+
+	var avgRating *float64
+	h.db.WithContext(ctx).Model(&model.Review{}).
+		Where("shop_id = ?", shopID).
+		Select("AVG(CAST(rating AS FLOAT))").
+		Scan(&avgRating)
+	if avgRating != nil && *avgRating == 0 {
+		avgRating = nil
+	}
+	metrics.AverageRating = avgRating
+
+	var communityPostCount int64
+	h.db.WithContext(ctx).Model(&model.CommunityPost{}).
+		Where("shop_id = ?", shopID).
+		Count(&communityPostCount)
+	metrics.CommunityPostCount = int(communityPostCount)
+
+	var memberCount int64
+	h.db.WithContext(ctx).Model(&model.UserShop{}).
+		Where("shop_id = ? AND relationship_type = ?", shopID, model.RelationshipTypeFavourite).
+		Count(&memberCount)
+	metrics.MemberCount = int(memberCount)
+
+	var employeeCount int64
+	h.db.WithContext(ctx).Model(&model.UserShop{}).
+		Where("shop_id = ? AND relationship_type = ?", shopID, model.RelationshipTypeEmployee).
+		Count(&employeeCount)
+	metrics.EmployeeCount = int(employeeCount)
+
+	var tableCount int64
+	h.db.WithContext(ctx).Model(&model.Table{}).
+		Where("shop_id = ?", shopID).
+		Count(&tableCount)
+	metrics.TableCount = int(tableCount)
+
+	var menuCount int64
+	h.db.WithContext(ctx).Model(&model.Menu{}).
+		Where("shop_id = ?", shopID).
+		Count(&menuCount)
+	metrics.MenuCount = int(menuCount)
+
+	return metrics
+}
+
+func (h *DashboardHandler) computeAverageRating(ctx context.Context, shopIDs []string) *float64 {
+	var avgRating *float64
+	h.db.WithContext(ctx).Model(&model.Review{}).
+		Where("shop_id IN ?", shopIDs).
+		Select("AVG(CAST(rating AS FLOAT))").
+		Scan(&avgRating)
+	if avgRating != nil && *avgRating == 0 {
+		return nil
+	}
+	return avgRating
+}
+
+func (h *DashboardHandler) loadShopDetails(ctx context.Context, shopIDs []string) map[string]shopDetail {
+	details := make(map[string]shopDetail, len(shopIDs))
+	if len(shopIDs) == 0 {
+		return details
+	}
+
+	var shops []model.Shop
+	h.db.WithContext(ctx).
+		Where("id IN ?", shopIDs).
+		Select("id, name, city").
+		Find(&shops)
+
+	for _, shop := range shops {
+		details[shop.ID] = shopDetail{Name: shop.Name, City: shop.City}
+	}
+	return details
 }
 
 func (h *DashboardHandler) resolveShopScope(ctx context.Context) []string {

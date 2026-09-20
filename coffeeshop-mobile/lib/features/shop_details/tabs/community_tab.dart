@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/auth/auth_notifier.dart';
+import '../../../core/auth/user_permissions.dart';
 import '../../../core/utils/api_error.dart';
 import '../../../data/models/community_post_response_dto.dart';
 import '../../../data/services/community_api_service.dart';
 import '../../../shared/widgets/empty_state_view.dart';
 import '../../../shared/widgets/error_view.dart';
 import '../../../shared/widgets/loading_indicator.dart';
+import '../../../shared/widgets/upgrade_prompt.dart';
 
 final communityPostsProvider =
     FutureProvider.family<Map<String, dynamic>, String>((ref, shopId) async {
@@ -95,6 +97,9 @@ class _CommunityTabState extends ConsumerState<CommunityTab> {
   @override
   Widget build(BuildContext context) {
     final asyncData = ref.watch(communityPostsProvider(widget.shopId));
+    final permissions = ref.watch(userPermissionsProvider).valueOrNull;
+    final canPost = widget.canManage && (permissions?.canPostCommunity ?? false);
+    final showUpgrade = widget.canManage && (permissions?.showCommunityUpgrade ?? false);
 
     return asyncData.when(
       loading: () => const LoadingIndicator(),
@@ -112,6 +117,11 @@ class _CommunityTabState extends ConsumerState<CommunityTab> {
           padding: const EdgeInsets.all(16),
           children: [
             if (widget.canManage) ...[
+              if (showUpgrade)
+                const UpgradePromptBanner(
+                  message: 'Community posts require Growth or higher.',
+                ),
+              if (showUpgrade) const SizedBox(height: 8),
               Card(
                 child: Padding(
                   padding: const EdgeInsets.all(12),
@@ -123,6 +133,7 @@ class _CommunityTabState extends ConsumerState<CommunityTab> {
                       TextField(
                         controller: _announcementController,
                         maxLines: 3,
+                        readOnly: !canPost,
                         decoration: const InputDecoration(
                           hintText: 'Write an announcement for your community...',
                           border: OutlineInputBorder(),
@@ -132,7 +143,9 @@ class _CommunityTabState extends ConsumerState<CommunityTab> {
                       Align(
                         alignment: Alignment.centerRight,
                         child: FilledButton(
-                          onPressed: _isPosting ? null : _postAnnouncement,
+                          onPressed: _isPosting || !canPost
+                              ? null
+                              : _postAnnouncement,
                           child: _isPosting
                               ? const SizedBox(
                                   width: 20,

@@ -36,6 +36,12 @@ func (Table) TableName() string { return "tables" }
 
 type LoyaltyPlanType string
 
+const (
+	LoyaltyPlanTypeBasic   LoyaltyPlanType = "BASIC"
+	LoyaltyPlanTypePremium LoyaltyPlanType = "PREMIUM"
+	LoyaltyPlanTypeVIP     LoyaltyPlanType = "VIP"
+)
+
 type LoyaltyPlan struct {
 	ID          string          `gorm:"type:uuid;primaryKey" json:"id"`
 	Name        string          `gorm:"not null" json:"name"`

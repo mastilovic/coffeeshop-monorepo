@@ -9,17 +9,29 @@ import (
 	"github.com/mastilovic/coffeeshop-go/internal/apperror"
 	"github.com/mastilovic/coffeeshop-go/internal/auth"
 	"github.com/mastilovic/coffeeshop-go/internal/model"
+	"github.com/mastilovic/coffeeshop-go/internal/subscription"
 	"gorm.io/gorm"
 )
 
 type ReservationRequestHandler struct {
-	db          *gorm.DB
-	currentUser *auth.CurrentUserService
-	authorizer  *auth.ShopAuthorizer
+	db           *gorm.DB
+	currentUser  *auth.CurrentUserService
+	authorizer   *auth.ShopAuthorizer
+	entitlements *subscription.EntitlementService
 }
 
-func NewReservationRequestHandler(db *gorm.DB, currentUser *auth.CurrentUserService, authorizer *auth.ShopAuthorizer) *ReservationRequestHandler {
-	return &ReservationRequestHandler{db: db, currentUser: currentUser, authorizer: authorizer}
+func NewReservationRequestHandler(
+	db *gorm.DB,
+	currentUser *auth.CurrentUserService,
+	authorizer *auth.ShopAuthorizer,
+	entitlements *subscription.EntitlementService,
+) *ReservationRequestHandler {
+	return &ReservationRequestHandler{
+		db:           db,
+		currentUser:  currentUser,
+		authorizer:   authorizer,
+		entitlements: entitlements,
+	}
 }
 
 type ReservationRequestCreateRequest struct {
@@ -176,6 +188,9 @@ func (h *ReservationRequestHandler) Accept(w http.ResponseWriter, r *http.Reques
 			apperror.WriteError(w, err)
 			return
 		}
+		if !h.requireReservationManage(w, r, *existing.ShopID) {
+			return
+		}
 	}
 
 	var req ReservationAcceptRequest
@@ -222,6 +237,9 @@ func (h *ReservationRequestHandler) Deny(w http.ResponseWriter, r *http.Request)
 			apperror.WriteError(w, err)
 			return
 		}
+		if !h.requireReservationManage(w, r, *existing.ShopID) {
+			return
+		}
 	}
 
 	existing.Status = "DENIED"
@@ -232,4 +250,31 @@ func (h *ReservationRequestHandler) Deny(w http.ResponseWriter, r *http.Request)
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(existing)
+}
+
+func (h *ReservationRequestHandler) requireReservationManage(w http.ResponseWriter, r *http.Request, shopID string) bool {
+	user, err := h.currentUser.RequireCurrentUser(r.Context())
+	if err != nil {
+		apperror.WriteError(w, err)
+		return false
+	}
+
+	userID, err := uuid.Parse(user.ID)
+	if err != nil {
+		apperror.WriteError(w, apperror.Internal("Invalid user ID"))
+		return false
+	}
+
+	shopUUID, err := uuid.Parse(shopID)
+	if err != nil {
+		apperror.WriteError(w, apperror.Internal("Invalid shop ID"))
+		return false
+	}
+
+	return subscription.RequireFeature(
+		w, r, h.entitlements,
+		userID, shopUUID,
+		h.authorizer.IsAdmin(r.Context()),
+		subscription.FeatureReservationManage,
+	)
 }

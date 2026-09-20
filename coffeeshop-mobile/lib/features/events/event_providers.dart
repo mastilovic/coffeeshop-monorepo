@@ -45,40 +45,89 @@ class EventFilter {
 
 enum EventTimeFilter { all, today, thisWeek, thisMonth }
 
+class EventListResult {
+  const EventListResult({
+    required this.events,
+    required this.totalPages,
+    required this.totalElements,
+  });
+
+  final List<EventResponseDto> events;
+  final int totalPages;
+  final int totalElements;
+}
+
+/// Formats a calendar day as `yyyy-MM-dd` for the events API.
+String eventApiDate(DateTime date) {
+  final y = date.year.toString().padLeft(4, '0');
+  final m = date.month.toString().padLeft(2, '0');
+  final d = date.day.toString().padLeft(2, '0');
+  return '$y-$m-$d';
+}
+
+/// Resolves dateFrom/dateTo for the time-filter chips.
+({String? dateFrom, String? dateTo}) eventFilterDateRange(EventTimeFilter filter) {
+  final now = DateTime.now();
+  switch (filter) {
+    case EventTimeFilter.all:
+      return (dateFrom: null, dateTo: null);
+    case EventTimeFilter.today:
+      final day = eventApiDate(now);
+      return (dateFrom: day, dateTo: day);
+    case EventTimeFilter.thisWeek:
+      final startOfDay = DateTime(now.year, now.month, now.day);
+      final startOfWeek = startOfDay.subtract(Duration(days: now.weekday - 1));
+      final endOfWeek = startOfWeek.add(const Duration(days: 6));
+      return (
+        dateFrom: eventApiDate(startOfWeek),
+        dateTo: eventApiDate(endOfWeek),
+      );
+    case EventTimeFilter.thisMonth:
+      return (
+        dateFrom: eventApiDate(DateTime(now.year, now.month, 1)),
+        dateTo: eventApiDate(DateTime(now.year, now.month + 1, 0)),
+      );
+  }
+}
+
 final eventFilterProvider = StateProvider<EventFilter>((ref) {
   return const EventFilter();
 });
 
-final eventListProvider = FutureProvider<List<EventResponseDto>>((ref) async {
+final eventListProvider = FutureProvider.autoDispose<EventListResult>((ref) async {
   final filter = ref.watch(eventFilterProvider);
   final apiService = ref.watch(eventApiServiceProvider);
-
-  String? dateFrom;
-  String? dateTo;
-
-  if (filter.filter == EventTimeFilter.today) {
-    final now = DateTime.now();
-    dateFrom = DateTime(now.year, now.month, now.day).toIso8601String();
-    dateTo = DateTime(now.year, now.month, now.day, 23, 59, 59).toIso8601String();
-  }
+  final range = eventFilterDateRange(filter.filter);
 
   final data = await apiService.getAll(
     q: filter.query.isEmpty ? null : filter.query,
-    dateFrom: filter.dateFrom ?? dateFrom,
-    dateTo: filter.dateTo ?? dateTo,
+    dateFrom: filter.dateFrom ?? range.dateFrom,
+    dateTo: filter.dateTo ?? range.dateTo,
     page: filter.page,
+    size: EventFilter.pageSize,
   );
 
   if (data is Map<String, dynamic>) {
-    return (data['content'] as List<dynamic>?)
+    final events = (data['content'] as List<dynamic>?)
             ?.map((e) => EventResponseDto.fromJson(e as Map<String, dynamic>))
             .toList() ??
         [];
+    return EventListResult(
+      events: events,
+      totalPages: (data['totalPages'] as num?)?.toInt() ?? 0,
+      totalElements: (data['totalElements'] as num?)?.toInt() ?? 0,
+    );
   }
   if (data is List) {
-    return data.map((e) => EventResponseDto.fromJson(e as Map<String, dynamic>)).toList();
+    final events =
+        data.map((e) => EventResponseDto.fromJson(e as Map<String, dynamic>)).toList();
+    return EventListResult(
+      events: events,
+      totalPages: events.isEmpty ? 0 : 1,
+      totalElements: events.length,
+    );
   }
-  return [];
+  return const EventListResult(events: [], totalPages: 0, totalElements: 0);
 });
 
 final eventDetailProvider = FutureProvider.family<EventResponseDto, String>((ref, id) async {
@@ -97,11 +146,7 @@ final eventCreatableShopsProvider = FutureProvider<List<ShopResponseDto>>((ref) 
   if (permissions == null) return [];
 
   if (permissions.isAdmin) {
-    final data = await api.getShops(size: 100);
-    return (data['content'] as List<dynamic>?)
-            ?.map((e) => ShopResponseDto.fromJson(e as Map<String, dynamic>))
-            .toList() ??
-        [];
+    return api.getAllShops();
   }
 
   if (permissions.isShopOwner) {

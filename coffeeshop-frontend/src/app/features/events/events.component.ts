@@ -1,7 +1,7 @@
 import { Component, computed, inject, Injector, OnInit, signal, ChangeDetectionStrategy } from '@angular/core';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { debounceTime, distinctUntilChanged, skip } from 'rxjs';
 import { EventService } from '../../services/event.service';
 import { ShopService } from '../../services/shop.service';
@@ -21,6 +21,7 @@ import { DateTimePickerComponent } from '../../shared/date-time-picker/date-time
 import { FormSelectComponent } from '../../shared/form-select/form-select.component';
 import { FormSelectOption } from '../../shared/form-select/form-select-option.model';
 import { DialogService } from '../../services/dialog.service';
+import { SubscriptionService } from '../../services/subscription.service';
 import {
   futureDateValidator,
   normalizeDateTimeLocal,
@@ -35,17 +36,24 @@ import {
 @Component({
   selector: 'app-events',
   standalone: true,
-  imports: [ReactiveFormsModule, DateRangePickerComponent, DateTimePickerComponent, FormSelectComponent],
+  imports: [ReactiveFormsModule, DateRangePickerComponent, DateTimePickerComponent, FormSelectComponent, RouterLink],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="page page--with-footer">
       <div class="page__content">
         <div class="page-header">
-          <h1 class="page-title">Events</h1>
+          <div class="page-header__title-group">
+            <h1 class="page-title">Events</h1>
+            @if (eventsQuotaLabel(); as quota) {
+              <p class="text-muted events-quota">{{ quota }}</p>
+            }
+          </div>
           @if (canCreateEvent()) {
             <button class="btn btn-primary" (click)="toggleForm()">
               {{ showForm() ? 'Cancel' : '+ Add Event' }}
             </button>
+          } @else if (showEventCreateUpgrade()) {
+            <a routerLink="/profile/billing" class="upgrade-link">Upgrade to Growth</a>
           }
         </div>
 
@@ -184,6 +192,30 @@ import {
       display: block;
       min-height: 100%;
     }
+
+    .page-header__title-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .events-quota {
+      margin: 0;
+      font-size: 0.8125rem;
+    }
+
+    .upgrade-link {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: #d4a574;
+      text-decoration: none;
+      white-space: nowrap;
+      align-self: center;
+    }
+
+    .upgrade-link:hover {
+      text-decoration: underline;
+    }
   `],
 })
 export class EventsComponent implements OnInit {
@@ -197,12 +229,33 @@ export class EventsComponent implements OnInit {
   private readonly injector = inject(Injector);
   private readonly router = inject(Router);
   private readonly dialog = inject(DialogService);
+  private readonly subscriptionService = inject(SubscriptionService);
 
-  readonly canCreateEvent = computed(() => {
+  readonly canManageEvents = computed(() => {
     const profile = this.profileService.currentUser();
     if (!profile) return false;
     return this.authService.isAdmin() || profile.userType === 'SHOP_OWNER';
   });
+
+  readonly eventsQuotaLabel = computed(() => {
+    if (!this.canManageEvents()) return null;
+    const limit = this.subscriptionService.getLimit('events');
+    if (!limit) return null;
+    if (limit.max < 0) return `${limit.used} / Unlimited events this month`;
+    return `${limit.used} / ${limit.max} events this month`;
+  });
+
+  readonly canCreateEvent = computed(() => {
+    if (!this.canManageEvents()) return false;
+    if (!this.subscriptionService.canUseFeature('event_create')) return false;
+    const limit = this.subscriptionService.getLimit('events');
+    if (limit && limit.max >= 0 && limit.used >= limit.max) return false;
+    return true;
+  });
+
+  readonly showEventCreateUpgrade = computed(() =>
+    this.canManageEvents() && !this.subscriptionService.canUseFeature('event_create'),
+  );
 
   readonly todayIsoValue = todayIso;
 
@@ -399,6 +452,7 @@ export class EventsComponent implements OnInit {
   onSubmit(): void {
     if (this.form.invalid) return;
     if (!this.editingId() && this.form.controls.eventDate.hasError('pastDate')) return;
+    if (!this.editingId() && !this.canCreateEvent()) return;
 
     const val = this.form.getRawValue();
     const id = this.editingId();

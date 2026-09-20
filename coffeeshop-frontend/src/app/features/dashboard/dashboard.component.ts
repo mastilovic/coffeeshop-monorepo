@@ -3,9 +3,12 @@ import { DecimalPipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { DashboardService } from '../../services/dashboard.service';
 import { AuthService } from '../../services/auth.service';
+import { ProfileService } from '../../services/profile.service';
+import { SubscriptionService } from '../../services/subscription.service';
 import {
   DashboardActivityItem,
   DashboardAggregate,
+  DashboardAnalyticsResponse,
   DashboardNotification,
   DashboardPersonalSummary,
   TopShopItem,
@@ -53,6 +56,113 @@ import {
             <span class="stats-bar__label">Events</span>
           </div>
         </div>
+
+        @if (isShopOwner()) {
+          <section class="analytics-section" aria-labelledby="analytics-heading">
+            <h2 id="analytics-heading" class="section-title">Pro Analytics</h2>
+
+            @if (!canViewAnalytics()) {
+              <div class="analytics-upgrade" data-testid="analytics-upgrade">
+                <p class="analytics-upgrade__text">
+                  Unlock full shop analytics with reservations, reviews, community, and operations metrics.
+                </p>
+                <a routerLink="/profile/billing" class="upgrade-link">Upgrade to Pro</a>
+              </div>
+            } @else if (analyticsLoading()) {
+              <p class="analytics-loading">Loading analytics...</p>
+            } @else if (analyticsError()) {
+              <p class="analytics-error">{{ analyticsError() }}</p>
+            } @else if (analytics()) {
+              <div class="analytics-aggregate" data-testid="analytics-aggregate">
+                <div class="analytics-metric">
+                  <span class="analytics-metric__value">{{ analytics()!.aggregate.reservationCount }}</span>
+                  <span class="analytics-metric__label">Reservations</span>
+                </div>
+                <div class="analytics-metric">
+                  <span class="analytics-metric__value">{{ analytics()!.aggregate.pendingReservationRequestCount }}</span>
+                  <span class="analytics-metric__label">Pending requests</span>
+                </div>
+                <div class="analytics-metric">
+                  <span class="analytics-metric__value">{{ analytics()!.aggregate.eventCount }}</span>
+                  <span class="analytics-metric__label">Events</span>
+                </div>
+                <div class="analytics-metric">
+                  <span class="analytics-metric__value">{{ analytics()!.aggregate.reviewCount }}</span>
+                  <span class="analytics-metric__label">
+                    Reviews
+                    @if (analytics()!.aggregate.averageRating !== null) {
+                      <span class="analytics-metric__sublabel">avg {{ analytics()!.aggregate.averageRating | number:'1.1-1' }}</span>
+                    }
+                  </span>
+                </div>
+                <div class="analytics-metric">
+                  <span class="analytics-metric__value">{{ analytics()!.aggregate.communityPostCount }}</span>
+                  <span class="analytics-metric__label">Community posts</span>
+                </div>
+                <div class="analytics-metric">
+                  <span class="analytics-metric__value">{{ analytics()!.aggregate.memberCount }}</span>
+                  <span class="analytics-metric__label">Members</span>
+                </div>
+                <div class="analytics-metric">
+                  <span class="analytics-metric__value">{{ analytics()!.aggregate.employeeCount }}</span>
+                  <span class="analytics-metric__label">Employees</span>
+                </div>
+                <div class="analytics-metric">
+                  <span class="analytics-metric__value">{{ analytics()!.aggregate.tableCount }}</span>
+                  <span class="analytics-metric__label">Tables</span>
+                </div>
+                <div class="analytics-metric">
+                  <span class="analytics-metric__value">{{ analytics()!.aggregate.menuCount }}</span>
+                  <span class="analytics-metric__label">Menus</span>
+                </div>
+              </div>
+
+              @if (analytics()!.shops.length > 0) {
+                <div class="analytics-shops" data-testid="analytics-shops">
+                  <h3 class="analytics-shops__title">Per shop</h3>
+                  <div class="analytics-shops__table-wrap">
+                    <table class="analytics-shops__table">
+                      <thead>
+                        <tr>
+                          <th scope="col">Shop</th>
+                          <th scope="col">Reservations</th>
+                          <th scope="col">Pending</th>
+                          <th scope="col">Events</th>
+                          <th scope="col">Reviews</th>
+                          <th scope="col">Posts</th>
+                          <th scope="col">Members</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        @for (shop of analytics()!.shops; track shop.shopId) {
+                          <tr>
+                            <td>
+                              <a class="analytics-shop-link" [routerLink]="['/shops', shop.shopId]">{{ shop.shopName }}</a>
+                              @if (shop.city) {
+                                <span class="analytics-shop-city">{{ shop.city }}</span>
+                              }
+                            </td>
+                            <td>{{ shop.reservationCount }}</td>
+                            <td>{{ shop.pendingReservationRequestCount }}</td>
+                            <td>{{ shop.eventCount }}</td>
+                            <td>
+                              {{ shop.reviewCount }}
+                              @if (shop.averageRating !== null) {
+                                <span class="analytics-shop-rating">({{ shop.averageRating | number:'1.1-1' }})</span>
+                              }
+                            </td>
+                            <td>{{ shop.communityPostCount }}</td>
+                            <td>{{ shop.memberCount }}</td>
+                          </tr>
+                        }
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              }
+            }
+          </section>
+        }
 
         <div class="dashboard-layout">
           <section class="dashboard-main" aria-labelledby="activity-heading">
@@ -572,15 +682,179 @@ import {
         gap: 0.125rem;
       }
     }
+
+    /* Pro analytics */
+    .analytics-section {
+      margin-bottom: 1.5rem;
+      padding-bottom: 1.25rem;
+      border-bottom: 1px solid #2a2a3e;
+    }
+
+    .analytics-upgrade {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem 1rem;
+      padding: 1rem 1.125rem;
+      border-radius: 10px;
+      border: 1px dashed #3a3a55;
+      background: rgba(212, 165, 116, 0.05);
+    }
+
+    .analytics-upgrade__text {
+      margin: 0;
+      font-size: 0.875rem;
+      color: #bbb;
+      flex: 1;
+      min-width: 200px;
+    }
+
+    .upgrade-link {
+      color: #d4a574;
+      font-weight: 600;
+      text-decoration: none;
+      font-size: 0.875rem;
+      white-space: nowrap;
+    }
+
+    .upgrade-link:hover {
+      text-decoration: underline;
+    }
+
+    .analytics-loading,
+    .analytics-error {
+      margin: 0;
+      font-size: 0.875rem;
+      color: #888;
+    }
+
+    .analytics-error {
+      color: #e57373;
+    }
+
+    .analytics-aggregate {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+    }
+
+    .analytics-metric {
+      display: flex;
+      flex-direction: column;
+      gap: 0.125rem;
+      padding: 0.625rem 0.75rem;
+      border-radius: 8px;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      border: 1px solid #2a2a3e;
+    }
+
+    .analytics-metric__value {
+      font-size: 1.125rem;
+      font-weight: 700;
+      color: #d4a574;
+    }
+
+    .analytics-metric__label {
+      font-size: 0.7rem;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .analytics-metric__sublabel {
+      margin-left: 0.25rem;
+      text-transform: none;
+      letter-spacing: 0;
+      color: #666;
+      font-size: 0.65rem;
+    }
+
+    .analytics-shops__title {
+      margin: 0 0 0.625rem 0;
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: #ccc;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .analytics-shops__table-wrap {
+      overflow-x: auto;
+      border: 1px solid #2a2a3e;
+      border-radius: 10px;
+    }
+
+    .analytics-shops__table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8rem;
+    }
+
+    .analytics-shops__table th,
+    .analytics-shops__table td {
+      padding: 0.5rem 0.75rem;
+      text-align: left;
+      border-bottom: 1px solid #1e1e30;
+      white-space: nowrap;
+    }
+
+    .analytics-shops__table th {
+      color: #888;
+      font-weight: 600;
+      text-transform: uppercase;
+      font-size: 0.7rem;
+      letter-spacing: 0.04em;
+      background: #151525;
+    }
+
+    .analytics-shops__table tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    .analytics-shop-link {
+      color: #d4a574;
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .analytics-shop-link:hover {
+      text-decoration: underline;
+    }
+
+    .analytics-shop-city {
+      display: block;
+      font-size: 0.7rem;
+      color: #666;
+      font-weight: 400;
+    }
+
+    .analytics-shop-rating {
+      color: #888;
+      font-size: 0.75rem;
+    }
   `],
 })
 export class DashboardComponent implements OnInit {
   private readonly dashboardService = inject(DashboardService);
   private readonly authService = inject(AuthService);
+  private readonly profileService = inject(ProfileService);
+  private readonly subscriptionService = inject(SubscriptionService);
 
   readonly isCustomer = computed(() => this.authService.realmRoles().includes('customer'));
 
+  readonly isShopOwner = computed(() => {
+    const profile = this.profileService.currentUser();
+    return !!profile && (profile.userType === 'SHOP_OWNER' || this.authService.isAdmin());
+  });
+
+  readonly canViewAnalytics = computed(() => this.subscriptionService.canUseFeature('analytics'));
+
   readonly loading = signal(true);
+  readonly analyticsLoading = signal(false);
+  readonly analyticsError = signal<string | null>(null);
+  readonly analytics = signal<DashboardAnalyticsResponse | null>(null);
   readonly aggregate = signal<DashboardAggregate>({
     shopCount: 0,
     reviewCount: 0,
@@ -614,6 +888,25 @@ export class DashboardComponent implements OnInit {
         this.loading.set(false);
       },
       error: () => this.loading.set(false),
+    });
+
+    if (this.isShopOwner() && this.canViewAnalytics()) {
+      this.loadAnalytics();
+    }
+  }
+
+  private loadAnalytics(): void {
+    this.analyticsLoading.set(true);
+    this.analyticsError.set(null);
+    this.dashboardService.getAnalytics().subscribe({
+      next: (response) => {
+        this.analytics.set(response);
+        this.analyticsLoading.set(false);
+      },
+      error: () => {
+        this.analyticsError.set('Unable to load analytics right now.');
+        this.analyticsLoading.set(false);
+      },
     });
   }
 

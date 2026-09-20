@@ -14,4 +14,9 @@ class DashboardApiService {
     final response = await _dioClient.get<Map<String, dynamic>>('/api/v2/dashboard/activity');
     return response.data!;
   }
+
+  Future<Map<String, dynamic>> getAnalytics() async {
+    final response = await _dioClient.get<Map<String, dynamic>>('/api/v2/dashboard/analytics');
+    return response.data!;
+  }
 }

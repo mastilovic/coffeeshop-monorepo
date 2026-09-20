@@ -36,6 +36,8 @@ import { UserSummaryDto } from '../../models/user.model';
 import { CommunityService } from '../../services/community.service';
 import { StarRatingComponent } from '../../shared/star-rating/star-rating.component';
 import { EmployeeManagementComponent } from '../dashboard/employee-management.component';
+import { LoyaltyManagementComponent } from './loyalty-management.component';
+import { LoyaltyPlanResponseDto } from '../../models/loyalty-plan.model';
 import { ShopEmployeeService } from '../../services/shop-employee.service';
 import { getAcceptReservationErrorMessage } from '../../utils/api-error';
 import {
@@ -45,6 +47,7 @@ import {
   isEventFull,
 } from '../../utils/reservation-event.utils';
 import { DialogService } from '../../services/dialog.service';
+import { SubscriptionService } from '../../services/subscription.service';
 import { DateTimePickerComponent } from '../../shared/date-time-picker/date-time-picker.component';
 import { todayIso } from '../../shared/calendar/calendar-date.utils';
 import {
@@ -52,7 +55,7 @@ import {
   normalizeDateTimeLocal,
 } from '../../utils/event-form.utils';
 
-type Tab = 'users' | 'menu' | 'tables' | 'reservations' | 'events' | 'reviews' | 'employees';
+type Tab = 'users' | 'menu' | 'tables' | 'reservations' | 'events' | 'reviews' | 'employees' | 'loyalty';
 type ReservationSubTab = 'pending' | 'approved' | 'denied';
 
 @Component({
@@ -66,6 +69,7 @@ type ReservationSubTab = 'pending' | 'approved' | 'denied';
     FormSelectComponent,
     DateTimePickerComponent,
     EmployeeManagementComponent,
+    LoyaltyManagementComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -178,7 +182,7 @@ type ReservationSubTab = 'pending' | 'approved' | 'denied';
             </div>
           }
 
-          @if (canManageShopContent()) {
+          @if (canPostCommunity()) {
             <div class="form-card mb-3">
               <h3 class="mb-2">Post announcement</h3>
               <p class="text-muted mb-2" style="font-size:0.875rem">Announcements appear pinned at the top of the feed.</p>
@@ -188,6 +192,11 @@ type ReservationSubTab = 'pending' | 'approved' | 'denied';
               <button type="button" class="btn btn-primary" style="margin-top:0.5rem"
                 [disabled]="!announcementDraft().trim() || postingAnnouncement()"
                 (click)="onAnnouncementSubmit()">Post announcement</button>
+            </div>
+          } @else if (showCommunityUpgrade()) {
+            <div class="form-card mb-3 upgrade-banner">
+              <p class="text-muted" style="margin:0">Post announcements to your community with Growth or higher.</p>
+              <a routerLink="/profile/billing" class="upgrade-link">Upgrade to Growth</a>
             </div>
           }
 
@@ -224,7 +233,16 @@ type ReservationSubTab = 'pending' | 'approved' | 'denied';
         <!-- MENU TAB -->
         @if (activeTab() === 'menu') {
           @if (canManageShopContent()) {
-            <div class="mb-3"><button class="btn btn-secondary" (click)="onCreateMenu()">+ New Menu</button></div>
+            <div class="tab-toolbar mb-3">
+              @if (menusQuotaLabel(); as quota) {
+                <p class="text-muted usage-quota">{{ quota }}</p>
+              }
+              @if (canCreateMenu()) {
+                <button class="btn btn-secondary" (click)="onCreateMenu()">+ New Menu</button>
+              } @else if (showMenusUpgrade()) {
+                <a routerLink="/profile/billing" class="upgrade-link">Upgrade to Growth</a>
+              }
+            </div>
           }
 
           <h3 class="mb-2">Current menu</h3>
@@ -340,22 +358,29 @@ type ReservationSubTab = 'pending' | 'approved' | 'denied';
         <!-- TABLES TAB -->
         @if (activeTab() === 'tables') {
           @if (canManageShopContent()) {
-            @if (showTableForm()) {
-              <div class="form-card mb-3">
-                <form [formGroup]="tableForm" (ngSubmit)="onTableSubmit()">
-                  <div class="form-row">
-                    <div class="form-group"><label>Table Number</label><input class="form-input" type="number" formControlName="number" /></div>
-                    <div class="form-group"><label>Capacity</label><input class="form-input" type="number" formControlName="capacity" /></div>
-                  </div>
-                  <div class="form-actions">
-                    <button type="submit" class="btn btn-primary" [disabled]="tableForm.invalid">{{ editingTableId() ? 'Update' : 'Add' }}</button>
-                    <button type="button" class="btn btn-secondary" (click)="showTableForm.set(false); editingTableId.set(null)">Cancel</button>
-                  </div>
-                </form>
-              </div>
-            } @else {
-              <button class="btn btn-primary mb-2" (click)="openAddTableForm()">+ Add Table</button>
-            }
+            <div class="tab-toolbar mb-2">
+              @if (tablesQuotaLabel(); as quota) {
+                <p class="text-muted usage-quota">{{ quota }}</p>
+              }
+              @if (showTableForm()) {
+                <div class="form-card mb-3" style="width:100%">
+                  <form [formGroup]="tableForm" (ngSubmit)="onTableSubmit()">
+                    <div class="form-row">
+                      <div class="form-group"><label>Table Number</label><input class="form-input" type="number" formControlName="number" /></div>
+                      <div class="form-group"><label>Capacity</label><input class="form-input" type="number" formControlName="capacity" /></div>
+                    </div>
+                    <div class="form-actions">
+                      <button type="submit" class="btn btn-primary" [disabled]="tableForm.invalid">{{ editingTableId() ? 'Update' : 'Add' }}</button>
+                      <button type="button" class="btn btn-secondary" (click)="showTableForm.set(false); editingTableId.set(null)">Cancel</button>
+                    </div>
+                  </form>
+                </div>
+              } @else if (canAddTable()) {
+                <button class="btn btn-primary" (click)="openAddTableForm()">+ Add Table</button>
+              } @else if (showTablesUpgrade()) {
+                <a routerLink="/profile/billing" class="upgrade-link">Upgrade to Growth</a>
+              }
+            </div>
           }
 
           @if (shop()!.tables.length === 0) {
@@ -612,7 +637,16 @@ type ReservationSubTab = 'pending' | 'approved' | 'denied';
             <div class="card-grid">
               @for (r of shop()!.reviews; track r.id) {
                 <div class="card">
-                  <div style="margin-bottom:0.5rem"><app-star-rating [rating]="r.rating" [readonly]="true" /></div>
+                  <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:0.75rem;margin-bottom:0.5rem">
+                    <div style="margin-bottom:0"><app-star-rating [rating]="r.rating" [readonly]="true" /></div>
+                    @if (canManageShopContent() && !isReviewAuthor(r)) {
+                      @if (canModerateReviews()) {
+                        <button type="button" class="btn btn-sm btn-danger" (click)="onDeleteReview(r)">Delete</button>
+                      } @else if (showReviewsUpgrade()) {
+                        <a routerLink="/profile/billing" class="upgrade-link">Upgrade to Growth</a>
+                      }
+                    }
+                  </div>
                   <p class="text-muted" style="font-size:0.875rem">{{ r.description }}</p>
                   <p class="text-muted" style="font-size:0.75rem;margin-top:0.5rem">By {{ r.user.name }}</p>
                   @if (isReviewAuthor(r)) {
@@ -655,6 +689,16 @@ type ReservationSubTab = 'pending' | 'approved' | 'denied';
         <!-- Employees tab -->
         @if (activeTab() === 'employees') {
           <app-employee-management [shopId]="shop()!.id" />
+        }
+
+        <!-- Loyalty tab -->
+        @if (activeTab() === 'loyalty') {
+          <app-loyalty-management
+            [shopId]="shop()!.id"
+            [shopFields]="loyaltyShopFields()"
+            [loyaltyPlan]="shop()!.loyaltyPlan"
+            (loyaltyPlanChange)="onLoyaltyPlanChange($event)"
+          />
         }
       }
     </div>
@@ -721,6 +765,37 @@ type ReservationSubTab = 'pending' | 'approved' | 'denied';
         flex-wrap: wrap;
       }
     }
+
+    .tab-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .usage-quota {
+      margin: 0;
+      font-size: 0.8125rem;
+    }
+
+    .upgrade-link {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: #d4a574;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    .upgrade-link:hover {
+      text-decoration: underline;
+    }
+
+    .upgrade-banner {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.5rem;
+    }
   `],
 })
 export class ShopDetailsComponent implements OnInit {
@@ -741,6 +816,7 @@ export class ShopDetailsComponent implements OnInit {
   private readonly eventService = inject(EventService);
   private readonly dialog = inject(DialogService);
   private readonly shopEmployeeService = inject(ShopEmployeeService);
+  private readonly subscriptionService = inject(SubscriptionService);
 
   readonly shop = signal<ShopResponseDto | null>(null);
   readonly loading = signal(true);
@@ -799,7 +875,89 @@ export class ShopDetailsComponent implements OnInit {
     if (!this.canManageShop()) {
       tabs = tabs.filter(t => t.key !== 'employees');
     }
+    if (!this.showLoyaltyTab()) {
+      tabs = tabs.filter(t => t.key !== 'loyalty');
+    }
     return tabs;
+  });
+
+  readonly tablesQuotaLabel = computed(() => {
+    if (!this.canManageShopContent()) return null;
+    const limit = this.subscriptionService.getLimit('tables');
+    if (!limit || limit.max < 0) return null;
+    return `${limit.used} / ${limit.max} tables`;
+  });
+
+  readonly canAddTable = computed(() => {
+    if (!this.canManageShopContent()) return false;
+    if (this.subscriptionService.canUseFeature('unlimited_tables')) return true;
+    const limit = this.subscriptionService.getLimit('tables');
+    if (!limit || limit.max < 0) return true;
+    return limit.used < limit.max;
+  });
+
+  readonly showTablesUpgrade = computed(() =>
+    this.canManageShopContent()
+    && !this.canAddTable()
+    && !this.subscriptionService.canUseFeature('unlimited_tables'),
+  );
+
+  readonly menusQuotaLabel = computed(() => {
+    if (!this.canManageShopContent()) return null;
+    const limit = this.subscriptionService.getLimit('menus');
+    if (!limit || limit.max < 0) return null;
+    return `${limit.used} / ${limit.max} menus`;
+  });
+
+  readonly canCreateMenu = computed(() => {
+    if (!this.canManageShopContent()) return false;
+    if (this.subscriptionService.canUseFeature('unlimited_menus')) return true;
+    const limit = this.subscriptionService.getLimit('menus');
+    if (!limit || limit.max < 0) return true;
+    return limit.used < limit.max;
+  });
+
+  readonly showMenusUpgrade = computed(() =>
+    this.canManageShopContent()
+    && !this.canCreateMenu()
+    && !this.subscriptionService.canUseFeature('unlimited_menus'),
+  );
+
+  readonly canPostCommunity = computed(() =>
+    this.canManageShopContent() && this.subscriptionService.canUseFeature('community_post'),
+  );
+
+  readonly showCommunityUpgrade = computed(() =>
+    this.canManageShopContent() && !this.subscriptionService.canUseFeature('community_post'),
+  );
+
+  readonly canModerateReviews = computed(() =>
+    this.canManageShopContent() && this.subscriptionService.canUseFeature('review_moderate'),
+  );
+
+  readonly showReviewsUpgrade = computed(() =>
+    this.canManageShopContent() && !this.subscriptionService.canUseFeature('review_moderate'),
+  );
+
+  readonly showLoyaltyTab = computed(() =>
+    this.canManageShop() && (
+      this.subscriptionService.canUseFeature('loyalty_basic')
+      || this.subscriptionService.canUseFeature('loyalty_premium')
+    ),
+  );
+
+  readonly loyaltyShopFields = computed(() => {
+    const shop = this.shop();
+    if (!shop) {
+      return { name: '', address: '', city: '', phoneNumber: '', email: '' };
+    }
+    return {
+      name: shop.name,
+      address: shop.address,
+      city: shop.city,
+      phoneNumber: shop.phoneNumber,
+      email: shop.email,
+    };
   });
 
   readonly blockedEventIdsForCurrentUser = computed(() => {
@@ -861,6 +1019,7 @@ export class ShopDetailsComponent implements OnInit {
     { key: 'reservations', label: 'Reservations' },
     { key: 'events', label: 'Events' },
     { key: 'reviews', label: 'Reviews' },
+    { key: 'loyalty', label: 'Loyalty' },
     { key: 'employees', label: 'Employees' },
   ];
 
@@ -1321,6 +1480,19 @@ export class ShopDetailsComponent implements OnInit {
     });
   }
 
+  onDeleteReview(r: ReviewResponseDto): void {
+    void this.dialog.confirm('Delete this review?', { confirmLabel: 'Delete', confirmVariant: 'danger' }).then(ok => {
+      if (!ok) return;
+      this.reviewService.delete(r.id).subscribe(() => {
+        this.shop.update(s => s ? {
+          ...s,
+          reviews: s.reviews.filter(rv => rv.id !== r.id),
+          reviewCount: Math.max(0, s.reviewCount - 1),
+        } : s);
+      });
+    });
+  }
+
   formatAverageRating(shop: ShopResponseDto): string {
     return shop.averageRating?.toFixed(1) ?? '—';
   }
@@ -1464,5 +1636,9 @@ export class ShopDetailsComponent implements OnInit {
 
   formatPostDate(date: string): string {
     return new Date(date).toLocaleString();
+  }
+
+  onLoyaltyPlanChange(plan: LoyaltyPlanResponseDto): void {
+    this.shop.update(s => s ? { ...s, loyaltyPlan: plan } : s);
   }
 }

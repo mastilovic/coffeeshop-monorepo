@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../../data/models/dashboard_activity_response.dart';
-import '../../../core/utils/extensions.dart';
+import '../../../shared/widgets/event_list_card.dart';
 
 class UpcomingEventsList extends StatelessWidget {
   const UpcomingEventsList({super.key, required this.events});
@@ -25,21 +24,16 @@ class UpcomingEventsList extends StatelessWidget {
                 ),
           ),
         ),
-        ...events.map((event) => Card(
-              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-              child: ListTile(
-                onTap: () => context.go('/events/${event.eventId}'),
-                leading: const Icon(Icons.event, color: Colors.orange),
-                title: Text(event.eventName),
-                subtitle: Text(event.shopName ?? ''),
-                trailing: event.eventDate != null
-                    ? Text(
-                        DateTime.tryParse(event.eventDate!)?.formatDate() ?? event.eventDate!,
-                        style: Theme.of(context).textTheme.bodySmall,
-                      )
-                    : null,
-              ),
-            )),
+        ...events.map((event) {
+          return EventListCard(
+            eventId: event.eventId,
+            eventName: event.eventName,
+            eventDate: event.eventDate ?? '',
+            shopId: event.shopId,
+            shopName: event.shopName,
+            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+          );
+        }),
       ],
     );
   }

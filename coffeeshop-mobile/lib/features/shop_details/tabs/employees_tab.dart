@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/auth/user_permissions.dart';
 import '../../../core/utils/api_error.dart';
 import '../../../data/models/user_list_item_dto.dart';
 import '../../../data/services/shop_employee_api_service.dart';
@@ -9,6 +10,7 @@ import '../../../shared/widgets/confirm_dialog.dart';
 import '../../../shared/widgets/error_view.dart';
 import '../../../shared/widgets/form_select.dart';
 import '../../../shared/widgets/loading_indicator.dart';
+import '../../../shared/widgets/upgrade_prompt.dart';
 
 final shopEmployeesProvider =
     FutureProvider.family<List<Map<String, dynamic>>, String>((ref, shopId) async {
@@ -17,7 +19,7 @@ final shopEmployeesProvider =
   return data.cast<Map<String, dynamic>>();
 });
 
-final _assignableUsersProvider = FutureProvider<List<UserListItemDto>>((ref) async {
+final assignableUsersProvider = FutureProvider<List<UserListItemDto>>((ref) async {
   final data = await ref.watch(userApiServiceProvider).getAll(size: 100);
   if (data is Map<String, dynamic>) {
     return (data['content'] as List<dynamic>?)
@@ -119,7 +121,10 @@ class _EmployeesTabState extends ConsumerState<EmployeesTab> {
   @override
   Widget build(BuildContext context) {
     final asyncData = ref.watch(shopEmployeesProvider(widget.shopId));
-    final usersAsync = ref.watch(_assignableUsersProvider);
+    final usersAsync = ref.watch(assignableUsersProvider);
+    final permissions = ref.watch(userPermissionsProvider).valueOrNull;
+    final canAssign = permissions?.canAssignEmployees ?? false;
+    final showUpgrade = permissions?.showEmployeeAssignUpgrade ?? false;
 
     return asyncData.when(
       loading: () => const LoadingIndicator(),
@@ -133,18 +138,24 @@ class _EmployeesTabState extends ConsumerState<EmployeesTab> {
         return ListView(
           padding: const EdgeInsets.all(16),
           children: [
+            if (showUpgrade) ...[
+              const UpgradePromptBanner(
+                message: 'Employee seats require Growth or higher.',
+              ),
+              const SizedBox(height: 12),
+            ],
             FilledButton.tonalIcon(
-              onPressed: () => setState(() => _showAddForm = !_showAddForm),
+              onPressed: canAssign ? () => setState(() => _showAddForm = !_showAddForm) : null,
               icon: Icon(_showAddForm ? Icons.close : Icons.person_add),
               label: Text(_showAddForm ? 'Cancel' : 'Add Employee'),
             ),
-            if (_showAddForm) ...[
+            if (_showAddForm && canAssign) ...[
               const SizedBox(height: 12),
               usersAsync.when(
                 loading: () => const LoadingIndicator(),
                 error: (e, _) => ErrorView(
                   message: e.toString(),
-                  onRetry: () => ref.invalidate(_assignableUsersProvider),
+                  onRetry: () => ref.invalidate(assignableUsersProvider),
                 ),
                 data: (users) {
                   final available = users.where((u) => !assignedIds.contains(u.id)).toList();

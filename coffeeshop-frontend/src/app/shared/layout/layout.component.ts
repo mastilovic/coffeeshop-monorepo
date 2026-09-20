@@ -8,6 +8,7 @@ import {
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { ProfileService } from '../../services/profile.service';
+import { SubscriptionService } from '../../services/subscription.service';
 import { DialogHostComponent } from '../dialog-host/dialog-host.component';
 import { MobileNavComponent } from '../mobile-nav/mobile-nav.component';
 
@@ -271,6 +272,7 @@ import { MobileNavComponent } from '../mobile-nav/mobile-nav.component';
 export class LayoutComponent implements OnInit {
   readonly authService = inject(AuthService);
   readonly profileService = inject(ProfileService);
+  private readonly subscriptionService = inject(SubscriptionService);
 
   readonly sidebarCollapsed = signal(false);
   readonly profileOpen = signal(false);
@@ -291,6 +293,7 @@ export class LayoutComponent implements OnInit {
 
   onLogout(): void {
     this.profileService.clearProfile();
+    this.subscriptionService.clear();
     this.authService.logout();
   }
 }

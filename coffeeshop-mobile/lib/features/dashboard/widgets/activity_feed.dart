@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/utils/extensions.dart';
 import '../../../data/models/dashboard_activity_response.dart';
@@ -7,6 +8,12 @@ class ActivityFeed extends StatelessWidget {
   const ActivityFeed({super.key, required this.activities});
 
   final List<DashboardActivityItem> activities;
+
+  void _onTap(BuildContext context, DashboardActivityItem item) {
+    final shopId = item.shopId;
+    if (shopId == null || shopId.isEmpty) return;
+    context.go('/shops/$shopId');
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -41,7 +48,10 @@ class ActivityFeed extends StatelessWidget {
               color = Theme.of(context).colorScheme.primary;
           }
 
+          final tappable = item.shopId != null && item.shopId!.isNotEmpty;
+
           return ListTile(
+            onTap: tappable ? () => _onTap(context, item) : null,
             leading: CircleAvatar(
               backgroundColor: color.withValues(alpha: 0.2),
               child: Icon(icon, color: color, size: 20),
@@ -50,10 +60,18 @@ class ActivityFeed extends StatelessWidget {
             subtitle: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (item.body != null) Text(item.body!, maxLines: 2, overflow: TextOverflow.ellipsis),
+                if (item.body != null)
+                  Text(
+                    item.body!,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 if (item.shopName != null) ...[
                   const SizedBox(height: 2),
-                  Text(item.shopName!, style: Theme.of(context).textTheme.bodySmall),
+                  Text(
+                    item.shopName!,
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
                 ],
               ],
             ),

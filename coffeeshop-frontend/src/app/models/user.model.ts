@@ -3,6 +3,7 @@ import { ShopSummaryDto } from './shop.model';
 import { ReviewResponseDto } from './review.model';
 import { ReservationResponseDto } from './reservation.model';
 import { PageResponseDto } from './event.model';
+import { LimitUsage, SubscriptionSummary } from './subscription.model';
 
 export interface UserListItemDto {
   id: string;
@@ -35,6 +36,9 @@ export interface UserProfileResponseDto {
   favouriteShops: ShopSummaryDto[];
   reviews: ReviewResponseDto[];
   reservations: ReservationResponseDto[];
+  subscription?: SubscriptionSummary;
+  entitlements?: Record<string, boolean>;
+  limits?: Record<string, LimitUsage>;
 }
 
 export interface UserSummaryDto {

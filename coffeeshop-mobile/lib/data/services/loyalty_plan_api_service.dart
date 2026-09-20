@@ -20,12 +20,16 @@ class LoyaltyPlanApiService {
     return response.data!;
   }
 
-  Future<void> create(Map<String, dynamic> data) async {
-    await _dioClient.post<Map<String, dynamic>>('/api/v2/loyalty-plan', data: data);
+  Future<Map<String, dynamic>> create(Map<String, dynamic> data) async {
+    final response =
+        await _dioClient.post<Map<String, dynamic>>('/api/v2/loyalty-plan', data: data);
+    return response.data!;
   }
 
-  Future<void> update(String id, Map<String, dynamic> data) async {
-    await _dioClient.put<Map<String, dynamic>>('/api/v2/loyalty-plan/$id', data: data);
+  Future<Map<String, dynamic>> update(String id, Map<String, dynamic> data) async {
+    final response =
+        await _dioClient.put<Map<String, dynamic>>('/api/v2/loyalty-plan/$id', data: data);
+    return response.data!;
   }
 
   Future<void> delete(String id) async {

@@ -29,6 +29,26 @@ class ShopApiService {
     return response.data!;
   }
 
+  /// Fetches all shops by paging with an API-allowed page size (max 50).
+  Future<List<ShopResponseDto>> getAllShops({String? q, String? city}) async {
+    const pageSize = 50;
+    final shops = <ShopResponseDto>[];
+    var page = 0;
+    var totalPages = 1;
+
+    while (page < totalPages) {
+      final data = await getShops(q: q, city: city, page: page, size: pageSize);
+      final content = data['content'] as List<dynamic>? ?? [];
+      shops.addAll(
+        content.map((e) => ShopResponseDto.fromJson(e as Map<String, dynamic>)),
+      );
+      totalPages = (data['totalPages'] as num?)?.toInt() ?? 1;
+      page++;
+    }
+
+    return shops;
+  }
+
   Future<List<ShopResponseDto>> getMine() async {
     final response = await _dioClient.get<List<dynamic>>('/api/v2/shop/mine');
     return response.data!.map((e) => ShopResponseDto.fromJson(e as Map<String, dynamic>)).toList();

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../data/models/dashboard_activity_response.dart';
+import '../../../shared/widgets/image_with_placeholder.dart';
+import '../../../shared/widgets/shop_card.dart';
 
 class TopShopsCarousel extends StatelessWidget {
   const TopShopsCarousel({super.key, required this.shops});
@@ -12,6 +14,8 @@ class TopShopsCarousel extends StatelessWidget {
   Widget build(BuildContext context) {
     if (shops.isEmpty) return const SizedBox.shrink();
 
+    final theme = Theme.of(context);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -19,13 +23,13 @@ class TopShopsCarousel extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           child: Text(
             'Top Shops',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ),
         SizedBox(
-          height: 160,
+          height: 104,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -33,58 +37,100 @@ class TopShopsCarousel extends StatelessWidget {
             separatorBuilder: (_, __) => const SizedBox(width: 12),
             itemBuilder: (context, index) {
               final shop = shops[index];
+              final hasRating = shopHasRating(
+                rating: shop.averageRating,
+                reviewCount: shop.reviewCount,
+              );
+              final ratingText = shopRatingLabel(
+                rating: shop.averageRating,
+                reviewCount: shop.reviewCount,
+              );
+
               return SizedBox(
-                width: 200,
+                width: 260,
                 child: Card(
+                  margin: EdgeInsets.zero,
+                  clipBehavior: Clip.antiAlias,
                   child: InkWell(
                     onTap: () => context.go('/shops/${shop.shopId}'),
-                    borderRadius: BorderRadius.circular(12),
                     child: Padding(
                       padding: const EdgeInsets.all(12),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                      child: Row(
                         children: [
-                          Text(
-                            shop.shopName,
-                            style: Theme.of(context).textTheme.titleSmall,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                          ImageWithPlaceholder(
+                            width: 56,
+                            height: 56,
+                            borderRadius: BorderRadius.circular(8),
+                            placeholderIcon: Icons.store,
                           ),
-                          if (shop.city != null) ...[
-                            const SizedBox(height: 4),
-                            Row(
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(Icons.location_on, size: 14,
-                                    color: Theme.of(context).colorScheme.onSurfaceVariant),
-                                const SizedBox(width: 4),
-                                Expanded(
-                                  child: Text(
-                                    shop.city!,
-                                    style: Theme.of(context).textTheme.bodySmall,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
+                                Text(
+                                  shop.shopName,
+                                  style: theme.textTheme.titleSmall,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                if (shop.city != null) ...[
+                                  const SizedBox(height: 2),
+                                  Row(
+                                    children: [
+                                      Icon(
+                                        Icons.location_on,
+                                        size: 14,
+                                        color: theme.colorScheme.onSurfaceVariant,
+                                      ),
+                                      const SizedBox(width: 2),
+                                      Expanded(
+                                        child: Text(
+                                          shop.city!,
+                                          style: theme.textTheme.bodySmall
+                                              ?.copyWith(
+                                            color: theme
+                                                .colorScheme.onSurfaceVariant,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ],
                                   ),
+                                ],
+                                const SizedBox(height: 4),
+                                Row(
+                                  children: [
+                                    Icon(
+                                      hasRating
+                                          ? Icons.star
+                                          : Icons.star_outline,
+                                      size: 14,
+                                      color: hasRating
+                                          ? Colors.amber
+                                          : theme.colorScheme.onSurfaceVariant,
+                                    ),
+                                    const SizedBox(width: 2),
+                                    Expanded(
+                                      child: Text(
+                                        ratingText,
+                                        style: theme.textTheme.bodySmall
+                                            ?.copyWith(
+                                          color: hasRating
+                                              ? null
+                                              : theme
+                                                  .colorScheme.onSurfaceVariant,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ],
                             ),
-                          ],
-                          const Spacer(),
-                          Row(
-                            children: [
-                              const Icon(Icons.star, size: 14, color: Colors.amber),
-                              const SizedBox(width: 4),
-                              Text(
-                                shop.averageRating?.toStringAsFixed(1) ?? '--',
-                                style: Theme.of(context).textTheme.bodySmall,
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                '${shop.reviewCount} reviews',
-                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                                    ),
-                              ),
-                            ],
                           ),
                         ],
                       ),

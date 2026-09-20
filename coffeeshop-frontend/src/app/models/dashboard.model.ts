@@ -54,3 +54,38 @@ export interface DashboardActivityResponse {
   personalSummary: DashboardPersonalSummary;
   notifications: DashboardNotification[];
 }
+
+export interface DashboardAnalyticsAggregate {
+  shopCount: number;
+  reservationCount: number;
+  pendingReservationRequestCount: number;
+  eventCount: number;
+  reviewCount: number;
+  averageRating: number | null;
+  communityPostCount: number;
+  memberCount: number;
+  employeeCount: number;
+  tableCount: number;
+  menuCount: number;
+}
+
+export interface DashboardShopAnalytics {
+  shopId: string;
+  shopName: string;
+  city: string;
+  reservationCount: number;
+  pendingReservationRequestCount: number;
+  eventCount: number;
+  reviewCount: number;
+  averageRating: number | null;
+  communityPostCount: number;
+  memberCount: number;
+  employeeCount: number;
+  tableCount: number;
+  menuCount: number;
+}
+
+export interface DashboardAnalyticsResponse {
+  aggregate: DashboardAnalyticsAggregate;
+  shops: DashboardShopAnalytics[];
+}

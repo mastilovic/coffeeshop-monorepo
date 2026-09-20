@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../features/billing/billing_screen.dart';
+import '../../features/billing/custom_plan_builder_screen.dart';
 import '../../features/auth/login_screen.dart';
 import '../../features/auth/register_screen.dart';
 import '../../features/dashboard/dashboard_screen.dart';
@@ -146,10 +148,16 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: '/reservations',
-                builder: (context, state) => ReservationListScreen(
-                  initialShopId: state.uri.queryParameters['shopId'],
-                  initialEventId: state.uri.queryParameters['eventId'],
-                ),
+                builder: (context, state) {
+                  final params = state.uri.queryParameters;
+                  return ReservationListScreen(
+                    initialShopId: params['shopId'],
+                    initialEventId: params['eventId'],
+                    openRequest: params['request'] == '1' ||
+                        params['shopId'] != null ||
+                        params['eventId'] != null,
+                  );
+                },
               ),
             ],
           ),
@@ -158,6 +166,19 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: '/profile',
                 builder: (context, state) => const ProfileScreen(),
+                routes: [
+                  GoRoute(
+                    path: 'billing',
+                    builder: (context, state) => const BillingScreen(),
+                    routes: [
+                      GoRoute(
+                        path: 'custom',
+                        builder: (context, state) =>
+                            const CustomPlanBuilderScreen(),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ],
           ),

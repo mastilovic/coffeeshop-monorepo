@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
+import '../../../core/auth/user_permissions.dart';
 import '../../../core/utils/api_error.dart';
 import '../../../data/models/event_response_dto.dart';
 import '../../../data/services/event_api_service.dart';
 import '../../../shared/widgets/empty_state_view.dart';
+import '../../../shared/widgets/event_list_card.dart';
+import '../../../shared/widgets/event_reserve_button.dart';
+import '../../../shared/widgets/upgrade_prompt.dart';
+import '../../events/event_providers.dart';
 import '../../shops/shop_providers.dart';
 
 String eventLabel(EventResponseDto event) {
@@ -113,6 +117,7 @@ class _EventsTabState extends ConsumerState<EventsTab> {
 
       _resetForm();
       ref.invalidate(shopDetailProvider(widget.shopId));
+      ref.invalidate(eventListProvider);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -140,6 +145,7 @@ class _EventsTabState extends ConsumerState<EventsTab> {
     try {
       await ref.read(eventApiServiceProvider).delete(eventId);
       ref.invalidate(shopDetailProvider(widget.shopId));
+      ref.invalidate(eventListProvider);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -152,16 +158,29 @@ class _EventsTabState extends ConsumerState<EventsTab> {
   @override
   Widget build(BuildContext context) {
     final events = parseShopEvents(widget.events);
+    final permissions = ref.watch(userPermissionsProvider).valueOrNull;
+    final canCreate = widget.canManage && (permissions?.canCreateEventWithSubscription ?? false);
+    final showUpgrade = widget.canManage && (permissions?.showEventCreateUpgrade ?? false);
+    final eventsQuota = permissions?.eventsQuotaLabel;
 
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
         if (widget.canManage) ...[
+          if (eventsQuota != null) UsageQuotaLabel(label: eventsQuota),
+          if (showUpgrade) ...[
+            const UpgradePromptBanner(
+              message: 'Create events with a Growth plan or higher.',
+            ),
+            const SizedBox(height: 12),
+          ],
           FilledButton.tonalIcon(
-            onPressed: () => setState(() {
-              _showForm = !_showForm;
-              if (!_showForm) _resetForm();
-            }),
+            onPressed: canCreate
+                ? () => setState(() {
+                      _showForm = !_showForm;
+                      if (!_showForm) _resetForm();
+                    })
+                : null,
             icon: Icon(_showForm ? Icons.close : Icons.add),
             label: Text(_showForm ? 'Cancel' : 'Add Event'),
           ),
@@ -195,7 +214,7 @@ class _EventsTabState extends ConsumerState<EventsTab> {
                     ),
                     const SizedBox(height: 12),
                     FilledButton(
-                      onPressed: _isSaving ? null : _saveEvent,
+                      onPressed: _isSaving || !canCreate ? null : _saveEvent,
                       child: Text(_editingEventId != null ? 'Update Event' : 'Save Event'),
                     ),
                   ],
@@ -209,31 +228,46 @@ class _EventsTabState extends ConsumerState<EventsTab> {
           EmptyStateView(
             icon: Icons.event,
             message: 'No events.',
-            actionLabel: widget.canManage && !_showForm ? 'Add Event' : null,
-            onAction: widget.canManage && !_showForm ? () => setState(() => _showForm = true) : null,
+            actionLabel: canCreate && !_showForm ? 'Add Event' : null,
+            onAction: canCreate && !_showForm ? () => setState(() => _showForm = true) : null,
           )
         else
           ...events.map((event) {
-            return Card(
-              margin: const EdgeInsets.only(bottom: 8),
-              child: ListTile(
-                leading: const Icon(Icons.event, color: Colors.orange),
-                title: Text(eventLabel(event)),
-                subtitle: Text(event.eventDate),
-                trailing: widget.canManage
-                    ? PopupMenuButton<String>(
-                        onSelected: (value) {
-                          if (value == 'edit') _startEdit(event);
-                          if (value == 'delete') _deleteEvent(event.eventId);
-                        },
-                        itemBuilder: (context) => const [
-                          PopupMenuItem(value: 'edit', child: Text('Edit')),
-                          PopupMenuItem(value: 'delete', child: Text('Delete')),
-                        ],
-                      )
-                    : const Icon(Icons.chevron_right),
-                onTap: () => context.push('/events/${event.eventId}'),
-              ),
+            final reserveButton = EventReserveButton(
+              eventId: event.eventId,
+              shopId: widget.shopId,
+              eventDate: event.eventDate,
+            );
+            return EventListCard(
+              eventId: event.eventId,
+              eventName: eventLabel(event),
+              eventDate: event.eventDate,
+              shopId: widget.shopId,
+              shopName: event.shopName,
+              shopCity: event.shopCity,
+              trailing: widget.canManage
+                  ? Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        reserveButton,
+                        PopupMenuButton<String>(
+                          onSelected: (value) {
+                            if (value == 'edit') _startEdit(event);
+                            if (value == 'delete') {
+                              _deleteEvent(event.eventId);
+                            }
+                          },
+                          itemBuilder: (context) => const [
+                            PopupMenuItem(value: 'edit', child: Text('Edit')),
+                            PopupMenuItem(
+                              value: 'delete',
+                              child: Text('Delete'),
+                            ),
+                          ],
+                        ),
+                      ],
+                    )
+                  : reserveButton,
             );
           }),
       ],

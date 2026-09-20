@@ -20,3 +20,8 @@ docker compose up --build
 | Postgres (app) | localhost:25432 |
 
 Copy `.env.example` to `.env` to override defaults.
+
+## Docs
+
+- [Owner subscription plans](docs/readme.md)
+- [Keycloak](docs/keycloak.md)

@@ -13,6 +13,7 @@ import (
 	"github.com/mastilovic/coffeeshop-go/internal/apperror"
 	"github.com/mastilovic/coffeeshop-go/internal/auth"
 	"github.com/mastilovic/coffeeshop-go/internal/model"
+	"github.com/mastilovic/coffeeshop-go/internal/subscription"
 	"gorm.io/gorm"
 )
 
@@ -22,10 +23,21 @@ type ShopHandler struct {
 	db             *gorm.DB
 	currentUserSvc *auth.CurrentUserService
 	authorizer     *auth.ShopAuthorizer
+	entitlements   *subscription.EntitlementService
 }
 
-func NewShopHandler(db *gorm.DB, currentUserSvc *auth.CurrentUserService, authorizer *auth.ShopAuthorizer) *ShopHandler {
-	return &ShopHandler{db: db, currentUserSvc: currentUserSvc, authorizer: authorizer}
+func NewShopHandler(
+	db *gorm.DB,
+	currentUserSvc *auth.CurrentUserService,
+	authorizer *auth.ShopAuthorizer,
+	entitlements *subscription.EntitlementService,
+) *ShopHandler {
+	return &ShopHandler{
+		db:             db,
+		currentUserSvc: currentUserSvc,
+		authorizer:     authorizer,
+		entitlements:   entitlements,
+	}
 }
 
 type shopCreateRequest struct {
@@ -614,7 +626,7 @@ func (h *ShopHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 
 // Create handles POST /shop.
 func (h *ShopHandler) Create(w http.ResponseWriter, r *http.Request) {
-	_, err := h.currentUserSvc.RequireCurrentUser(r.Context())
+	user, err := h.currentUserSvc.RequireCurrentUser(r.Context())
 	if err != nil {
 		apperror.WriteError(w, err)
 		return
@@ -628,6 +640,23 @@ func (h *ShopHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var req shopCreateRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		apperror.WriteError(w, apperror.BadRequest("Invalid request body"))
+		return
+	}
+
+	ownerIDStr := user.ID
+	if req.OwnerUserID != "" {
+		ownerIDStr = req.OwnerUserID
+	}
+	ownerUUID, err := uuid.Parse(ownerIDStr)
+	if err != nil {
+		apperror.WriteError(w, apperror.BadRequest("Invalid owner user ID"))
+		return
+	}
+	if !subscription.RequireLimit(
+		w, r, h.entitlements,
+		ownerUUID, uuid.Nil,
+		subscription.LimitShops, h.authorizer.IsAdmin(r.Context()),
+	) {
 		return
 	}
 
@@ -656,6 +685,22 @@ func (h *ShopHandler) Create(w http.ResponseWriter, r *http.Request) {
 				return err
 			}
 		}
+
+		var existingShopSubs int64
+		if err := tx.Model(&model.ShopSubscription{}).
+			Where("owner_user_id = ?", ownerIDStr).
+			Count(&existingShopSubs).Error; err != nil {
+			return err
+		}
+		shopSub := model.ShopSubscription{
+			ShopID:      shop.ID,
+			OwnerUserID: ownerIDStr,
+			IsBaseShop:  existingShopSubs == 0,
+		}
+		if err := tx.Create(&shopSub).Error; err != nil {
+			return err
+		}
+
 		return nil
 	})
 

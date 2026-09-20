@@ -3,21 +3,41 @@ package handler
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 
+	"github.com/google/uuid"
 	"github.com/mastilovic/coffeeshop-go/internal/apperror"
 	"github.com/mastilovic/coffeeshop-go/internal/auth"
+	"github.com/mastilovic/coffeeshop-go/internal/middleware"
 	"github.com/mastilovic/coffeeshop-go/internal/model"
+	"github.com/mastilovic/coffeeshop-go/internal/repository"
+	"github.com/mastilovic/coffeeshop-go/internal/subscription"
 	"gorm.io/gorm"
 )
 
 type ProfileHandler struct {
-	db          *gorm.DB
-	currentUser *auth.CurrentUserService
+	db           *gorm.DB
+	currentUser  *auth.CurrentUserService
+	entitlements *subscription.EntitlementService
+	pricing      *subscription.PricingService
+	subRepo      *repository.SubscriptionRepository
 }
 
-func NewProfileHandler(db *gorm.DB, currentUser *auth.CurrentUserService) *ProfileHandler {
-	return &ProfileHandler{db: db, currentUser: currentUser}
+func NewProfileHandler(
+	db *gorm.DB,
+	currentUser *auth.CurrentUserService,
+	entitlements *subscription.EntitlementService,
+	pricing *subscription.PricingService,
+	subRepo *repository.SubscriptionRepository,
+) *ProfileHandler {
+	return &ProfileHandler{
+		db:           db,
+		currentUser:  currentUser,
+		entitlements: entitlements,
+		pricing:      pricing,
+		subRepo:      subRepo,
+	}
 }
 
 type profileResponse struct {
@@ -30,6 +50,24 @@ type profileResponse struct {
 	FavouriteShops []shopSummary           `json:"favouriteShops"`
 	Reviews        []profileReviewResponse `json:"reviews"`
 	Reservations   []reservationResponse   `json:"reservations"`
+	Subscription   *subscriptionSummary    `json:"subscription,omitempty"`
+	Entitlements   map[string]bool         `json:"entitlements,omitempty"`
+	Limits         map[string]limitUsage    `json:"limits,omitempty"`
+}
+
+type subscriptionSummary struct {
+	PlanMode           string  `json:"planMode"`
+	PlanTier           *string `json:"planTier,omitempty"`
+	Status             string  `json:"status"`
+	ShopsIncluded      int     `json:"shopsIncluded"`
+	ShopsUsed          int     `json:"shopsUsed"`
+	PeriodEnd          *string `json:"periodEnd,omitempty"`
+	MonthlyAmountCents int     `json:"monthlyAmountCents"`
+}
+
+type limitUsage struct {
+	Used int `json:"used"`
+	Max  int `json:"max"`
 }
 
 type profileReviewComment struct {
@@ -96,8 +134,205 @@ func (h *ProfileHandler) GetProfile(w http.ResponseWriter, r *http.Request) {
 		Reservations:   reservations,
 	}
 
+	if auth.NormalizeUserType(user.UserType) == "SHOP_OWNER" {
+		isAdmin := isAdminFromContext(ctx)
+		ownerID, err := uuid.Parse(user.ID)
+		if err != nil {
+			apperror.WriteError(w, apperror.Internal("Invalid user id"))
+			return
+		}
+
+		entitlements, err := h.entitlements.ResolveEntitlements(ctx, ownerID, isAdmin)
+		if err != nil {
+			apperror.WriteError(w, apperror.Internal("Failed to load entitlements"))
+			return
+		}
+		resp.Entitlements = entitlementsToMap(entitlements)
+
+		subSummary, err := h.loadSubscriptionSummary(ctx, user.ID)
+		if err != nil {
+			apperror.WriteError(w, apperror.Internal("Failed to load subscription"))
+			return
+		}
+		resp.Subscription = subSummary
+
+		if primaryShopID, err := h.resolvePrimaryShopID(ctx, user.ID); err == nil {
+			limits, err := h.loadLimits(ctx, ownerID, primaryShopID, isAdmin)
+			if err != nil {
+				apperror.WriteError(w, apperror.Internal("Failed to load limits"))
+				return
+			}
+			resp.Limits = limits
+		}
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(resp)
+}
+
+func isAdminFromContext(ctx context.Context) bool {
+	claims := middleware.GetUserClaims(ctx)
+	if claims == nil {
+		return false
+	}
+	for _, role := range claims.Roles {
+		if role == "admin" {
+			return true
+		}
+	}
+	return false
+}
+
+func entitlementsToMap(entitlements map[subscription.Feature]bool) map[string]bool {
+	result := make(map[string]bool, len(entitlements))
+	for feature, enabled := range entitlements {
+		result[string(feature)] = enabled
+	}
+	return result
+}
+
+func (h *ProfileHandler) resolvePrimaryShopID(ctx context.Context, ownerUserID string) (uuid.UUID, error) {
+	var baseShop model.ShopSubscription
+	err := h.db.WithContext(ctx).
+		Where("owner_user_id = ? AND is_base_shop = ?", ownerUserID, true).
+		First(&baseShop).Error
+	if err == nil {
+		return uuid.Parse(baseShop.ShopID)
+	}
+	if !errors.Is(err, gorm.ErrRecordNotFound) {
+		return uuid.Nil, err
+	}
+
+	var shopID string
+	err = h.db.WithContext(ctx).
+		Table("shop AS s").
+		Select("s.id").
+		Joins("JOIN user_shop AS us ON us.shop_id = s.id").
+		Where("us.user_id = ? AND us.relationship_type = ?", ownerUserID, model.RelationshipTypeOwner).
+		Order("s.name ASC").
+		Limit(1).
+		Scan(&shopID).Error
+	if err != nil {
+		return uuid.Nil, err
+	}
+	if shopID == "" {
+		return uuid.Nil, gorm.ErrRecordNotFound
+	}
+	return uuid.Parse(shopID)
+}
+
+func (h *ProfileHandler) loadSubscriptionSummary(ctx context.Context, ownerUserID string) (*subscriptionSummary, error) {
+	sub, err := h.subRepo.GetOwnerSubscription(ctx, ownerUserID)
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		sub = &model.OwnerSubscription{
+			UserID:   ownerUserID,
+			PlanMode: model.PlanModePreset,
+			Status:   model.SubscriptionStatusActive,
+		}
+		starter := model.PlanTierStarter
+		sub.PlanTier = &starter
+	} else if err != nil {
+		return nil, err
+	}
+
+	shopsUsed, err := h.countShopsUsed(ctx, ownerUserID)
+	if err != nil {
+		return nil, err
+	}
+
+	monthlyAmount, err := h.resolveMonthlyAmountCents(ctx, sub, shopsUsed)
+	if err != nil {
+		return nil, err
+	}
+
+	summary := &subscriptionSummary{
+		PlanMode:           string(sub.PlanMode),
+		Status:             string(sub.Status),
+		ShopsIncluded:      1,
+		ShopsUsed:          shopsUsed,
+		MonthlyAmountCents: monthlyAmount,
+	}
+	if sub.PlanTier != nil {
+		tier := string(*sub.PlanTier)
+		summary.PlanTier = &tier
+	}
+	if sub.CurrentPeriodEnd != nil {
+		formatted := sub.CurrentPeriodEnd.UTC().Format("2006-01-02")
+		summary.PeriodEnd = &formatted
+	}
+	return summary, nil
+}
+
+func (h *ProfileHandler) countShopsUsed(ctx context.Context, ownerUserID string) (int, error) {
+	shops, err := h.subRepo.ListShopSubscriptionsByOwner(ctx, ownerUserID)
+	if err != nil {
+		return 0, err
+	}
+	if len(shops) > 0 {
+		return len(shops), nil
+	}
+
+	var count int64
+	err = h.db.WithContext(ctx).
+		Model(&model.UserShop{}).
+		Where("user_id = ? AND relationship_type = ?", ownerUserID, model.RelationshipTypeOwner).
+		Count(&count).Error
+	return int(count), err
+}
+
+func (h *ProfileHandler) resolveMonthlyAmountCents(ctx context.Context, sub *model.OwnerSubscription, shopCount int) (int, error) {
+	if sub.LockedMonthlyAmountCents != nil {
+		return *sub.LockedMonthlyAmountCents, nil
+	}
+
+	if shopCount < 1 {
+		shopCount = 1
+	}
+
+	billingInterval := model.BillingIntervalMonthly
+	if sub.BillingInterval != nil {
+		billingInterval = *sub.BillingInterval
+	}
+
+	featureKeys := []string{}
+	if sub.PlanMode == model.PlanModeCustom {
+		features, err := h.subRepo.GetOwnerSubscriptionFeatures(ctx, sub.UserID)
+		if err != nil {
+			return 0, err
+		}
+		for _, feature := range features {
+			featureKeys = append(featureKeys, feature.FeatureKey)
+		}
+	}
+
+	quote, err := h.pricing.Quote(ctx, subscription.QuoteRequest{
+		PlanMode:        sub.PlanMode,
+		PlanTier:        sub.PlanTier,
+		Features:        featureKeys,
+		ShopCount:       shopCount,
+		BillingInterval: billingInterval,
+	})
+	if err != nil {
+		return 0, err
+	}
+	return quote.MonthlyTotalCents, nil
+}
+
+func (h *ProfileHandler) loadLimits(ctx context.Context, ownerID, shopID uuid.UUID, isAdmin bool) (map[string]limitUsage, error) {
+	limitTypes := []subscription.LimitType{
+		subscription.LimitTables,
+		subscription.LimitMenus,
+		subscription.LimitEvents,
+		subscription.LimitEmployees,
+		subscription.LimitShops,
+	}
+
+	limits := make(map[string]limitUsage, len(limitTypes))
+	for _, limitType := range limitTypes {
+		used, max, _, _ := h.entitlements.CheckLimit(ctx, ownerID, shopID, limitType, isAdmin)
+		limits[string(limitType)] = limitUsage{Used: used, Max: max}
+	}
+	return limits, nil
 }
 
 func (h *ProfileHandler) loadFavouriteShops(ctx context.Context, userID string) ([]shopSummary, error) {

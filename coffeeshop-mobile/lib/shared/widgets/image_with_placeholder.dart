@@ -29,12 +29,14 @@ class ImageWithPlaceholder extends StatelessWidget {
         : null;
 
     if (imageUrl == null || imageUrl!.isEmpty) {
-      return _Placeholder(
+      final placeholder = _Placeholder(
         width: width,
         height: height,
         icon: placeholderIcon,
         shape: shape,
       );
+      if (borderRadius == null) return placeholder;
+      return ClipRRect(borderRadius: borderRadius!, child: placeholder);
     }
 
     return ClipRRect(

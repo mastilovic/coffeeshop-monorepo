@@ -1,5 +1,5 @@
 import { Component, inject, signal, computed, OnInit, ChangeDetectionStrategy, DestroyRef } from '@angular/core';
-import { ActivatedRoute, Router, NavigationEnd } from '@angular/router';
+import { ActivatedRoute, Router, NavigationEnd, RouterLink } from '@angular/router';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { filter } from 'rxjs';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -27,11 +27,12 @@ import {
   isEventFull,
 } from '../../utils/reservation-event.utils';
 import { DialogService } from '../../services/dialog.service';
+import { SubscriptionService } from '../../services/subscription.service';
 
 @Component({
   selector: 'app-reservations',
   standalone: true,
-  imports: [ReactiveFormsModule, FormsModule, FormSelectComponent],
+  imports: [ReactiveFormsModule, FormsModule, FormSelectComponent, RouterLink],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="page">
@@ -166,7 +167,7 @@ import { DialogService } from '../../services/dialog.service';
                               <span class="compact-row__avatar">{{ req.shop.name.charAt(0).toUpperCase() }}</span>
                               <div class="compact-row__text">
                                 <span class="compact-row__primary">{{ req.shop.name }}</span>
-                                <span class="compact-row__secondary">{{ eventLabel(req) }} &middot; Party {{ req.partySize }}</span>
+                                <span class="compact-row__secondary">{{ requestSecondaryLabel(req) }}</span>
                               </div>
                             </div>
                             <span class="badge"
@@ -189,7 +190,7 @@ import { DialogService } from '../../services/dialog.service';
                               <span class="compact-row__avatar">{{ r.shop.name.charAt(0).toUpperCase() }}</span>
                               <div class="compact-row__text">
                                 <span class="compact-row__primary">{{ r.shop.name }}</span>
-                                <span class="compact-row__secondary">{{ eventLabel(r) }} &middot; {{ r.table ? 'Table ' + r.table.number : 'N/A' }} &middot; Party {{ r.partySize }}</span>
+                                <span class="compact-row__secondary">{{ reservationSecondaryLabel(r) }}</span>
                               </div>
                             </div>
                           </article>
@@ -257,8 +258,19 @@ import { DialogService } from '../../services/dialog.service';
                               @if (!hasSuitableTablesForRequest(req)) {
                                 <span class="text-muted" style="font-size:0.6875rem">No table for party of {{ req.partySize }}</span>
                               }
-                              <button class="btn btn--compact btn-primary" (click)="onAccept(req)">Accept</button>
-                              <button class="btn btn--compact btn-danger" (click)="onDeny(req)">Deny</button>
+                              <button
+                                class="btn btn--compact btn-primary"
+                                [disabled]="!canManageReservations()"
+                                (click)="onAccept(req)"
+                              >Accept</button>
+                              <button
+                                class="btn btn--compact btn-danger"
+                                [disabled]="!canManageReservations()"
+                                (click)="onDeny(req)"
+                              >Deny</button>
+                              @if (!canManageReservations()) {
+                                <a routerLink="/profile/billing" class="upgrade-link">Upgrade to Growth</a>
+                              }
                             </div>
                           </article>
                         }
@@ -342,7 +354,7 @@ import { DialogService } from '../../services/dialog.service';
                     <span class="compact-row__avatar">{{ req.shop.name.charAt(0).toUpperCase() }}</span>
                     <div class="compact-row__text">
                       <span class="compact-row__primary">{{ req.shop.name }}</span>
-                      <span class="compact-row__secondary">{{ eventLabel(req) }} &middot; Party {{ req.partySize }}</span>
+                      <span class="compact-row__secondary">{{ requestSecondaryLabel(req) }}</span>
                     </div>
                   </div>
                   <span class="badge"
@@ -366,7 +378,7 @@ import { DialogService } from '../../services/dialog.service';
                     <span class="compact-row__avatar">{{ r.shop.name.charAt(0).toUpperCase() }}</span>
                     <div class="compact-row__text">
                       <span class="compact-row__primary">{{ r.shop.name }}</span>
-                      <span class="compact-row__secondary">{{ eventLabel(r) }} &middot; {{ r.table ? 'Table ' + r.table.number : 'N/A' }} &middot; Party {{ r.partySize }}</span>
+                      <span class="compact-row__secondary">{{ reservationSecondaryLabel(r) }}</span>
                     </div>
                   </div>
                 </article>
@@ -386,6 +398,18 @@ import { DialogService } from '../../services/dialog.service';
       display: flex;
       gap: 0.5rem;
       flex-wrap: wrap;
+    }
+
+    .upgrade-link {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #d4a574;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    .upgrade-link:hover {
+      text-decoration: underline;
     }
 
     @media (max-width: 768px) {
@@ -415,6 +439,11 @@ export class ReservationsComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly dialog = inject(DialogService);
+  private readonly subscriptionService = inject(SubscriptionService);
+
+  readonly canManageReservations = computed(() =>
+    this.subscriptionService.canUseFeature('reservation_manage'),
+  );
 
   readonly shops = signal<ShopResponseDto[]>([]);
   readonly users = signal<UserResponseDto[]>([]);
@@ -724,6 +753,68 @@ export class ReservationsComponent implements OnInit {
     return item.eventId ?? '—';
   }
 
+  requestSecondaryLabel(req: {
+    eventName?: string;
+    eventId?: string;
+    eventDate?: string;
+    partySize: number;
+  }): string {
+    const base = `${this.eventLabel(req)} · Party ${req.partySize}`;
+    return this.appendEventDateMeta(base, req.eventDate);
+  }
+
+  reservationSecondaryLabel(r: {
+    eventName?: string;
+    eventId?: string;
+    eventDate?: string;
+    partySize: number;
+    table?: { number?: number } | null;
+  }): string {
+    const tableLabel = r.table ? `Table ${r.table.number}` : 'N/A';
+    const base = `${this.eventLabel(r)} · ${tableLabel} · Party ${r.partySize}`;
+    return this.appendEventDateMeta(base, r.eventDate);
+  }
+
+  private appendEventDateMeta(base: string, eventDate?: string): string {
+    if (!eventDate) {
+      return base;
+    }
+    const formatted = this.formatEventDate(eventDate);
+    if (!formatted) {
+      return base;
+    }
+    return `${base} · ${formatted} · ${this.relativeEventTime(eventDate)}`;
+  }
+
+  formatEventDate(dateStr: string): string {
+    const date = new Date(dateStr);
+    if (Number.isNaN(date.getTime())) {
+      return '';
+    }
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
+  }
+
+  relativeEventTime(timestamp: string): string {
+    const date = new Date(timestamp);
+    if (Number.isNaN(date.getTime())) {
+      return '';
+    }
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const thatDay = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    const days = Math.round((thatDay.getTime() - today.getTime()) / 86400000);
+
+    if (days === 0) return 'Today';
+    if (days === 1) return 'Tomorrow';
+    if (days === -1) return 'Yesterday';
+    if (days > 0) return `In ${days} days`;
+    return `${-days} days ago`;
+  }
+
   private onShopChange(shopId: string): void {
     this.loadEventsForRequestShop(shopId);
   }
@@ -812,6 +903,7 @@ export class ReservationsComponent implements OnInit {
   }
 
   onAccept(req: ReservationRequestResponseDto): void {
+    if (!this.canManageReservations()) return;
     const sel = this.selectedTableForRequest();
     if (!sel || sel.reqId !== req.id || !sel.tableId) {
       void this.dialog.alert('Please select a table first.');
@@ -831,6 +923,7 @@ export class ReservationsComponent implements OnInit {
   }
 
   onDeny(req: ReservationRequestResponseDto): void {
+    if (!this.canManageReservations()) return;
     void this.dialog
       .confirm('Deny this reservation request?', {
         confirmLabel: 'Deny',

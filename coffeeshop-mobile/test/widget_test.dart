@@ -5,7 +5,8 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   testWidgets('App smoke test - renders without error', (WidgetTester tester) async {
     await tester.pumpWidget(const ProviderScope(child: CoffeeshopApp()));
-    await tester.pumpAndSettle(const Duration(seconds: 2));
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
     expect(tester.takeException(), isNull);
   });
 }

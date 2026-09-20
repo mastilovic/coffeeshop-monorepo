@@ -7,6 +7,7 @@ import '../../core/utils/api_error.dart';
 import '../../data/models/shop_response_dto.dart';
 import '../../data/services/event_api_service.dart';
 import '../../shared/widgets/form_select.dart';
+import '../../shared/widgets/upgrade_prompt.dart';
 import 'event_providers.dart';
 
 class EventCreateScreen extends ConsumerStatefulWidget {
@@ -79,8 +80,18 @@ class _EventCreateScreenState extends ConsumerState<EventCreateScreen> {
     }
 
     final permissions = ref.read(userPermissionsProvider).valueOrNull;
-    final canCreate = permissions?.canCreateEvent ?? false;
-    if (canCreate && _selectedShopId == null) {
+    final canCreate = permissions?.canCreateEventWithSubscription ?? false;
+    if (!canCreate) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Event creation requires Growth or higher')),
+      );
+      showUpgradeSnackBar(
+        context,
+        message: 'Upgrade to Growth to create events.',
+      );
+      return;
+    }
+    if (_selectedShopId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please select a shop')),
       );
@@ -174,20 +185,29 @@ class _EventCreateScreenState extends ConsumerState<EventCreateScreen> {
   @override
   Widget build(BuildContext context) {
     final permissions = ref.watch(userPermissionsProvider).valueOrNull;
-    final canCreate = permissions?.canCreateEvent ?? false;
+    final canCreate = permissions?.canCreateEventWithSubscription ?? false;
+    final showUpgrade = permissions?.showEventCreateUpgrade ?? false;
     final shopsAsync = ref.watch(eventCreatableShopsProvider);
 
     final shops = shopsAsync.valueOrNull ?? [];
-    final shopRequiredButMissing =
-        canCreate && shops.isNotEmpty && _selectedShopId == null;
-    final canSubmit = !_isSaving && !shopRequiredButMissing && !(canCreate && shops.isEmpty);
+    final shopRequiredButMissing = canCreate && shops.isNotEmpty && _selectedShopId == null;
+    final canSubmit = !_isSaving &&
+        canCreate &&
+        !shopRequiredButMissing &&
+        !(permissions?.canCreateEvent == true && shops.isEmpty);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Create Event')),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          if (canCreate) _buildShopSection(shopsAsync),
+          if (showUpgrade) ...[
+            const UpgradePromptBanner(
+              message: 'Create events with a Growth plan or higher.',
+            ),
+            const SizedBox(height: 12),
+          ],
+          if (permissions?.canCreateEvent ?? false) _buildShopSection(shopsAsync),
           TextField(
             controller: _nameController,
             decoration: const InputDecoration(labelText: 'Event name', border: OutlineInputBorder()),

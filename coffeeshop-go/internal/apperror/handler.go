@@ -11,6 +11,13 @@ type ErrorResponse struct {
 }
 
 func WriteError(w http.ResponseWriter, err error) {
+	if payErr, ok := err.(*PaymentRequiredError); ok {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(payErr.StatusCode)
+		json.NewEncoder(w).Encode(payErr)
+		return
+	}
+
 	if appErr, ok := err.(*AppError); ok {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(appErr.StatusCode)
