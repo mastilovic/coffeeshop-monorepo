@@ -147,13 +147,16 @@ type contactSummary struct {
 }
 
 type shopWithOwnerResponse struct {
-	ID          string        `json:"id"`
-	Name        string        `json:"name"`
-	Address     string        `json:"address"`
-	City        string        `json:"city"`
-	PhoneNumber string        `json:"phoneNumber"`
-	Email       string        `json:"email"`
-	CreatedBy   *ownerSummary `json:"createdBy"`
+	ID            string        `json:"id"`
+	Name          string        `json:"name"`
+	Address       string        `json:"address"`
+	City          string        `json:"city"`
+	PhoneNumber   string        `json:"phoneNumber"`
+	Email         string        `json:"email"`
+	CreatedBy     *ownerSummary `json:"createdBy"`
+	ReviewCount   int           `json:"reviewCount"`
+	AverageRating *float64      `json:"averageRating"`
+	MemberCount   *int          `json:"memberCount,omitempty"`
 }
 
 type ownerSummary struct {
@@ -214,6 +217,73 @@ func fillShopOwners(ctx context.Context, db *gorm.DB, shops []model.Shop) ([]sho
 	return results, nil
 }
 
+// fillShopListStats attaches review aggregates and favourite member counts to list items.
+func fillShopListStats(ctx context.Context, db *gorm.DB, shops []shopWithOwnerResponse) error {
+	if len(shops) == 0 {
+		return nil
+	}
+
+	shopIDs := make([]string, len(shops))
+	for i, s := range shops {
+		shopIDs[i] = s.ID
+	}
+
+	type ratingRow struct {
+		ShopID        string
+		ReviewCount   int64
+		AverageRating *float64
+	}
+	var ratingRows []ratingRow
+	if err := db.WithContext(ctx).
+		Table("review").
+		Select("shop_id, COUNT(*) AS review_count, AVG(CAST(rating AS FLOAT)) AS average_rating").
+		Where("shop_id IN ?", shopIDs).
+		Group("shop_id").
+		Scan(&ratingRows).Error; err != nil {
+		return err
+	}
+	ratingsByShop := make(map[string]ratingRow, len(ratingRows))
+	for _, row := range ratingRows {
+		ratingsByShop[row.ShopID] = row
+	}
+
+	type memberRow struct {
+		ShopID      string
+		MemberCount int64
+	}
+	var memberRows []memberRow
+	if err := db.WithContext(ctx).
+		Table("user_shop").
+		Select("shop_id, COUNT(*) AS member_count").
+		Where("shop_id IN ? AND relationship_type = ?", shopIDs, model.RelationshipTypeFavourite).
+		Group("shop_id").
+		Scan(&memberRows).Error; err != nil {
+		return err
+	}
+	membersByShop := make(map[string]int, len(memberRows))
+	for _, row := range memberRows {
+		membersByShop[row.ShopID] = int(row.MemberCount)
+	}
+
+	for i := range shops {
+		if row, ok := ratingsByShop[shops[i].ID]; ok && row.ReviewCount > 0 {
+			shops[i].ReviewCount = int(row.ReviewCount)
+			shops[i].AverageRating = row.AverageRating
+		} else {
+			shops[i].ReviewCount = 0
+			shops[i].AverageRating = nil
+		}
+		if count, ok := membersByShop[shops[i].ID]; ok {
+			mc := count
+			shops[i].MemberCount = &mc
+		} else {
+			zero := 0
+			shops[i].MemberCount = &zero
+		}
+	}
+	return nil
+}
+
 // GetShops handles GET /shop: flat list (no page param, public) or paginated search (with page param, auth).
 func (h *ShopHandler) GetShops(w http.ResponseWriter, r *http.Request) {
 	pageParam := r.URL.Query().Get("page")
@@ -239,6 +309,10 @@ func (h *ShopHandler) listAllShops(w http.ResponseWriter, r *http.Request) {
 	enriched, err := fillShopOwners(r.Context(), h.db, shops)
 	if err != nil {
 		apperror.WriteError(w, apperror.Internal("Failed to fetch shop owners"))
+		return
+	}
+	if err := fillShopListStats(r.Context(), h.db, enriched); err != nil {
+		apperror.WriteError(w, apperror.Internal("Failed to fetch shop stats"))
 		return
 	}
 
@@ -299,6 +373,10 @@ func (h *ShopHandler) paginatedSearch(w http.ResponseWriter, r *http.Request, pa
 	enriched, err := fillShopOwners(r.Context(), h.db, shops)
 	if err != nil {
 		apperror.WriteError(w, apperror.Internal("Failed to fetch shop owners"))
+		return
+	}
+	if err := fillShopListStats(r.Context(), h.db, enriched); err != nil {
+		apperror.WriteError(w, apperror.Internal("Failed to fetch shop stats"))
 		return
 	}
 

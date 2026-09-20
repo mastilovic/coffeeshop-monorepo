@@ -13,6 +13,7 @@ import 'tabs/employees_tab.dart';
 import 'tabs/events_tab.dart';
 import 'tabs/loyalty_tab.dart';
 import 'tabs/menu_tab.dart';
+import 'tabs/overview_tab.dart';
 import 'tabs/reservations_tab.dart';
 import 'tabs/reviews_tab.dart';
 import 'tabs/tables_tab.dart';
@@ -55,136 +56,196 @@ class _ShopDetailContent extends ConsumerWidget {
       return const Scaffold(body: LoadingIndicator());
     }
 
-    return _buildScaffold(
-      context,
+    final canManageContent = permissions.canManageContent(shopId);
+    final canManageShop = permissions.canManageShop(shopId);
+    final tabSpecs = _tabSpecs(
       permissions: permissions,
-      canManageContent: permissions.canManageContent(shopId),
-      canManageShop: permissions.canManageShop(shopId),
+      canManageContent: canManageContent,
+    );
+
+    return _ShopDetailTabs(
+      shop: shop,
+      shopId: shopId,
+      canManageShop: canManageShop,
+      canManageContent: canManageContent,
+      tabSpecs: tabSpecs,
     );
   }
 
-  Widget _buildScaffold(
-    BuildContext context, {
+  List<({String key, String label})> _tabSpecs({
     required UserPermissions permissions,
     required bool canManageContent,
-    required bool canManageShop,
   }) {
-    final tabs = <({String label, Widget view})>[];
-
     if (canManageContent) {
-      tabs.addAll([
-        (
-          label: 'Community',
-          view: CommunityTab(shopId: shopId, canManage: canManageContent),
-        ),
-        (
-          label: 'Menu',
-          view: MenuTab(
-            shopId: shopId,
-            menu: shop.currentMenu,
-            canManage: canManageContent,
-          ),
-        ),
-        (
-          label: 'Tables',
-          view: TablesTab(
-            shopId: shopId,
-            tables: shop.tables,
-            canManage: canManageContent,
-          ),
-        ),
-        (
-          label: 'Reservations',
-          view: ReservationsTab(
-            shopId: shopId,
-            tables: shop.tables,
-            canManage: canManageContent,
-          ),
-        ),
-        (
-          label: 'Events',
-          view: EventsTab(
-            shopId: shopId,
-            events: shop.events,
-            canManage: canManageContent,
-          ),
-        ),
-        (label: 'Reviews', view: ReviewsTab(shopId: shopId)),
-      ]);
-      if (canManageShop) {
-        tabs.add((label: 'Employees', view: EmployeesTab(shopId: shopId)));
-      }
-      if (permissions.showLoyaltyTab) {
-        tabs.add((
-          label: 'Loyalty',
-          view: LoyaltyTab(shopId: shopId, loyaltyPlan: shop.loyaltyPlan),
-        ));
-      }
-    } else {
-      // Customer: Menu first, then Events, Community, Reviews, Reservations.
-      tabs.addAll([
-        (
-          label: 'Menu',
-          view: MenuTab(
-            shopId: shopId,
-            menu: shop.currentMenu,
-            canManage: false,
-          ),
-        ),
-        (
-          label: 'Events',
-          view: EventsTab(
-            shopId: shopId,
-            events: shop.events,
-            canManage: false,
-          ),
-        ),
-        (
-          label: 'Community',
-          view: CommunityTab(shopId: shopId, canManage: false),
-        ),
-        (label: 'Reviews', view: ReviewsTab(shopId: shopId)),
-        (
-          label: 'Reservations',
-          view: ReservationsTab(
-            shopId: shopId,
-            tables: shop.tables,
-            canManage: false,
-          ),
-        ),
-      ]);
+      return [
+        (key: 'overview', label: 'Overview'),
+        (key: 'community', label: 'Community'),
+        (key: 'menu', label: 'Menu'),
+        (key: 'tables', label: 'Tables'),
+        (key: 'reservations', label: 'Reservations'),
+        (key: 'events', label: 'Events'),
+        (key: 'reviews', label: 'Reviews'),
+        if (permissions.canManageShop(shopId))
+          (key: 'employees', label: 'Employees'),
+        if (permissions.showLoyaltyTab) (key: 'loyalty', label: 'Loyalty'),
+      ];
     }
 
-    return DefaultTabController(
-      length: tabs.length,
-      child: Scaffold(
-        appBar: AppBar(
-          title: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(shop.name),
-              if (loyaltyPlanType(shop.loyaltyPlan) != null) ...[
-                const SizedBox(height: 4),
-                LoyaltyBadge(planType: loyaltyPlanType(shop.loyaltyPlan)!),
-              ],
+    return [
+      (key: 'overview', label: 'Overview'),
+      (key: 'menu', label: 'Menu'),
+      (key: 'events', label: 'Events'),
+      (key: 'community', label: 'Community'),
+      (key: 'reviews', label: 'Reviews'),
+      (key: 'reservations', label: 'Reservations'),
+    ];
+  }
+}
+
+class _ShopDetailTabs extends StatefulWidget {
+  const _ShopDetailTabs({
+    required this.shop,
+    required this.shopId,
+    required this.canManageShop,
+    required this.canManageContent,
+    required this.tabSpecs,
+  });
+
+  final ShopResponseDto shop;
+  final String shopId;
+  final bool canManageShop;
+  final bool canManageContent;
+  final List<({String key, String label})> tabSpecs;
+
+  @override
+  State<_ShopDetailTabs> createState() => _ShopDetailTabsState();
+}
+
+class _ShopDetailTabsState extends State<_ShopDetailTabs>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: widget.tabSpecs.length, vsync: this);
+  }
+
+  @override
+  void didUpdateWidget(covariant _ShopDetailTabs oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.tabSpecs.length != widget.tabSpecs.length) {
+      final previousIndex = _tabController.index;
+      _tabController.dispose();
+      _tabController = TabController(
+        length: widget.tabSpecs.length,
+        vsync: this,
+        initialIndex: previousIndex.clamp(0, widget.tabSpecs.length - 1),
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  int? _indexOf(String key) {
+    final index = widget.tabSpecs.indexWhere((t) => t.key == key);
+    return index >= 0 ? index : null;
+  }
+
+  void _goToTab(String key) {
+    final index = _indexOf(key);
+    if (index == null) return;
+    _tabController.animateTo(index);
+  }
+
+  Widget _viewFor(String key) {
+    final shop = widget.shop;
+    final shopId = widget.shopId;
+    final canManage = widget.canManageContent;
+
+    switch (key) {
+      case 'overview':
+        return OverviewTab(
+          shop: shop,
+          canManageShop: widget.canManageShop,
+          onSeeMenu: () => _goToTab('menu'),
+          onSeeEvents: () => _goToTab('events'),
+          onSeeReviews: () => _goToTab('reviews'),
+        );
+      case 'community':
+        return CommunityTab(shopId: shopId, canManage: canManage);
+      case 'menu':
+        return MenuTab(
+          shopId: shopId,
+          menu: shop.currentMenu,
+          canManage: canManage,
+        );
+      case 'tables':
+        return TablesTab(
+          shopId: shopId,
+          tables: shop.tables,
+          canManage: canManage,
+        );
+      case 'reservations':
+        return ReservationsTab(
+          shopId: shopId,
+          tables: shop.tables,
+          canManage: canManage,
+        );
+      case 'events':
+        return EventsTab(
+          shopId: shopId,
+          events: shop.events,
+          canManage: canManage,
+        );
+      case 'reviews':
+        return ReviewsTab(shopId: shopId);
+      case 'employees':
+        return EmployeesTab(shopId: shopId);
+      case 'loyalty':
+        return LoyaltyTab(shopId: shopId, loyaltyPlan: shop.loyaltyPlan);
+      default:
+        return const SizedBox.shrink();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final shop = widget.shop;
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(shop.name),
+            if (loyaltyPlanType(shop.loyaltyPlan) != null) ...[
+              const SizedBox(height: 4),
+              LoyaltyBadge(planType: loyaltyPlanType(shop.loyaltyPlan)!),
             ],
-          ),
-          actions: [
-            if (canManageShop)
-              IconButton(
-                icon: const Icon(Icons.edit_outlined),
-                tooltip: 'Edit shop',
-                onPressed: () => context.push('/shops/$shopId/edit'),
-              ),
           ],
-          bottom: TabBar(
-            isScrollable: true,
-            tabs: tabs.map((t) => Tab(text: t.label)).toList(),
-          ),
         ),
-        body: TabBarView(
-          children: tabs.map((t) => t.view).toList(),
+        actions: [
+          if (widget.canManageShop)
+            IconButton(
+              icon: const Icon(Icons.edit_outlined),
+              tooltip: 'Edit shop',
+              onPressed: () => context.push('/shops/${widget.shopId}/edit'),
+            ),
+        ],
+        bottom: TabBar(
+          controller: _tabController,
+          isScrollable: true,
+          tabs: widget.tabSpecs.map((t) => Tab(text: t.label)).toList(),
         ),
+      ),
+      body: TabBarView(
+        controller: _tabController,
+        children: widget.tabSpecs.map((t) => _viewFor(t.key)).toList(),
       ),
     );
   }

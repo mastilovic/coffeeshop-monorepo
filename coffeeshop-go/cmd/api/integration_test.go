@@ -229,6 +229,91 @@ func TestShop_PaginatedSearch_ReturnsPageResponse(t *testing.T) {
 	}
 }
 
+func TestShop_PaginatedSearch_IncludesReviewStats(t *testing.T) {
+	h := setupTestHarness(t)
+	h.seedSubscriptionCatalog(t)
+	ownerID := h.createUser(t, "Rating List Owner", "rating-list-owner@example.com", "SHOP_OWNER")
+	ownerToken := h.tokenForUser(ownerID, []string{"SHOP_OWNER"})
+	growthTier := model.PlanTierGrowth
+	h.createOwnerSubscription(t, ownerID, model.PlanModePreset, &growthTier)
+
+	reviewedShopW := h.doJSON(http.MethodPost, "/api/v2/shop", map[string]interface{}{
+		"name": "Rated Explore Shop", "address": "1 St", "city": "Beograd", "phoneNumber": "123",
+		"ownerUserId": ownerID,
+	}, ownerToken)
+	if reviewedShopW.Code != http.StatusCreated {
+		t.Fatalf("create reviewed shop: expected 201, got %d; body: %s", reviewedShopW.Code, reviewedShopW.Body.String())
+	}
+	var reviewedShop map[string]interface{}
+	json.Unmarshal(reviewedShopW.Body.Bytes(), &reviewedShop)
+	reviewedShopID := reviewedShop["id"].(string)
+
+	unreviewedShopW := h.doJSON(http.MethodPost, "/api/v2/shop", map[string]interface{}{
+		"name": "Unrated Explore Shop", "address": "2 St", "city": "Beograd", "phoneNumber": "456",
+		"ownerUserId": ownerID,
+	}, ownerToken)
+	if unreviewedShopW.Code != http.StatusCreated {
+		t.Fatalf("create unreviewed shop: expected 201, got %d; body: %s", unreviewedShopW.Code, unreviewedShopW.Body.String())
+	}
+	var unreviewedShop map[string]interface{}
+	json.Unmarshal(unreviewedShopW.Body.Bytes(), &unreviewedShop)
+	unreviewedShopID := unreviewedShop["id"].(string)
+
+	customerID := h.createUser(t, "Rating List Customer", "rating-list-customer@example.com", "CUSTOMER")
+	customerToken := h.tokenForUser(customerID, []string{"CUSTOMER"})
+	reviewW := h.doJSON(http.MethodPost, "/api/v2/review", map[string]interface{}{
+		"title": "Solid", "description": "Nice espresso", "rating": 4,
+		"shopId": reviewedShopID, "commentsEnabled": true,
+	}, customerToken)
+	if reviewW.Code != http.StatusCreated {
+		t.Fatalf("create review: expected 201, got %d; body: %s", reviewW.Code, reviewW.Body.String())
+	}
+
+	w := h.doJSON(http.MethodGet, "/api/v2/shop?q=Explore&page=0&size=10", nil, ownerToken)
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d; body: %s", w.Code, w.Body.String())
+	}
+
+	var page map[string]interface{}
+	json.Unmarshal(w.Body.Bytes(), &page)
+	content, ok := page["content"].([]interface{})
+	if !ok {
+		t.Fatalf("expected content array; body: %s", w.Body.String())
+	}
+
+	byID := map[string]map[string]interface{}{}
+	for _, item := range content {
+		shop, ok := item.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		id, _ := shop["id"].(string)
+		byID[id] = shop
+	}
+
+	rated, ok := byID[reviewedShopID]
+	if !ok {
+		t.Fatalf("reviewed shop %s not in list results", reviewedShopID)
+	}
+	if rated["reviewCount"].(float64) != 1 {
+		t.Errorf("expected reviewCount 1, got %v", rated["reviewCount"])
+	}
+	if rated["averageRating"].(float64) != 4 {
+		t.Errorf("expected averageRating 4, got %v", rated["averageRating"])
+	}
+
+	unrated, ok := byID[unreviewedShopID]
+	if !ok {
+		t.Fatalf("unreviewed shop %s not in list results", unreviewedShopID)
+	}
+	if unrated["reviewCount"].(float64) != 0 {
+		t.Errorf("expected reviewCount 0 for unreviewed shop, got %v", unrated["reviewCount"])
+	}
+	if unrated["averageRating"] != nil {
+		t.Errorf("expected averageRating null for unreviewed shop, got %v", unrated["averageRating"])
+	}
+}
+
 func TestShop_PaginatedSearch_FiltersByCity(t *testing.T) {
 	h := setupTestHarness(t)
 	h.seedSubscriptionCatalog(t)
@@ -551,6 +636,8 @@ func TestReview_CRUDAndComments(t *testing.T) {
 	h := setupTestHarness(t)
 	ownerID := h.createUser(t, "Review Owner", "review-owner@example.com", "SHOP_OWNER")
 	token := h.tokenForUser(ownerID, []string{"SHOP_OWNER"})
+	customerID := h.createUser(t, "Review Customer", "review-customer@example.com", "CUSTOMER")
+	customerToken := h.tokenForUser(customerID, []string{"CUSTOMER"})
 
 	shopW := h.doJSON(http.MethodPost, "/api/v2/shop", map[string]interface{}{
 		"name": "Review Shop", "address": "1 St", "city": "Beograd", "phoneNumber": "123",
@@ -562,16 +649,95 @@ func TestReview_CRUDAndComments(t *testing.T) {
 
 	reviewBody := map[string]interface{}{
 		"title": "Great coffee", "description": "Amazing espresso",
-		"rating": 5, "shopId": shopID, "userId": ownerID,
-		"reviewDate": "2026-05-27", "commentsEnabled": true,
+		"rating": 5, "shopId": shopID, "commentsEnabled": true,
 	}
-	w := h.doJSON(http.MethodPost, "/api/v2/review", reviewBody, token)
+	w := h.doJSON(http.MethodPost, "/api/v2/review", reviewBody, customerToken)
 	if w.Code != http.StatusCreated {
 		t.Fatalf("expected 201 for create review, got %d; body: %s", w.Code, w.Body.String())
 	}
 	var review map[string]interface{}
 	json.Unmarshal(w.Body.Bytes(), &review)
 	reviewID := review["id"].(string)
+
+	userObj, ok := review["user"].(map[string]interface{})
+	if !ok {
+		t.Fatalf("expected nested user on create response; body: %s", w.Body.String())
+	}
+	if userObj["id"] != customerID {
+		t.Errorf("expected user.id %s, got %v", customerID, userObj["id"])
+	}
+	if userObj["name"] != "Review Customer" {
+		t.Errorf("expected user.name Review Customer, got %v", userObj["name"])
+	}
+	if _, hasEmail := userObj["email"]; hasEmail {
+		t.Errorf("user summary must not include email")
+	}
+	if userObj["username"] == nil || userObj["username"] == "" {
+		t.Errorf("expected non-empty user.username, got %v", userObj["username"])
+	}
+
+	// Second review from same customer for same shop must conflict.
+	w = h.doJSON(http.MethodPost, "/api/v2/review", reviewBody, customerToken)
+	if w.Code != http.StatusConflict {
+		t.Fatalf("expected 409 for duplicate review, got %d; body: %s", w.Code, w.Body.String())
+	}
+
+	// Author can update their own review.
+	updateBody := map[string]interface{}{
+		"title": "Updated title", "description": "Updated description",
+		"rating": 4, "commentsEnabled": false,
+	}
+	w = h.doJSON(http.MethodPut, "/api/v2/review/"+reviewID, updateBody, customerToken)
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200 for author update, got %d; body: %s", w.Code, w.Body.String())
+	}
+	var updated map[string]interface{}
+	json.Unmarshal(w.Body.Bytes(), &updated)
+	if updated["title"] != "Updated title" || updated["rating"].(float64) != 4 {
+		t.Errorf("unexpected update response: %v", updated)
+	}
+	updatedUser, ok := updated["user"].(map[string]interface{})
+	if !ok || updatedUser["id"] != customerID {
+		t.Errorf("expected nested user on update response; body: %s", w.Body.String())
+	}
+
+	getW := h.doJSON(http.MethodGet, "/api/v2/review/"+reviewID, nil, "")
+	if getW.Code != http.StatusOK {
+		t.Fatalf("expected 200 for get review, got %d", getW.Code)
+	}
+	var got map[string]interface{}
+	json.Unmarshal(getW.Body.Bytes(), &got)
+	gotUser, ok := got["user"].(map[string]interface{})
+	if !ok {
+		t.Fatalf("expected nested user on get response; body: %s", getW.Body.String())
+	}
+	if _, hasEmail := gotUser["email"]; hasEmail {
+		t.Errorf("get response user must not include email")
+	}
+
+	listW := h.doJSON(http.MethodGet, "/api/v2/review", nil, "")
+	if listW.Code != http.StatusOK {
+		t.Fatalf("expected 200 for list reviews, got %d", listW.Code)
+	}
+	var listed []map[string]interface{}
+	json.Unmarshal(listW.Body.Bytes(), &listed)
+	found := false
+	for _, item := range listed {
+		if item["id"] == reviewID {
+			found = true
+			listUser, ok := item["user"].(map[string]interface{})
+			if !ok {
+				t.Fatalf("expected nested user on list item")
+			}
+			if _, hasEmail := listUser["email"]; hasEmail {
+				t.Errorf("list response user must not include email")
+			}
+			break
+		}
+	}
+	if !found {
+		t.Errorf("created review not found in list")
+	}
 
 	commentBody := map[string]interface{}{
 		"body": "I agree!", "userId": ownerID,
@@ -589,6 +755,12 @@ func TestReview_CRUDAndComments(t *testing.T) {
 	json.Unmarshal(w.Body.Bytes(), &comments)
 	if len(comments) != 1 {
 		t.Errorf("expected 1 comment, got %d", len(comments))
+	}
+
+	// Author can delete their own review.
+	delW := h.doJSON(http.MethodDelete, "/api/v2/review/"+reviewID, nil, customerToken)
+	if delW.Code != http.StatusNoContent {
+		t.Fatalf("expected 204 for author delete, got %d; body: %s", delW.Code, delW.Body.String())
 	}
 }
 
@@ -2063,7 +2235,10 @@ func TestSubscriptionGates_ReviewDelete(t *testing.T) {
 			ownerToken := h.tokenForUser(ownerID, []string{"SHOP_OWNER"})
 			h.applyGatePlan(t, ownerID, tc.plan)
 			shopID := h.createShopForOwner(t, ownerID, ownerToken, "Gate Review Shop")
-			reviewID := h.createReviewForShop(t, ownerID, ownerToken, shopID)
+			// Create as a customer so owner delete goes through moderation entitlement, not author path.
+			customerID := h.createUser(t, "Gate Reviewer", "gate-reviewer-"+tc.name+"@example.com", "CUSTOMER")
+			customerToken := h.tokenForUser(customerID, []string{"CUSTOMER"})
+			reviewID := h.createReviewForShop(t, customerID, customerToken, shopID)
 
 			token := h.gateToken(t, ownerID, tc.plan, tc.name)
 			w := h.doJSON(http.MethodDelete, "/api/v2/review/"+reviewID, nil, token)
@@ -2171,6 +2346,8 @@ func (h *testHarness) seedAnalyticsDataForShop(t *testing.T, ownerID, ownerToken
 
 	customerID := h.createUser(t, "Analytics Customer", "analytics-customer-"+shopID+"@example.com", "CUSTOMER")
 	customerToken := h.tokenForUser(customerID, []string{"CUSTOMER"})
+	customer2ID := h.createUser(t, "Analytics Customer 2", "analytics-customer2-"+shopID+"@example.com", "CUSTOMER")
+	customer2Token := h.tokenForUser(customer2ID, []string{"CUSTOMER"})
 
 	w := h.doJSON(http.MethodPost, "/api/v2/review", map[string]interface{}{
 		"title": "Great", "description": "Loved it", "rating": 4,
@@ -2183,7 +2360,7 @@ func (h *testHarness) seedAnalyticsDataForShop(t *testing.T, ownerID, ownerToken
 	w = h.doJSON(http.MethodPost, "/api/v2/review", map[string]interface{}{
 		"title": "Excellent", "description": "Five stars", "rating": 5,
 		"shopId": shopID, "commentsEnabled": true,
-	}, customerToken)
+	}, customer2Token)
 	if w.Code != http.StatusCreated {
 		t.Fatalf("seed review 2: expected 201, got %d; body: %s", w.Code, w.Body.String())
 	}

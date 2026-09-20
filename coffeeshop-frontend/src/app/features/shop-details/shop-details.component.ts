@@ -37,9 +37,11 @@ import { CommunityService } from '../../services/community.service';
 import { StarRatingComponent } from '../../shared/star-rating/star-rating.component';
 import { EmployeeManagementComponent } from '../dashboard/employee-management.component';
 import { LoyaltyManagementComponent } from './loyalty-management.component';
+import { ShopOverviewComponent } from './shop-overview.component';
 import { LoyaltyPlanResponseDto } from '../../models/loyalty-plan.model';
 import { ShopEmployeeService } from '../../services/shop-employee.service';
 import { getAcceptReservationErrorMessage } from '../../utils/api-error';
+import { formatUserDisplayName } from '../../utils/user-display-name';
 import {
   canReserveForEvent,
   eventAvailabilityLabel as formatEventAvailability,
@@ -55,7 +57,7 @@ import {
   normalizeDateTimeLocal,
 } from '../../utils/event-form.utils';
 
-type Tab = 'users' | 'menu' | 'tables' | 'reservations' | 'events' | 'reviews' | 'employees' | 'loyalty';
+type Tab = 'overview' | 'users' | 'menu' | 'tables' | 'reservations' | 'events' | 'reviews' | 'employees' | 'loyalty';
 type ReservationSubTab = 'pending' | 'approved' | 'denied';
 
 @Component({
@@ -70,6 +72,7 @@ type ReservationSubTab = 'pending' | 'approved' | 'denied';
     DateTimePickerComponent,
     EmployeeManagementComponent,
     LoyaltyManagementComponent,
+    ShopOverviewComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -128,6 +131,14 @@ type ReservationSubTab = 'pending' | 'approved' | 'denied';
             </button>
           }
         </nav>
+
+        <!-- OVERVIEW TAB -->
+        @if (activeTab() === 'overview') {
+          <app-shop-overview
+            [shop]="shop()!"
+            (seeAll)="onTabChange($event)"
+          />
+        }
 
         <!-- COMMUNITY TAB -->
         @if (activeTab() === 'users') {
@@ -607,12 +618,15 @@ type ReservationSubTab = 'pending' | 'approved' | 'denied';
           }
 
           @if (canLeaveReview() && !showReviewForm()) {
-            <button type="button" class="btn btn-primary mb-2" (click)="showReviewForm.set(true)">Leave review</button>
+            <button type="button" class="btn btn-primary mb-2" (click)="openCreateReviewForm()">Leave a review</button>
+          }
+          @if (canEditReview() && !showReviewForm()) {
+            <button type="button" class="btn btn-primary mb-2" (click)="openEditReviewForm()">Edit your review</button>
           }
 
           @if (showReviewForm()) {
             <form class="form-card mb-3" [formGroup]="reviewForm" (ngSubmit)="onReviewSubmit()">
-              <h3 class="mb-2">Leave a review</h3>
+              <h3 class="mb-2">{{ editingReviewId() ? 'Edit your review' : 'Leave a review' }}</h3>
               <div class="form-group"><label>Rating</label><app-star-rating formControlName="rating" />
                 @if (reviewForm.controls.rating.touched && reviewForm.controls.rating.invalid) { <p class="text-muted" style="font-size:0.75rem;margin-top:0.25rem">Rating must be between 1 and 5.</p> }
               </div>
@@ -625,7 +639,7 @@ type ReservationSubTab = 'pending' | 'approved' | 'denied';
                 </label>
               </div>
               <div class="form-actions">
-                <button type="submit" class="btn btn-primary" [disabled]="reviewForm.invalid">Submit review</button>
+                <button type="submit" class="btn btn-primary" [disabled]="reviewForm.invalid">{{ editingReviewId() ? 'Save review' : 'Submit review' }}</button>
                 <button type="button" class="btn btn-secondary" (click)="toggleReviewForm()">Cancel</button>
               </div>
             </form>
@@ -648,7 +662,7 @@ type ReservationSubTab = 'pending' | 'approved' | 'denied';
                     }
                   </div>
                   <p class="text-muted" style="font-size:0.875rem">{{ r.description }}</p>
-                  <p class="text-muted" style="font-size:0.75rem;margin-top:0.5rem">By {{ r.user.name }}</p>
+                  <p class="text-muted" style="font-size:0.75rem;margin-top:0.5rem">By {{ reviewerLabel(r.user) }}</p>
                   @if (isReviewAuthor(r)) {
                     <label class="toggle-switch" style="margin-top:0.75rem;font-size:0.875rem">
                       <input type="checkbox" [checked]="r.commentsEnabled" (change)="onCommentsEnabledChange(r, $any($event.target).checked)" />
@@ -666,7 +680,7 @@ type ReservationSubTab = 'pending' | 'approved' | 'denied';
                         <div style="display:flex;flex-direction:column;gap:0.5rem;margin-bottom:0.75rem">
                           @for (c of r.comments; track c.id) {
                             <div style="background:#1f2937;border-radius:0.375rem;padding:0.5rem 0.75rem">
-                              <p style="font-size:0.75rem;color:#9ca3af;margin-bottom:0.25rem">{{ c.user.name }} · {{ formatCommentDate(c.createdAt) }}</p>
+                              <p style="font-size:0.75rem;color:#9ca3af;margin-bottom:0.25rem">{{ reviewerLabel(c.user) }} · {{ formatCommentDate(c.createdAt) }}</p>
                               <p style="font-size:0.875rem;color:#e5e7eb">{{ c.body }}</p>
                             </div>
                           }
@@ -820,7 +834,7 @@ export class ShopDetailsComponent implements OnInit {
 
   readonly shop = signal<ShopResponseDto | null>(null);
   readonly loading = signal(true);
-  readonly activeTab = signal<Tab>('users');
+  readonly activeTab = signal<Tab>('overview');
   readonly reservationSubTab = signal<ReservationSubTab>('pending');
   readonly reservations = signal<ReservationResponseDto[]>([]);
   readonly allShopRequests = signal<ReservationRequestResponseDto[]>([]);
@@ -993,6 +1007,7 @@ export class ShopDetailsComponent implements OnInit {
   readonly showTableForm = signal(false);
   readonly editingTableId = signal<string | null>(null);
   readonly showReviewForm = signal(false);
+  readonly editingReviewId = signal<string | null>(null);
   readonly showEventForm = signal(false);
   readonly editingEventId = signal<string | null>(null);
 
@@ -1013,6 +1028,7 @@ export class ShopDetailsComponent implements OnInit {
   readonly commentDrafts = signal<Record<string, string>>({});
 
   readonly tabs: { key: Tab; label: string }[] = [
+    { key: 'overview', label: 'Overview' },
     { key: 'users', label: 'Users' },
     { key: 'menu', label: 'Menu' },
     { key: 'tables', label: 'Tables' },
@@ -1114,25 +1130,40 @@ export class ShopDetailsComponent implements OnInit {
     const shop = this.shop();
     if (!shop) return;
     const wasFavourite = this.isFavourite();
-    this.shop.update(s => s ? { ...s, favouriteByCurrentUser: !wasFavourite } : s);
-    this.togglingFavourite.set(true);
-    const op = wasFavourite
-      ? this.shopService.removeFavourite(shop.id)
-      : this.shopService.addFavourite(shop.id);
-    op.subscribe({
-      next: updatedShop => {
-        this.shop.update(s => s ? {
-          ...s,
-          ...updatedShop,
-          favouriteByCurrentUser: updatedShop.favouriteByCurrentUser ?? !wasFavourite,
-        } : s);
-        this.togglingFavourite.set(false);
-      },
-      error: () => {
-        this.shop.update(s => s ? { ...s, favouriteByCurrentUser: wasFavourite } : s);
-        this.togglingFavourite.set(false);
-      },
-    });
+
+    const runToggle = (): void => {
+      this.shop.update(s => s ? { ...s, favouriteByCurrentUser: !wasFavourite } : s);
+      this.togglingFavourite.set(true);
+      const op = wasFavourite
+        ? this.shopService.removeFavourite(shop.id)
+        : this.shopService.addFavourite(shop.id);
+      op.subscribe({
+        next: updatedShop => {
+          this.shop.update(s => s ? {
+            ...s,
+            ...updatedShop,
+            favouriteByCurrentUser: updatedShop.favouriteByCurrentUser ?? !wasFavourite,
+          } : s);
+          this.togglingFavourite.set(false);
+        },
+        error: () => {
+          this.shop.update(s => s ? { ...s, favouriteByCurrentUser: wasFavourite } : s);
+          this.togglingFavourite.set(false);
+        },
+      });
+    };
+
+    if (wasFavourite) {
+      void this.dialog.confirm(
+        `Are you sure you want to leave ${shop.name}'s community?`,
+        { confirmLabel: 'Leave', confirmVariant: 'danger' },
+      ).then(ok => {
+        if (ok) runToggle();
+      });
+      return;
+    }
+
+    runToggle();
   }
 
   // --- Menu ---
@@ -1447,15 +1478,54 @@ export class ShopDetailsComponent implements OnInit {
   }
 
   // --- Reviews ---
+  ownReview(): ReviewResponseDto | null {
+    const profile = this.profileService.currentUser();
+    const shop = this.shop();
+    if (!profile || !shop) return null;
+    const own = shop.reviews.filter(r => r.user?.id === profile.id);
+    if (own.length === 0) return null;
+    return [...own].sort((a, b) => (b.reviewDate ?? '').localeCompare(a.reviewDate ?? ''))[0] ?? null;
+  }
+
   canLeaveReview(): boolean {
     const profile = this.profileService.currentUser();
     if (!profile || !this.shop()) return false;
     if (this.canManageShopContent()) return false;
-    return true;
+    return this.ownReview() === null;
+  }
+
+  canEditReview(): boolean {
+    const profile = this.profileService.currentUser();
+    if (!profile || !this.shop()) return false;
+    if (this.canManageShopContent()) return false;
+    return this.ownReview() !== null;
+  }
+
+  reviewerLabel(user: UserSummaryDto | null | undefined): string {
+    return formatUserDisplayName(user);
+  }
+
+  openCreateReviewForm(): void {
+    this.editingReviewId.set(null);
+    this.reviewForm.reset({ rating: 0, description: '', commentsEnabled: true });
+    this.showReviewForm.set(true);
+  }
+
+  openEditReviewForm(): void {
+    const existing = this.ownReview();
+    if (!existing) return;
+    this.editingReviewId.set(existing.id);
+    this.reviewForm.reset({
+      rating: existing.rating,
+      description: existing.description ?? '',
+      commentsEnabled: existing.commentsEnabled,
+    });
+    this.showReviewForm.set(true);
   }
 
   toggleReviewForm(): void {
     this.showReviewForm.set(false);
+    this.editingReviewId.set(null);
     this.reviewForm.reset({ rating: 0, description: '', commentsEnabled: true });
   }
 
@@ -1463,9 +1533,75 @@ export class ShopDetailsComponent implements OnInit {
     if (this.reviewForm.invalid || !this.shop()) return;
     const shopId = this.shop()!.id;
     const val = this.reviewForm.getRawValue();
-    this.reviewService.create({ ...val, shopId }).subscribe(review => {
-      this.shop.update(s => s ? { ...s, reviews: [review, ...s.reviews], reviewCount: s.reviewCount + 1 } : s);
-      this.toggleReviewForm();
+    const editingId = this.editingReviewId();
+
+    if (editingId) {
+      const existing = this.shop()!.reviews.find(r => r.id === editingId);
+      this.reviewService.update(editingId, {
+        title: existing?.title,
+        description: val.description,
+        rating: val.rating,
+        commentsEnabled: val.commentsEnabled,
+      }).subscribe({
+        next: updated => {
+          this.shop.update(s => {
+            if (!s) return s;
+            return {
+              ...s,
+              reviews: s.reviews.map(rv =>
+                rv.id === updated.id
+                  ? {
+                      ...rv,
+                      ...updated,
+                      comments: updated.comments ?? rv.comments ?? [],
+                      shop: updated.shop ?? rv.shop,
+                      user: updated.user ?? rv.user,
+                    }
+                  : rv,
+              ),
+            };
+          });
+          this.toggleReviewForm();
+        },
+        error: (err: unknown) => {
+          if (err instanceof HttpErrorResponse && err.status === 409) {
+            void this.dialog.alert('You have already reviewed this shop.');
+          }
+        },
+      });
+      return;
+    }
+
+    this.reviewService.create({ ...val, shopId }).subscribe({
+      next: review => {
+        this.shop.update(s => {
+          if (!s) return s;
+          const normalized: ReviewResponseDto = {
+            ...review,
+            comments: review.comments ?? [],
+            shop: review.shop ?? {
+              id: s.id,
+              name: s.name,
+              address: s.address,
+              city: s.city,
+              phoneNumber: s.phoneNumber,
+              email: s.email,
+            },
+            user: review.user,
+          };
+          return {
+            ...s,
+            reviews: [normalized, ...s.reviews],
+            reviewCount: s.reviewCount + 1,
+          };
+        });
+        this.toggleReviewForm();
+      },
+      error: (err: unknown) => {
+        if (err instanceof HttpErrorResponse && err.status === 409) {
+          void this.dialog.alert('You have already reviewed this shop.');
+        }
+      },
     });
   }
 
@@ -1475,8 +1611,26 @@ export class ShopDetailsComponent implements OnInit {
   }
 
   onCommentsEnabledChange(r: ReviewResponseDto, enabled: boolean): void {
-    this.reviewService.update(r.id, { ...r, commentsEnabled: enabled }).subscribe(updated => {
-      this.shop.update(s => s ? { ...s, reviews: s.reviews.map(rv => rv.id === updated.id ? updated : rv) } : s);
+    this.reviewService.update(r.id, {
+      title: r.title,
+      description: r.description,
+      rating: r.rating,
+      commentsEnabled: enabled,
+    }).subscribe(updated => {
+      this.shop.update(s => s ? {
+        ...s,
+        reviews: s.reviews.map(rv =>
+          rv.id === updated.id
+            ? {
+                ...rv,
+                ...updated,
+                comments: updated.comments ?? rv.comments ?? [],
+                shop: updated.shop ?? rv.shop,
+                user: updated.user ?? rv.user,
+              }
+            : rv,
+        ),
+      } : s);
     });
   }
 

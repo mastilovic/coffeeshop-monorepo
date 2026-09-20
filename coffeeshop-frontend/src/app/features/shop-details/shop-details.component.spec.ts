@@ -87,7 +87,11 @@ describe('ShopDetailsComponent', () => {
     totalPages: 1,
   };
 
-  async function setup(entitlements: Record<string, boolean>, limits: Record<string, LimitUsage> = {}): Promise<void> {
+  async function setup(
+    entitlements: Record<string, boolean>,
+    limits: Record<string, LimitUsage> = {},
+    profile: UserProfileResponseDto = ownerProfile,
+  ): Promise<void> {
     canUseFeatureMock = vi.fn((featureKey: string) => entitlements[featureKey] ?? false);
     getLimitMock = vi.fn((limitKey: string) => limits[limitKey]);
 
@@ -101,7 +105,7 @@ describe('ShopDetailsComponent', () => {
         },
         {
           provide: ProfileService,
-          useValue: { currentUser: signal(ownerProfile) },
+          useValue: { currentUser: signal(profile) },
         },
         {
           provide: AuthService,
@@ -119,7 +123,14 @@ describe('ShopDetailsComponent', () => {
           provide: ReservationRequestService,
           useValue: { getAll: vi.fn(() => of([])) },
         },
-        { provide: ReviewService, useValue: { delete: vi.fn(() => of(void 0)) } },
+        {
+          provide: ReviewService,
+          useValue: {
+            delete: vi.fn(() => of(void 0)),
+            create: vi.fn(),
+            update: vi.fn(),
+          },
+        },
         { provide: ReviewCommentService, useValue: {} },
         {
           provide: CommunityService,
@@ -153,6 +164,20 @@ describe('ShopDetailsComponent', () => {
     fixture = TestBed.createComponent(ShopDetailsComponent);
     fixture.detectChanges();
   }
+
+  it('defaults to Overview as the first tab', async () => {
+    await setup({});
+
+    const tabLabels = fixture.componentInstance.visibleTabs().map(tab => tab.label);
+    expect(tabLabels[0]).toBe('Overview');
+    expect(fixture.componentInstance.activeTab()).toBe('overview');
+
+    const element = fixture.nativeElement as HTMLElement;
+    expect(element.textContent).toContain('No menu yet.');
+    expect(element.textContent).toContain('No upcoming events.');
+    expect(element.textContent).toContain('Great coffee');
+    expect(element.textContent).toContain('5.0 (1)');
+  });
 
   it('shows table usage indicator', async () => {
     await setup(
@@ -201,6 +226,9 @@ describe('ShopDetailsComponent', () => {
   it('gates community announcements on Starter', async () => {
     await setup({ community_post: false });
 
+    fixture.componentInstance.onTabChange('users');
+    fixture.detectChanges();
+
     const element = fixture.nativeElement as HTMLElement;
     expect(element.querySelector('textarea[placeholder="Share news with your community..."]')).toBeNull();
     expect(element.textContent).toContain('Upgrade to Growth');
@@ -224,6 +252,49 @@ describe('ShopDetailsComponent', () => {
     fixture.detectChanges();
 
     expect(fixture.nativeElement.textContent).toContain('Delete');
+  });
+
+  it('hides leave review and shows edit when current user already reviewed', async () => {
+    const customerProfile: UserProfileResponseDto = {
+      ...ownerProfile,
+      id: 'customer-1',
+      name: 'Customer',
+      username: 'customer',
+      email: 'customer@example.com',
+      userType: 'CUSTOMER',
+    };
+
+    await setup({}, {}, customerProfile);
+    fixture.componentInstance.onTabChange('reviews');
+    fixture.detectChanges();
+
+    const element = fixture.nativeElement as HTMLElement;
+    expect(element.textContent).not.toContain('Leave a review');
+    expect(element.textContent).toContain('Edit your review');
+    expect(fixture.componentInstance.canLeaveReview()).toBe(false);
+    expect(fixture.componentInstance.canEditReview()).toBe(true);
+    expect(element.textContent).toContain('By customer');
+  });
+
+  it('shows leave review when current user has not reviewed', async () => {
+    const customerProfile: UserProfileResponseDto = {
+      ...ownerProfile,
+      id: 'customer-2',
+      name: 'Other Customer',
+      username: 'other',
+      email: 'other@example.com',
+      userType: 'CUSTOMER',
+    };
+
+    await setup({}, {}, customerProfile);
+    fixture.componentInstance.onTabChange('reviews');
+    fixture.detectChanges();
+
+    const element = fixture.nativeElement as HTMLElement;
+    expect(element.textContent).toContain('Leave a review');
+    expect(element.textContent).not.toContain('Edit your review');
+    expect(fixture.componentInstance.canLeaveReview()).toBe(true);
+    expect(fixture.componentInstance.canEditReview()).toBe(false);
   });
 
   it('hides loyalty tab without loyalty entitlement', async () => {

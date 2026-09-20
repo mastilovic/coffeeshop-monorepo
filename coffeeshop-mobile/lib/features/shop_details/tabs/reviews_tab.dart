@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/auth/auth_notifier.dart';
 import '../../../core/auth/user_permissions.dart';
 import '../../../core/utils/api_error.dart';
+import '../../../core/utils/extensions.dart';
 import '../../../data/models/review_response_dto.dart';
 import '../../../data/services/review_api_service.dart';
 import '../../../shared/widgets/error_view.dart';
@@ -15,6 +16,29 @@ bool _reviewBelongsToShop(ReviewResponseDto review, String shopId) {
   final shop = review.shop;
   if (shop == null) return false;
   return (shop['id'] as String?) == shopId;
+}
+
+String? _reviewAuthorId(ReviewResponseDto review) {
+  return review.user?['id'] as String? ?? review.userId;
+}
+
+List<ReviewResponseDto> _ownReviews(List<ReviewResponseDto> reviews, String? userId) {
+  if (userId == null) return const [];
+  return reviews.where((r) => _reviewAuthorId(r) == userId).toList();
+}
+
+/// Newest own review for edit: prefer later reviewDate, else last in list.
+ReviewResponseDto? _newestOwnReview(List<ReviewResponseDto> own) {
+  if (own.isEmpty) return null;
+  final sorted = List<ReviewResponseDto>.from(own)
+    ..sort((a, b) {
+      final aDate = a.reviewDate ?? '';
+      final bDate = b.reviewDate ?? '';
+      final cmp = bDate.compareTo(aDate);
+      if (cmp != 0) return cmp;
+      return 0;
+    });
+  return sorted.first;
 }
 
 final shopReviewsProvider =
@@ -38,6 +62,8 @@ class ReviewsTab extends ConsumerStatefulWidget {
 
 class _ReviewsTabState extends ConsumerState<ReviewsTab> {
   bool _showReviewForm = false;
+  bool _isEditing = false;
+  String? _editingReviewId;
   bool _isSubmittingReview = false;
   int _newRating = 5;
   final _titleController = TextEditingController();
@@ -50,32 +76,74 @@ class _ReviewsTabState extends ConsumerState<ReviewsTab> {
     super.dispose();
   }
 
+  void _openCreateForm() {
+    setState(() {
+      _showReviewForm = true;
+      _isEditing = false;
+      _editingReviewId = null;
+      _newRating = 5;
+    });
+    _titleController.clear();
+    _descriptionController.clear();
+  }
+
+  void _openEditForm(ReviewResponseDto review) {
+    setState(() {
+      _showReviewForm = true;
+      _isEditing = true;
+      _editingReviewId = review.id;
+      _newRating = review.rating;
+    });
+    _titleController.text = review.title ?? '';
+    _descriptionController.text = review.description ?? '';
+  }
+
+  void _closeForm() {
+    setState(() {
+      _showReviewForm = false;
+      _isEditing = false;
+      _editingReviewId = null;
+      _newRating = 5;
+    });
+    _titleController.clear();
+    _descriptionController.clear();
+  }
+
   Future<void> _submitReview() async {
     setState(() => _isSubmittingReview = true);
+    final wasEditing = _isEditing;
+    final editingId = _editingReviewId;
+    final payload = {
+      'rating': _newRating,
+      'title': _titleController.text.trim(),
+      'description': _descriptionController.text.trim(),
+      'commentsEnabled': true,
+    };
     try {
-      await ref.read(reviewApiServiceProvider).create({
-        'shopId': widget.shopId,
-        'rating': _newRating,
-        'title': _titleController.text.trim(),
-        'description': _descriptionController.text.trim(),
-        'commentsEnabled': true,
-      });
+      final api = ref.read(reviewApiServiceProvider);
+      if (wasEditing && editingId != null) {
+        await api.update(editingId, payload);
+      } else {
+        await api.create({
+          ...payload,
+          'shopId': widget.shopId,
+        });
+      }
       ref.invalidate(shopReviewsProvider(widget.shopId));
       if (mounted) {
-        setState(() {
-          _showReviewForm = false;
-          _newRating = 5;
-        });
-        _titleController.clear();
-        _descriptionController.clear();
+        _closeForm();
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Review submitted')),
+          SnackBar(content: Text(wasEditing ? 'Review updated' : 'Review submitted')),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to submit review: ${formatApiError(e)}')),
+          SnackBar(
+            content: Text(
+              'Failed to ${wasEditing ? 'update' : 'submit'} review: ${formatApiError(e)}',
+            ),
+          ),
         );
       }
     } finally {
@@ -99,6 +167,9 @@ class _ReviewsTabState extends ConsumerState<ReviewsTab> {
     try {
       await ref.read(reviewApiServiceProvider).delete(reviewId);
       ref.invalidate(shopReviewsProvider(widget.shopId));
+      if (mounted && _editingReviewId == reviewId) {
+        _closeForm();
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -112,7 +183,7 @@ class _ReviewsTabState extends ConsumerState<ReviewsTab> {
   Widget build(BuildContext context) {
     final asyncData = ref.watch(shopReviewsProvider(widget.shopId));
     final permissions = ref.watch(userPermissionsProvider).valueOrNull;
-    final canLeaveReview = permissions != null && !permissions.canManageContent(widget.shopId);
+    final canManage = permissions != null && permissions.canManageContent(widget.shopId);
     final currentUserId = ref.watch(authNotifierProvider).user?.id;
 
     return asyncData.when(
@@ -122,15 +193,26 @@ class _ReviewsTabState extends ConsumerState<ReviewsTab> {
         onRetry: () => ref.invalidate(shopReviewsProvider(widget.shopId)),
       ),
       data: (reviews) {
+        final own = _ownReviews(reviews, currentUserId);
+        final newestOwn = _newestOwnReview(own);
+        final hasOwnReview = newestOwn != null;
+        final showCta = !canManage && permissions != null;
+
         return ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            if (canLeaveReview) ...[
+            if (showCta) ...[
               if (!_showReviewForm)
                 FilledButton.tonalIcon(
-                  onPressed: () => setState(() => _showReviewForm = true),
-                  icon: const Icon(Icons.rate_review),
-                  label: const Text('Leave a review'),
+                  onPressed: () {
+                    if (hasOwnReview) {
+                      _openEditForm(newestOwn);
+                    } else {
+                      _openCreateForm();
+                    }
+                  },
+                  icon: Icon(hasOwnReview ? Icons.edit : Icons.rate_review),
+                  label: Text(hasOwnReview ? 'Edit your review' : 'Leave a review'),
                 )
               else
                 Card(
@@ -139,7 +221,10 @@ class _ReviewsTabState extends ConsumerState<ReviewsTab> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        Text('Your review', style: Theme.of(context).textTheme.titleSmall),
+                        Text(
+                          _isEditing ? 'Edit your review' : 'Your review',
+                          style: Theme.of(context).textTheme.titleSmall,
+                        ),
                         const SizedBox(height: 8),
                         StarRating(
                           rating: _newRating.toDouble(),
@@ -167,9 +252,7 @@ class _ReviewsTabState extends ConsumerState<ReviewsTab> {
                           children: [
                             Expanded(
                               child: OutlinedButton(
-                                onPressed: _isSubmittingReview
-                                    ? null
-                                    : () => setState(() => _showReviewForm = false),
+                                onPressed: _isSubmittingReview ? null : _closeForm,
                                 child: const Text('Cancel'),
                               ),
                             ),
@@ -183,7 +266,7 @@ class _ReviewsTabState extends ConsumerState<ReviewsTab> {
                                         height: 20,
                                         child: CircularProgressIndicator(strokeWidth: 2),
                                       )
-                                    : const Text('Submit'),
+                                    : Text(_isEditing ? 'Save' : 'Submit'),
                               ),
                             ),
                           ],
@@ -242,8 +325,7 @@ class _ReviewCardState extends ConsumerState<_ReviewCard> {
   bool get _isAuthor {
     final userId = widget.currentUserId;
     if (userId == null) return false;
-    final reviewUserId = widget.review.user?['id'] as String? ?? widget.review.userId;
-    return reviewUserId == userId;
+    return _reviewAuthorId(widget.review) == userId;
   }
 
   Future<void> _submitComment() async {
@@ -271,8 +353,7 @@ class _ReviewCardState extends ConsumerState<_ReviewCard> {
   @override
   Widget build(BuildContext context) {
     final review = widget.review;
-    final user = review.user;
-    final userName = user?['name'] as String? ?? 'Anonymous';
+    final userName = formatUserDisplayNameFromMap(review.user);
 
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
@@ -324,7 +405,7 @@ class _ReviewCardState extends ConsumerState<_ReviewCard> {
               const SizedBox(height: 4),
               ...review.comments.map((comment) {
                 final author = comment['user'] as Map<String, dynamic>?;
-                final authorName = author?['name'] as String? ?? 'User';
+                final authorName = formatUserDisplayNameFromMap(author);
                 final text = comment['body'] as String? ?? comment['text'] as String? ?? '';
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 4),

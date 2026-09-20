@@ -109,6 +109,28 @@ String normalizeUserType(String raw) {
   }
 }
 
+/// Public display label for a user summary: username if set, else name. Never email.
+String formatUserDisplayName({String? username, String? name}) {
+  final trimmedUsername = username?.trim();
+  if (trimmedUsername != null && trimmedUsername.isNotEmpty) {
+    return trimmedUsername;
+  }
+  final trimmedName = name?.trim();
+  if (trimmedName != null && trimmedName.isNotEmpty) {
+    return trimmedName;
+  }
+  return 'User';
+}
+
+/// Same as [formatUserDisplayName] for a JSON user/author map from the API.
+String formatUserDisplayNameFromMap(Map<String, dynamic>? user) {
+  if (user == null) return 'User';
+  return formatUserDisplayName(
+    username: user['username'] as String?,
+    name: user['name'] as String?,
+  );
+}
+
 extension StringExtension on String {
   String get initials {
     final parts = trim().split(RegExp(r'\s+'));

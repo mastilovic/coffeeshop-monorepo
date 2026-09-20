@@ -39,6 +39,31 @@ void main() {
     });
   });
 
+  group('formatUserDisplayName', () {
+    test('prefers username when configured', () {
+      expect(
+        formatUserDisplayName(username: 'ada', name: 'Ada Lovelace'),
+        'ada',
+      );
+    });
+
+    test('falls back to name when username empty', () {
+      expect(
+        formatUserDisplayName(username: '  ', name: 'Ada Lovelace'),
+        'Ada Lovelace',
+      );
+    });
+
+    test('uses User as last resort and never email', () {
+      expect(formatUserDisplayName(username: null, name: null), 'User');
+      expect(formatUserDisplayNameFromMap(null), 'User');
+      expect(
+        formatUserDisplayNameFromMap({'username': 'bob', 'name': 'Robert'}),
+        'bob',
+      );
+    });
+  });
+
   group('DateTimeExtension', () {
     final testDate = DateTime(2024, 3, 15, 14, 30);
 
