@@ -40,11 +40,12 @@ type assignEmployeeRequest struct {
 }
 
 type shopEmployeeResponse struct {
-	UserID  string `json:"userId"`
-	ShopID  string `json:"shopId"`
-	Name    string `json:"name"`
-	Email   string `json:"email"`
-	IsOwner bool   `json:"isOwner"`
+	UserID   string `json:"userId"`
+	ShopID   string `json:"shopId"`
+	Name     string `json:"name"`
+	Username string `json:"username"`
+	Email    string `json:"email"`
+	IsOwner  bool   `json:"isOwner"`
 }
 
 // Assign handles POST /shop-employees — assigns a user as an employee of a shop.
@@ -104,11 +105,12 @@ func (h *ShopEmployeeHandler) Assign(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(shopEmployeeResponse{
-		UserID:  targetUser.ID,
-		ShopID:  req.ShopID,
-		Name:    targetUser.Name,
-		Email:   targetUser.Email,
-		IsOwner: false,
+		UserID:   targetUser.ID,
+		ShopID:   req.ShopID,
+		Name:     targetUser.Name,
+		Username: targetUser.Username,
+		Email:    targetUser.Email,
+		IsOwner:  false,
 	})
 }
 
@@ -197,11 +199,12 @@ func (h *ShopEmployeeHandler) List(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 		results = append(results, shopEmployeeResponse{
-			UserID:  u.ID,
-			ShopID:  shopID,
-			Name:    u.Name,
-			Email:   u.Email,
-			IsOwner: us.RelationshipType == model.RelationshipTypeOwner,
+			UserID:   u.ID,
+			ShopID:   shopID,
+			Name:     u.Name,
+			Username: u.Username,
+			Email:    u.Email,
+			IsOwner:  us.RelationshipType == model.RelationshipTypeOwner,
 		})
 	}
 

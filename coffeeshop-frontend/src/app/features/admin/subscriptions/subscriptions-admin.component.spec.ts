@@ -19,6 +19,7 @@ describe('SubscriptionsAdminComponent', () => {
     {
       id: 'owner-1',
       name: 'Alice Owner',
+      username: 'alice',
       email: 'alice@example.com',
       planMode: 'PRESET',
       planTier: 'GROWTH',
@@ -29,6 +30,7 @@ describe('SubscriptionsAdminComponent', () => {
     {
       id: 'owner-2',
       name: 'Bob Owner',
+      username: 'bob',
       email: 'bob@example.com',
       planMode: 'CUSTOM',
       status: 'trialing',
@@ -93,7 +95,8 @@ describe('SubscriptionsAdminComponent', () => {
 
     expect(adminService.listOwners).toHaveBeenCalled();
     expect(element.textContent).toContain('Alice Owner');
-    expect(element.textContent).toContain('alice@example.com');
+    expect(element.textContent).toContain('@alice');
+    expect(element.textContent).not.toContain('alice@example.com');
     expect(element.textContent).toContain('GROWTH');
     expect(element.querySelector('[data-testid="owner-owner-1"]')).toBeTruthy();
   });

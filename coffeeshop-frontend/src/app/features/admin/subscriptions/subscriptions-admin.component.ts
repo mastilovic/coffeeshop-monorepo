@@ -56,7 +56,7 @@ const STATUS_OPTIONS: FormSelectOption[] = [
         @if (showForm()) {
           <div class="form-card mb-3" data-testid="override-form">
             <h3 class="form-card__title">Override Plan — {{ selectedOwner()?.name }}</h3>
-            <p class="text-muted form-card__subtitle">{{ selectedOwner()?.email }}</p>
+            <p class="text-muted form-card__subtitle">@{{ selectedOwner()?.username }}</p>
 
             <form [formGroup]="form" (ngSubmit)="onSubmit()">
               <div class="form-row">
@@ -145,7 +145,7 @@ const STATUS_OPTIONS: FormSelectOption[] = [
           <input
             class="form-input events-search"
             type="search"
-            placeholder="Search by name or email..."
+            placeholder="Search by name or username..."
             aria-label="Search owners"
             [value]="searchInput()"
             (input)="onSearchInput($event)"
@@ -164,7 +164,7 @@ const STATUS_OPTIONS: FormSelectOption[] = [
                   <span class="compact-row__avatar">{{ owner.name.charAt(0).toUpperCase() }}</span>
                   <div class="compact-row__text">
                     <span class="compact-row__primary">{{ owner.name }}</span>
-                    <span class="compact-row__secondary">{{ owner.email }}</span>
+                    <span class="compact-row__secondary">@{{ owner.username }}</span>
                   </div>
                 </div>
                 <span class="compact-row__badge plan-badge">

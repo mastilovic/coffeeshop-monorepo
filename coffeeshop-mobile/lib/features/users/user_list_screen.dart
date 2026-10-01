@@ -154,7 +154,11 @@ class _UserTile extends ConsumerWidget {
     );
   }
 
-  Future<void> _showEditDialog(BuildContext context, WidgetRef ref, bool isAdmin) async {
+  Future<void> _showEditDialog(
+    BuildContext context,
+    WidgetRef ref,
+    bool isAdmin,
+  ) async {
     Map<String, dynamic> userData;
     try {
       userData = await ref.read(userApiServiceProvider).getById(user.id);
@@ -169,13 +173,12 @@ class _UserTile extends ConsumerWidget {
 
     final nameController = TextEditingController(text: user.name);
     final usernameController = TextEditingController(text: user.username);
-    final emailController = TextEditingController(text: userData['email'] as String? ?? '');
+    final existingEmail = userData['email'] as String? ?? '';
     var selectedUserType = user.userType;
 
     if (!context.mounted) {
       nameController.dispose();
       usernameController.dispose();
-      emailController.dispose();
       return;
     }
 
@@ -199,19 +202,16 @@ class _UserTile extends ConsumerWidget {
                       controller: usernameController,
                       decoration: const InputDecoration(labelText: 'Username'),
                     ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: emailController,
-                      decoration: const InputDecoration(labelText: 'Email'),
-                      keyboardType: TextInputType.emailAddress,
-                    ),
                     if (isAdmin) ...[
                       const SizedBox(height: 12),
                       FormSelect<String>(
                         label: 'Account type',
                         value: selectedUserType,
-                        items: UserRole.values.map((role) => role.name).toList(),
-                        itemLabel: (value) => UserRole.fromString(value).displayName,
+                        items: UserRole.values
+                            .map((role) => role.name)
+                            .toList(),
+                        itemLabel: (value) =>
+                            UserRole.fromString(value).displayName,
                         onChanged: (value) {
                           if (value != null) {
                             setDialogState(() => selectedUserType = value);
@@ -233,15 +233,19 @@ class _UserTile extends ConsumerWidget {
                       final payload = <String, dynamic>{
                         'name': nameController.text.trim(),
                         'username': usernameController.text.trim(),
-                        'email': emailController.text.trim(),
+                        'email': existingEmail,
                       };
                       if (isAdmin) {
                         payload['userType'] = selectedUserType;
                       }
-                      await ref.read(userApiServiceProvider).update(user.id, payload);
+                      await ref
+                          .read(userApiServiceProvider)
+                          .update(user.id, payload);
                       ref.invalidate(userListProvider);
                       if (user.id == ref.read(authNotifierProvider).user?.id) {
-                        await ref.read(authNotifierProvider.notifier).refreshProfile();
+                        await ref
+                            .read(authNotifierProvider.notifier)
+                            .refreshProfile();
                       }
                       if (dialogContext.mounted) Navigator.pop(dialogContext);
                       if (context.mounted) {
@@ -252,7 +256,11 @@ class _UserTile extends ConsumerWidget {
                     } catch (e) {
                       if (context.mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Failed to update user: ${formatApiError(e)}')),
+                          SnackBar(
+                            content: Text(
+                              'Failed to update user: ${formatApiError(e)}',
+                            ),
+                          ),
                         );
                       }
                     }
@@ -268,7 +276,6 @@ class _UserTile extends ConsumerWidget {
 
     nameController.dispose();
     usernameController.dispose();
-    emailController.dispose();
   }
 
   void _confirmDelete(BuildContext context, WidgetRef ref) async {
@@ -284,14 +291,16 @@ class _UserTile extends ConsumerWidget {
         await ref.read(userApiServiceProvider).delete(user.id);
         ref.invalidate(userListProvider);
         if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('User deleted')),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('User deleted')));
         }
       } catch (e) {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Failed to delete user: ${formatApiError(e)}')),
+            SnackBar(
+              content: Text('Failed to delete user: ${formatApiError(e)}'),
+            ),
           );
         }
       }

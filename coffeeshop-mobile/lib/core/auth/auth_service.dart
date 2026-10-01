@@ -9,10 +9,7 @@ import 'user_role.dart';
 enum AuthStatus { unknown, authenticated, unauthenticated }
 
 class AuthState {
-  const AuthState({
-    this.status = AuthStatus.unknown,
-    this.user,
-  });
+  const AuthState({this.status = AuthStatus.unknown, this.user});
 
   final AuthStatus status;
   final UserProfileResponseDto? user;
@@ -45,8 +42,8 @@ class AuthService {
   AuthService({
     required TokenStorage tokenStorage,
     required AuthApiService authApiService,
-  })  : _tokenStorage = tokenStorage,
-        _authApiService = authApiService;
+  }) : _tokenStorage = tokenStorage,
+       _authApiService = authApiService;
 
   final TokenStorage _tokenStorage;
   final AuthApiService _authApiService;
@@ -56,13 +53,18 @@ class AuthService {
 
   Stream<AuthState> get authStateChanges => _authStateController.stream;
 
-  Future<void> login(String email, String password) async {
+  Future<void> login(
+    String email,
+    String password, {
+    bool rememberMe = true,
+  }) async {
     try {
       final tokenResponse = await _authApiService.login(email, password);
       await _tokenStorage.saveTokens(
         accessToken: tokenResponse.accessToken,
         refreshToken: tokenResponse.refreshToken,
         expiry: DateTime.now().add(Duration(seconds: tokenResponse.expiresIn)),
+        persist: rememberMe,
       );
       await _loadUserProfile();
     } catch (e) {
@@ -91,6 +93,7 @@ class AuthService {
       accessToken: tokenResponse.accessToken,
       refreshToken: tokenResponse.refreshToken,
       expiry: DateTime.now().add(Duration(seconds: tokenResponse.expiresIn)),
+      persist: true,
     );
     await _loadUserProfile();
   }

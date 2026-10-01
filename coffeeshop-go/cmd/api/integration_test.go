@@ -28,7 +28,7 @@ func setupTestHarness(t *testing.T) *testHarness {
 	jwtIssuer := testutil.NewTestJWTIssuer(t)
 
 	cfg := config.Config{
-		Port:                  8080,
+		Port:                 8080,
 		CORSAllowedOrigins:   "http://localhost:4200",
 		KeycloakJWTIssuerURI: jwtIssuer.IssuerURI,
 		KeycloakBaseURL:      "http://localhost:8080",
@@ -1244,8 +1244,8 @@ func TestSubscriptionQuote_CustomThreeFeatureAnnual(t *testing.T) {
 	token := h.tokenForUser(ownerID, []string{"SHOP_OWNER"})
 
 	body := map[string]interface{}{
-		"planMode": "CUSTOM",
-		"features": []string{"reservation_manage", "event_create", "analytics"},
+		"planMode":        "CUSTOM",
+		"features":        []string{"reservation_manage", "event_create", "analytics"},
 		"shopCount":       1,
 		"billingInterval": "annual",
 	}
@@ -2486,6 +2486,29 @@ func TestShopStaffAuthz_EmployeeCanManageContentButNotEmployeesOrShop(t *testing
 		t.Fatalf("owner assign employee: expected 201, got %d; body: %s", assignW.Code, assignW.Body.String())
 	}
 
+	listW := h.doJSON(http.MethodGet, "/api/v2/shop/"+shopID+"/employees", nil, ownerToken)
+	if listW.Code != http.StatusOK {
+		t.Fatalf("list employees: expected 200, got %d; body: %s", listW.Code, listW.Body.String())
+	}
+	var employees []map[string]interface{}
+	json.Unmarshal(listW.Body.Bytes(), &employees)
+	foundEmployee := false
+	for _, emp := range employees {
+		if emp["userId"] != employeeID {
+			continue
+		}
+		foundEmployee = true
+		if emp["username"] != "emp-authz-emp" {
+			t.Errorf("expected employee username emp-authz-emp, got %v", emp["username"])
+		}
+		if emp["email"] != "emp-authz-emp@example.com" {
+			t.Errorf("expected employee email to remain in payload, got %v", emp["email"])
+		}
+	}
+	if !foundEmployee {
+		t.Error("expected assigned employee in list")
+	}
+
 	// Employees can manage shop content.
 	w := h.doJSON(http.MethodPost, "/api/v2/table", map[string]interface{}{
 		"number": 5, "capacity": 2, "shopId": shopID,
@@ -2703,6 +2726,12 @@ func TestAdminSubscription_ListOwnersAndOverride(t *testing.T) {
 			if item["planTier"] != "STARTER" {
 				t.Errorf("expected planTier STARTER, got %v", item["planTier"])
 			}
+			if item["username"] != "owner-list-target" {
+				t.Errorf("expected username owner-list-target, got %v", item["username"])
+			}
+			if item["email"] != "owner-list-target@example.com" {
+				t.Errorf("expected email to remain in payload, got %v", item["email"])
+			}
 			if item["shopsUsed"].(float64) != 1 {
 				t.Errorf("expected shopsUsed=1, got %v", item["shopsUsed"])
 			}
@@ -2725,4 +2754,3 @@ func TestAdminSubscription_ListOwnersAndOverride(t *testing.T) {
 		t.Errorf("expected planTier PRO after override, got %v", sub["planTier"])
 	}
 }
-

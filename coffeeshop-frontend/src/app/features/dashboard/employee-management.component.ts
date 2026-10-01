@@ -24,7 +24,7 @@ import { UserListItemDto } from '../../models/user.model';
         <div *ngFor="let emp of employees()" class="employee-row">
           <div class="employee-info">
             <span class="employee-name">{{ emp.name }}</span>
-            <span class="employee-email">{{ emp.email }}</span>
+            <span class="employee-username">@{{ emp.username }}</span>
             <span *ngIf="emp.isOwner" class="owner-badge">Owner</span>
           </div>
           <button
@@ -46,7 +46,7 @@ import { UserListItemDto } from '../../models/user.model';
           <input
             type="text"
             [formControl]="searchControl"
-            placeholder="Search users by name or email..."
+            placeholder="Search users by name or username..."
             class="search-input"
           />
           <div *ngIf="searchResults().length > 0" class="search-results">
@@ -56,7 +56,7 @@ import { UserListItemDto } from '../../models/user.model';
               (click)="addEmployee(user)"
             >
               <span>{{ user.name }}</span>
-              <span class="user-email">{{ user.username }}</span>
+              <span class="user-username">@{{ user.username }}</span>
             </div>
           </div>
           <div *ngIf="searchControl.value && searchResults().length === 0 && !searching()" class="no-results">
@@ -97,7 +97,7 @@ import { UserListItemDto } from '../../models/user.model';
       color: #e0e0e0;
       font-size: 0.875rem;
     }
-    .employee-email {
+    .employee-username {
       color: #888;
       font-size: 0.8125rem;
     }
@@ -166,7 +166,7 @@ import { UserListItemDto } from '../../models/user.model';
       background: #2a2a3e;
       color: #d4a574;
     }
-    .user-email {
+    .user-username {
       color: #888;
       font-size: 0.75rem;
     }

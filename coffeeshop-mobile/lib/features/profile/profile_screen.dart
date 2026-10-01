@@ -49,7 +49,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   bool _isEditing = false;
   late final TextEditingController _nameController;
   late final TextEditingController _usernameController;
-  late final TextEditingController _emailController;
   bool _isSaving = false;
 
   @override
@@ -57,14 +56,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     super.initState();
     _nameController = TextEditingController();
     _usernameController = TextEditingController();
-    _emailController = TextEditingController();
   }
 
   @override
   void dispose() {
     _nameController.dispose();
     _usernameController.dispose();
-    _emailController.dispose();
     super.dispose();
   }
 
@@ -73,7 +70,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     if (user != null) {
       _nameController.text = user.name;
       _usernameController.text = user.username;
-      _emailController.text = user.email;
     }
   }
 
@@ -86,22 +82,22 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       await ref.read(userApiServiceProvider).update(user.id, {
         'name': _nameController.text.trim(),
         'username': _usernameController.text.trim(),
-        'email': _emailController.text.trim(),
+        'email': user.email,
       });
 
       await ref.read(authNotifierProvider.notifier).refreshProfile();
 
       if (mounted) {
         setState(() => _isEditing = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Profile updated')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Profile updated')));
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to update profile: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to update profile: $e')));
       }
     } finally {
       if (mounted) setState(() => _isSaving = false);
@@ -203,15 +199,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             prefixIcon: Icon(Icons.alternate_email),
           ),
         ),
-        const SizedBox(height: 16),
-        TextField(
-          controller: _emailController,
-          decoration: const InputDecoration(
-            labelText: 'Email',
-            prefixIcon: Icon(Icons.email),
-          ),
-          keyboardType: TextInputType.emailAddress,
-        ),
         const SizedBox(height: 24),
         SizedBox(
           width: double.infinity,
@@ -240,21 +227,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       children: [
         Text(
           user.name,
-          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 4),
         Text(
           '@${user.username}',
           style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          user.email,
-          style: Theme.of(context).textTheme.bodyMedium,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
         ),
         const SizedBox(height: 8),
         Container(
@@ -266,8 +248,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           child: Text(
             UserRole.fromString(user.userType).displayName,
             style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onPrimaryContainer,
-                ),
+              color: Theme.of(context).colorScheme.onPrimaryContainer,
+            ),
           ),
         ),
         const SizedBox(height: 32),
@@ -285,13 +267,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               children: [
                 Text(
                   'Account Details',
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 8),
                 _DetailRow(label: 'User ID', value: user.id),
-                _DetailRow(label: 'Account Type', value: UserRole.fromString(user.userType).displayName),
+                _DetailRow(
+                  label: 'Account Type',
+                  value: UserRole.fromString(user.userType).displayName,
+                ),
               ],
             ),
           ),
@@ -374,14 +359,11 @@ class _StatItem extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               value,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
-            Text(
-              label,
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
+            Text(label, style: Theme.of(context).textTheme.bodySmall),
           ],
         ),
       ),

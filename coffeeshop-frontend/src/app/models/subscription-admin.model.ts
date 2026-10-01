@@ -38,6 +38,7 @@ export interface AdminFeatureUpdate {
 export interface OwnerSubscriptionListItem {
   id: string;
   name: string;
+  username: string;
   email: string;
   planMode?: PlanMode;
   planTier?: PlanTier;

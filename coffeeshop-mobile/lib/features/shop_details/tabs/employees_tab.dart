@@ -13,13 +13,18 @@ import '../../../shared/widgets/loading_indicator.dart';
 import '../../../shared/widgets/upgrade_prompt.dart';
 
 final shopEmployeesProvider =
-    FutureProvider.family<List<Map<String, dynamic>>, String>((ref, shopId) async {
-  final api = ref.watch(shopEmployeeApiServiceProvider);
-  final data = await api.getEmployees(shopId);
-  return data.cast<Map<String, dynamic>>();
-});
+    FutureProvider.family<List<Map<String, dynamic>>, String>((
+      ref,
+      shopId,
+    ) async {
+      final api = ref.watch(shopEmployeeApiServiceProvider);
+      final data = await api.getEmployees(shopId);
+      return data.cast<Map<String, dynamic>>();
+    });
 
-final assignableUsersProvider = FutureProvider<List<UserListItemDto>>((ref) async {
+final assignableUsersProvider = FutureProvider<List<UserListItemDto>>((
+  ref,
+) async {
   final data = await ref.watch(userApiServiceProvider).getAll(size: 100);
   if (data is Map<String, dynamic>) {
     return (data['content'] as List<dynamic>?)
@@ -51,14 +56,16 @@ class _EmployeesTabState extends ConsumerState<EmployeesTab> {
   }
 
   bool _isOwnerRow(Map<String, dynamic> employee) {
-    return employee['isOwner'] as bool? ?? employee['is_owner'] as bool? ?? false;
+    return employee['isOwner'] as bool? ??
+        employee['is_owner'] as bool? ??
+        false;
   }
 
   Future<void> _assignEmployee() async {
     if (_selectedUserId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a user')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Please select a user')));
       return;
     }
 
@@ -74,14 +81,16 @@ class _EmployeesTabState extends ConsumerState<EmployeesTab> {
           _showAddForm = false;
           _selectedUserId = null;
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Employee assigned')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Employee assigned')));
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to assign employee: ${formatApiError(e)}')),
+          SnackBar(
+            content: Text('Failed to assign employee: ${formatApiError(e)}'),
+          ),
         );
       }
     } finally {
@@ -112,7 +121,9 @@ class _EmployeesTabState extends ConsumerState<EmployeesTab> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to remove employee: ${formatApiError(e)}')),
+          SnackBar(
+            content: Text('Failed to remove employee: ${formatApiError(e)}'),
+          ),
         );
       }
     }
@@ -133,7 +144,10 @@ class _EmployeesTabState extends ConsumerState<EmployeesTab> {
         onRetry: () => ref.invalidate(shopEmployeesProvider(widget.shopId)),
       ),
       data: (employees) {
-        final assignedIds = employees.map(_employeeUserId).whereType<String>().toSet();
+        final assignedIds = employees
+            .map(_employeeUserId)
+            .whereType<String>()
+            .toSet();
 
         return ListView(
           padding: const EdgeInsets.all(16),
@@ -145,7 +159,9 @@ class _EmployeesTabState extends ConsumerState<EmployeesTab> {
               const SizedBox(height: 12),
             ],
             FilledButton.tonalIcon(
-              onPressed: canAssign ? () => setState(() => _showAddForm = !_showAddForm) : null,
+              onPressed: canAssign
+                  ? () => setState(() => _showAddForm = !_showAddForm)
+                  : null,
               icon: Icon(_showAddForm ? Icons.close : Icons.person_add),
               label: Text(_showAddForm ? 'Cancel' : 'Add Employee'),
             ),
@@ -158,7 +174,9 @@ class _EmployeesTabState extends ConsumerState<EmployeesTab> {
                   onRetry: () => ref.invalidate(assignableUsersProvider),
                 ),
                 data: (users) {
-                  final available = users.where((u) => !assignedIds.contains(u.id)).toList();
+                  final available = users
+                      .where((u) => !assignedIds.contains(u.id))
+                      .toList();
                   if (available.isEmpty) {
                     return const Text('No users available to assign.');
                   }
@@ -173,7 +191,8 @@ class _EmployeesTabState extends ConsumerState<EmployeesTab> {
                           final user = available.firstWhere((u) => u.id == id);
                           return '${user.name} (@${user.username})';
                         },
-                        onChanged: (value) => setState(() => _selectedUserId = value),
+                        onChanged: (value) =>
+                            setState(() => _selectedUserId = value),
                       ),
                       const SizedBox(height: 12),
                       FilledButton(
@@ -182,7 +201,9 @@ class _EmployeesTabState extends ConsumerState<EmployeesTab> {
                             ? const SizedBox(
                                 width: 20,
                                 height: 20,
-                                child: CircularProgressIndicator(strokeWidth: 2),
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
                               )
                             : const Text('Assign'),
                       ),
@@ -197,24 +218,35 @@ class _EmployeesTabState extends ConsumerState<EmployeesTab> {
             else
               ...employees.map((emp) {
                 final name = emp['name'] as String? ?? 'Unknown';
-                final email = emp['email'] as String? ?? '';
+                final username = emp['username'] as String? ?? '';
                 final roleName =
-                    emp['role_name'] as String? ?? emp['roleName'] as String? ?? 'Employee';
+                    emp['role_name'] as String? ??
+                    emp['roleName'] as String? ??
+                    'Employee';
                 final isOwner = _isOwnerRow(emp);
 
                 return Card(
                   margin: const EdgeInsets.only(bottom: 8),
                   child: ListTile(
-                    leading: CircleAvatar(child: Text(name.isNotEmpty ? name[0].toUpperCase() : '?')),
+                    leading: CircleAvatar(
+                      child: Text(
+                        name.isNotEmpty ? name[0].toUpperCase() : '?',
+                      ),
+                    ),
                     title: Text(name),
-                    subtitle: Text(email),
+                    subtitle: username.isEmpty ? null : Text('@$username'),
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 2,
+                          ),
                           decoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.primaryContainer,
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.primaryContainer,
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(

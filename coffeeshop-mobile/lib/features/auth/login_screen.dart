@@ -19,6 +19,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _passwordController = TextEditingController();
 
   bool _isLoading = false;
+  bool _rememberMe = true;
   String? _errorMessage;
 
   @override
@@ -61,6 +62,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       await authNotifier.login(
         _emailController.text.trim(),
         _passwordController.text,
+        rememberMe: _rememberMe,
       );
     } catch (e) {
       if (mounted) {
@@ -74,9 +76,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     ref.listen(authNotifierProvider, (previous, next) {
-      if (next.status == AuthStatus.authenticated &&
-          _isLoading &&
-          mounted) {
+      if (next.status == AuthStatus.authenticated && _isLoading && mounted) {
         setState(() => _isLoading = false);
       }
     });
@@ -94,17 +94,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(
-                      Icons.coffee,
-                      size: 80,
-                      color: colorScheme.primary,
-                    ),
+                    Icon(Icons.coffee, size: 80, color: colorScheme.primary),
                     const SizedBox(height: 16),
                     Text(
                       'CoffeeShop',
-                      style: Theme.of(context)
-                          .textTheme
-                          .headlineMedium
+                      style: Theme.of(context).textTheme.headlineMedium
                           ?.copyWith(fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 48),
@@ -117,8 +111,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         ),
                         child: Row(
                           children: [
-                            Icon(Icons.error_outline,
-                                color: colorScheme.error, size: 20),
+                            Icon(
+                              Icons.error_outline,
+                              color: colorScheme.error,
+                              size: 20,
+                            ),
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
@@ -158,8 +155,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       ),
                       obscureText: true,
                       textInputAction: TextInputAction.done,
-                      onFieldSubmitted:
-                          _isLoading ? null : (_) => _handleLogin(),
+                      onFieldSubmitted: _isLoading
+                          ? null
+                          : (_) => _handleLogin(),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
                           return 'Please enter your password';
@@ -167,7 +165,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         return null;
                       },
                     ),
-                    const SizedBox(height: 32),
+                    const SizedBox(height: 8),
+                    CheckboxListTile(
+                      value: _rememberMe,
+                      onChanged: _isLoading
+                          ? null
+                          : (value) {
+                              setState(() => _rememberMe = value ?? true);
+                            },
+                      title: const Text('Remember me'),
+                      controlAffinity: ListTileControlAffinity.leading,
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                    const SizedBox(height: 16),
                     SizedBox(
                       width: double.infinity,
                       child: FilledButton(
@@ -179,8 +189,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             ? const SizedBox(
                                 height: 20,
                                 width: 20,
-                                child:
-                                    CircularProgressIndicator(strokeWidth: 2),
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
                               )
                             : const Text('Login'),
                       ),

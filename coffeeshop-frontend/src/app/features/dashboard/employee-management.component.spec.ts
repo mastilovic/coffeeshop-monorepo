@@ -32,6 +32,7 @@ describe('EmployeeManagementComponent', () => {
     shopId: 'shop-1',
     userId: 'owner-1',
     name: 'Owner',
+    username: 'owner',
     email: 'owner@example.com',
     isOwner: true,
   };
@@ -82,7 +83,11 @@ describe('EmployeeManagementComponent', () => {
   it('shows employee search when entitled', () => {
     const element = fixture.nativeElement as HTMLElement;
     expect(element.textContent).toContain('1 / 3 employees');
-    expect(element.querySelector('input.search-input')).toBeTruthy();
+    expect(element.textContent).toContain('@owner');
+    expect(element.textContent).not.toContain('owner@example.com');
+    expect(element.querySelector('input.search-input')?.getAttribute('placeholder')).toBe(
+      'Search users by name or username...',
+    );
     expect(element.querySelector('a[routerlink="/profile/billing"]')).toBeNull();
   });
 

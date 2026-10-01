@@ -2,6 +2,7 @@ export interface ShopEmployeeDto {
   userId: string;
   shopId: string;
   name: string;
+  username: string;
   email: string;
   isOwner: boolean;
 }

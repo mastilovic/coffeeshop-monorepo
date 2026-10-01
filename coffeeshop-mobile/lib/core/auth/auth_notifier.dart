@@ -2,15 +2,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'auth_service.dart';
 
-final authNotifierProvider =
-    StateNotifierProvider<AuthNotifier, AuthState>((ref) {
+final authNotifierProvider = StateNotifierProvider<AuthNotifier, AuthState>((
+  ref,
+) {
   return AuthNotifier(authService: ref.watch(authServiceProvider));
 });
 
 class AuthNotifier extends StateNotifier<AuthState> {
   AuthNotifier({required AuthService authService})
-      : _authService = authService,
-        super(const AuthState()) {
+    : _authService = authService,
+      super(const AuthState()) {
     _authService.authStateChanges.listen((state) {
       this.state = state;
     });
@@ -19,9 +20,13 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   final AuthService _authService;
 
-  Future<void> login(String email, String password) async {
+  Future<void> login(
+    String email,
+    String password, {
+    bool rememberMe = true,
+  }) async {
     try {
-      await _authService.login(email, password);
+      await _authService.login(email, password, rememberMe: rememberMe);
     } catch (_) {
       state = const AuthState(status: AuthStatus.unauthenticated);
       rethrow;

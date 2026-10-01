@@ -18,11 +18,11 @@ import (
 )
 
 type SubscriptionAdminHandler struct {
-	db           *gorm.DB
-	currentUser  *auth.CurrentUserService
-	authorizer   *auth.ShopAuthorizer
-	subRepo      *repository.SubscriptionRepository
-	pricing      *subscription.PricingService
+	db          *gorm.DB
+	currentUser *auth.CurrentUserService
+	authorizer  *auth.ShopAuthorizer
+	subRepo     *repository.SubscriptionRepository
+	pricing     *subscription.PricingService
 }
 
 func NewSubscriptionAdminHandler(
@@ -70,6 +70,7 @@ type updateFeaturesRequest struct {
 type ownerSubscriptionListItem struct {
 	ID                       string  `json:"id"`
 	Name                     string  `json:"name"`
+	Username                 string  `json:"username"`
 	Email                    string  `json:"email"`
 	PlanMode                 *string `json:"planMode,omitempty"`
 	PlanTier                 *string `json:"planTier,omitempty"`
@@ -294,9 +295,10 @@ func (h *SubscriptionAdminHandler) ListOwners(w http.ResponseWriter, r *http.Req
 	items := make([]ownerSubscriptionListItem, len(users))
 	for i, user := range users {
 		item := ownerSubscriptionListItem{
-			ID:    user.ID,
-			Name:  user.Name,
-			Email: user.Email,
+			ID:       user.ID,
+			Name:     user.Name,
+			Username: user.Username,
+			Email:    user.Email,
 		}
 
 		sub, err := h.subRepo.GetOwnerSubscription(ctx, user.ID)
