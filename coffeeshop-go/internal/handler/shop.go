@@ -5,8 +5,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"sort"
 	"strconv"
 	"strings"
+	"time"
+
+	"gorm.io/gorm/clause"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
@@ -73,18 +77,18 @@ type fullShopResponse struct {
 	Email       string        `json:"email"`
 	CreatedBy   *ownerSummary `json:"createdBy"`
 
-	Users                   []ownerSummary           `json:"users"`
-	CurrentMenu             *menuWithItemsResponse   `json:"currentMenu"`
-	MenuHistory             []menuWithItemsResponse  `json:"menuHistory"`
-	LoyaltyPlan             *loyaltyPlanSummary      `json:"loyaltyPlan"`
-	Events                  []eventSummary           `json:"events"`
-	Tables                  []tableSummary           `json:"tables"`
-	Reviews                 []reviewWithUserResponse `json:"reviews"`
-	ReviewCount             int                      `json:"reviewCount"`
-	AverageRating           *float64                 `json:"averageRating"`
-	Contacts                []contactSummary         `json:"contacts"`
-	FavouriteByCurrentUser  *bool                    `json:"favouriteByCurrentUser,omitempty"`
-	MemberCount             *int                     `json:"memberCount,omitempty"`
+	Users                  []ownerSummary           `json:"users"`
+	CurrentMenu            *menuWithItemsResponse   `json:"currentMenu"`
+	MenuHistory            []menuWithItemsResponse  `json:"menuHistory"`
+	LoyaltyPlan            *loyaltyPlanSummary      `json:"loyaltyPlan"`
+	Events                 []eventSummary           `json:"events"`
+	Tables                 []tableSummary           `json:"tables"`
+	Reviews                []reviewWithUserResponse `json:"reviews"`
+	ReviewCount            int                      `json:"reviewCount"`
+	AverageRating          *float64                 `json:"averageRating"`
+	Contacts               []contactSummary         `json:"contacts"`
+	FavouriteByCurrentUser *bool                    `json:"favouriteByCurrentUser,omitempty"`
+	MemberCount            *int                     `json:"memberCount,omitempty"`
 }
 
 type menuWithItemsResponse struct {
@@ -147,16 +151,25 @@ type contactSummary struct {
 }
 
 type shopWithOwnerResponse struct {
-	ID            string        `json:"id"`
-	Name          string        `json:"name"`
-	Address       string        `json:"address"`
-	City          string        `json:"city"`
-	PhoneNumber   string        `json:"phoneNumber"`
-	Email         string        `json:"email"`
-	CreatedBy     *ownerSummary `json:"createdBy"`
-	ReviewCount   int           `json:"reviewCount"`
-	AverageRating *float64      `json:"averageRating"`
-	MemberCount   *int          `json:"memberCount,omitempty"`
+	ID                string        `json:"id"`
+	Name              string        `json:"name"`
+	Address           string        `json:"address"`
+	City              string        `json:"city"`
+	PhoneNumber       string        `json:"phoneNumber"`
+	Email             string        `json:"email"`
+	CreatedBy         *ownerSummary `json:"createdBy"`
+	ReviewCount       int           `json:"reviewCount"`
+	AverageRating     *float64      `json:"averageRating"`
+	RecentReviewCount int           `json:"recentReviewCount"`
+	MemberCount       *int          `json:"memberCount,omitempty"`
+}
+
+func recentReviewCutoff(now time.Time) string {
+	return now.AddDate(0, 0, -30).Format("2006-01-02")
+}
+
+func recentReviewsQueryActive(r *http.Request) bool {
+	return strings.TrimSpace(r.URL.Query().Get("recentReviews")) == "30"
 }
 
 type ownerSummary struct {
@@ -247,6 +260,24 @@ func fillShopListStats(ctx context.Context, db *gorm.DB, shops []shopWithOwnerRe
 		ratingsByShop[row.ShopID] = row
 	}
 
+	type recentRow struct {
+		ShopID            string
+		RecentReviewCount int64
+	}
+	var recentRows []recentRow
+	if err := db.WithContext(ctx).
+		Table("review").
+		Select("shop_id, COUNT(*) AS recent_review_count").
+		Where("shop_id IN ? AND review_date >= ?", shopIDs, recentReviewCutoff(time.Now())).
+		Group("shop_id").
+		Scan(&recentRows).Error; err != nil {
+		return err
+	}
+	recentByShop := make(map[string]int, len(recentRows))
+	for _, row := range recentRows {
+		recentByShop[row.ShopID] = int(row.RecentReviewCount)
+	}
+
 	type memberRow struct {
 		ShopID      string
 		MemberCount int64
@@ -273,6 +304,7 @@ func fillShopListStats(ctx context.Context, db *gorm.DB, shops []shopWithOwnerRe
 			shops[i].ReviewCount = 0
 			shops[i].AverageRating = nil
 		}
+		shops[i].RecentReviewCount = recentByShop[shops[i].ID]
 		if count, ok := membersByShop[shops[i].ID]; ok {
 			mc := count
 			shops[i].MemberCount = &mc
@@ -314,6 +346,11 @@ func (h *ShopHandler) listAllShops(w http.ResponseWriter, r *http.Request) {
 	if err := fillShopListStats(r.Context(), h.db, enriched); err != nil {
 		apperror.WriteError(w, apperror.Internal("Failed to fetch shop stats"))
 		return
+	}
+	if recentReviewsQueryActive(r) {
+		sort.SliceStable(enriched, func(i, j int) bool {
+			return enriched[i].RecentReviewCount > enriched[j].RecentReviewCount
+		})
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -365,6 +402,14 @@ func (h *ShopHandler) paginatedSearch(w http.ResponseWriter, r *http.Request, pa
 
 	var shops []model.Shop
 	offset := page * size
+	if recentReviewsQueryActive(r) {
+		query = query.Clauses(clause.OrderBy{
+			Expression: clause.Expr{
+				SQL:  "(SELECT COUNT(*) FROM review WHERE review.shop_id = shop.id AND review.review_date >= ?) DESC",
+				Vars: []interface{}{recentReviewCutoff(time.Now())},
+			},
+		})
+	}
 	if err := query.Offset(offset).Limit(size).Find(&shops).Error; err != nil {
 		apperror.WriteError(w, apperror.Internal("Failed to fetch shops"))
 		return

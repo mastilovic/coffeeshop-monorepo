@@ -16,6 +16,7 @@ class ShopApiService {
     String? city,
     int page = 0,
     int size = 25,
+    int? recentReviews,
   }) async {
     final response = await _dioClient.get<Map<String, dynamic>>(
       '/api/v2/shop',
@@ -24,6 +25,7 @@ class ShopApiService {
         if (city != null && city.isNotEmpty) 'city': city,
         'page': page,
         'size': size,
+        if (recentReviews != null) 'recentReviews': recentReviews,
       },
     );
     return response.data!;

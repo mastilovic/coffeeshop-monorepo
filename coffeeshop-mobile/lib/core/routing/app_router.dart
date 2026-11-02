@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../features/billing/billing_screen.dart';
-import '../../features/billing/custom_plan_builder_screen.dart';
 import '../../features/auth/login_screen.dart';
 import '../../features/auth/register_screen.dart';
+import '../../features/billing/billing_screen.dart';
+import '../../features/billing/custom_plan_builder_screen.dart';
 import '../../features/dashboard/dashboard_screen.dart';
 import '../../features/events/event_create_screen.dart';
 import '../../features/events/event_detail_screen.dart';
@@ -118,7 +118,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: '/shops',
-                builder: (context, state) => const ShopListScreen(),
+                builder: (context, state) {
+                  final recentReviews = int.tryParse(
+                    state.uri.queryParameters['recentReviews'] ?? '',
+                  );
+                  return ShopListScreen(
+                    recentReviews: recentReviews == 30 ? 30 : null,
+                  );
+                },
                 routes: [
                   GoRoute(
                     path: 'new',
@@ -153,6 +160,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                   return ReservationListScreen(
                     initialShopId: params['shopId'],
                     initialEventId: params['eventId'],
+                    initialTab: params['tab'],
                     openRequest: params['request'] == '1' ||
                         params['shopId'] != null ||
                         params['eventId'] != null,

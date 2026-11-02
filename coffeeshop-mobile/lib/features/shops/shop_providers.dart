@@ -56,7 +56,7 @@ final shopListParamsProvider = StateProvider<ShopListParams>((ref) {
   return const ShopListParams();
 });
 
-final shopListProvider = FutureProvider<ShopListResult>((ref) async {
+final shopListProvider = FutureProvider.family<ShopListResult, int?>((ref, recentReviews) async {
   final params = ref.watch(shopListParamsProvider);
   final apiService = ref.watch(shopApiServiceProvider);
 
@@ -64,6 +64,7 @@ final shopListProvider = FutureProvider<ShopListResult>((ref) async {
     q: params.query.isEmpty ? null : params.query,
     city: params.city,
     page: params.page,
+    recentReviews: recentReviews,
   );
 
   final content = (data['content'] as List<dynamic>?)

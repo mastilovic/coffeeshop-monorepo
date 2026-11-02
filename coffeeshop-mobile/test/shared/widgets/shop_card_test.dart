@@ -16,7 +16,7 @@ void main() {
     });
 
     test('returns No rating yet when rating is null', () {
-      expect(shopRatingLabel(rating: null, reviewCount: 5), 'No rating yet');
+      expect(shopRatingLabel(reviewCount: 5), 'No rating yet');
     });
 
     test('returns No rating yet when rating is zero', () {
@@ -266,6 +266,53 @@ void main() {
       );
 
       expect(find.text('Premium Loyalty'), findsOneWidget);
+    });
+
+    testWidgets('shows recent review badge when the view is active', (tester) async {
+      await tester.pumpWidget(
+        buildTestWidget(
+          const ShopCard(
+            name: 'Rated Shop',
+            rating: 4.5,
+            reviewCount: 2,
+            highlightRecentReviews: true,
+            recentReviewCount: 2,
+          ),
+        ),
+      );
+
+      expect(find.text('4.5 (2)'), findsOneWidget);
+      expect(find.text('2 new'), findsOneWidget);
+    });
+
+    testWidgets('hides recent review badge when the view is inactive', (tester) async {
+      await tester.pumpWidget(
+        buildTestWidget(
+          const ShopCard(
+            name: 'Rated Shop',
+            rating: 4.5,
+            reviewCount: 2,
+            recentReviewCount: 2,
+          ),
+        ),
+      );
+
+      expect(find.text('4.5 (2)'), findsOneWidget);
+      expect(find.text('2 new'), findsNothing);
+    });
+
+    testWidgets('keeps No rating yet and hides the badge when there are no recent reviews', (tester) async {
+      await tester.pumpWidget(
+        buildTestWidget(
+          const ShopCard(
+            name: 'Plain Shop',
+            highlightRecentReviews: true,
+          ),
+        ),
+      );
+
+      expect(find.text('No rating yet'), findsOneWidget);
+      expect(find.textContaining('new'), findsNothing);
     });
 
     testWidgets('hides loyalty badge when plan type is null', (tester) async {

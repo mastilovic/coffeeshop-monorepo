@@ -23,6 +23,9 @@ export class ShopService {
     if (params.q?.trim()) {
       httpParams['q'] = params.q.trim();
     }
+    if (params.recentReviews != null) {
+      httpParams['recentReviews'] = String(params.recentReviews);
+    }
     return this.http.get<ShopListPage>(this.base, { params: httpParams });
   }
 

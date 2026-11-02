@@ -2,7 +2,6 @@ import 'package:coffeeshop_mobile/core/auth/user_permissions.dart';
 import 'package:coffeeshop_mobile/core/auth/user_role.dart';
 import 'package:coffeeshop_mobile/features/shop_details/tabs/loyalty_tab.dart';
 import 'package:coffeeshop_mobile/shared/widgets/upgrade_prompt.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'gated_ui_test_helpers.dart';

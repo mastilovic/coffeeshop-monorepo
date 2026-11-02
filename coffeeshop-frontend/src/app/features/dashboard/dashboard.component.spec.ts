@@ -118,6 +118,40 @@ describe('DashboardComponent', () => {
     fixture.detectChanges();
   });
 
+  it('exposes notification query params on the dashboard links', () => {
+    const service = TestBed.inject(DashboardService);
+    vi.mocked(service.getActivity).mockReturnValue(of({
+      ...activityResponse,
+      notifications: [
+        {
+          type: 'pending_requests',
+          message: 'Reservation requests awaiting approval',
+          count: 1,
+          link: '/reservations?tab=manage',
+        },
+        {
+          type: 'new_reviews',
+          message: 'New reviews in the last 30 days',
+          count: 2,
+          link: '/shops?recentReviews=30',
+        },
+      ],
+    }));
+
+    fixture = TestBed.createComponent(DashboardComponent);
+    fixture.detectChanges();
+
+    const component = fixture.componentInstance;
+    expect(component.notificationLink('/reservations?tab=manage').queryParams).toEqual({ tab: 'manage' });
+    expect(component.notificationLink('/shops?recentReviews=30').queryParams).toEqual({ recentReviews: '30' });
+
+    const links = [...fixture.nativeElement.querySelectorAll('a.widget-list__link')] as HTMLAnchorElement[];
+    expect(links.map(link => link.getAttribute('href'))).toEqual([
+      '/reservations?tab=manage',
+      '/shops?recentReviews=30',
+    ]);
+  });
+
   it('loads analytics for entitled shop owners', () => {
     expect(getAnalyticsMock).toHaveBeenCalled();
     expect(fixture.nativeElement.querySelector('[data-testid="analytics-aggregate"]')).toBeTruthy();

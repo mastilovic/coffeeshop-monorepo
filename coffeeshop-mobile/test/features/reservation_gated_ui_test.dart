@@ -1,9 +1,7 @@
-import 'package:coffeeshop_mobile/core/auth/user_permissions.dart';
 import 'package:coffeeshop_mobile/data/models/reservation_request_response_dto.dart';
 import 'package:coffeeshop_mobile/features/shop_details/tabs/reservations_tab.dart';
 import 'package:coffeeshop_mobile/shared/widgets/upgrade_prompt.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'gated_ui_test_helpers.dart';

@@ -153,7 +153,7 @@ type dashboardShopAnalytics struct {
 
 type dashboardAnalyticsResponse struct {
 	Aggregate dashboardAnalyticsAggregate `json:"aggregate"`
-	Shops     []dashboardShopAnalytics  `json:"shops"`
+	Shops     []dashboardShopAnalytics    `json:"shops"`
 }
 
 func emptyDashboardAnalyticsResponse() dashboardAnalyticsResponse {
@@ -611,11 +611,11 @@ func (h *DashboardHandler) computeNotifications(ctx context.Context, shopIDs []s
 			Type:    "pending_requests",
 			Message: "Reservation requests awaiting approval",
 			Count:   int(pendingCount),
-			Link:    "/reservations",
+			Link:    "/reservations?tab=manage",
 		})
 	}
 
-	thirtyDaysAgo := time.Now().AddDate(0, 0, -30).Format("2006-01-02")
+	thirtyDaysAgo := recentReviewCutoff(time.Now())
 	var recentReviewCount int64
 	h.db.WithContext(ctx).Model(&model.Review{}).
 		Where("shop_id IN ? AND review_date >= ?", shopIDs, thirtyDaysAgo).
@@ -625,7 +625,7 @@ func (h *DashboardHandler) computeNotifications(ctx context.Context, shopIDs []s
 			Type:    "new_reviews",
 			Message: "New reviews in the last 30 days",
 			Count:   int(recentReviewCount),
-			Link:    "/shops",
+			Link:    "/shops?recentReviews=30",
 		})
 	}
 

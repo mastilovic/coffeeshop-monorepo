@@ -1,10 +1,8 @@
-import 'package:coffeeshop_mobile/core/auth/user_permissions.dart';
 import 'package:coffeeshop_mobile/features/shop_details/tabs/community_tab.dart';
 import 'package:coffeeshop_mobile/features/shop_details/tabs/employees_tab.dart';
 import 'package:coffeeshop_mobile/features/shop_details/tabs/tables_tab.dart';
 import 'package:coffeeshop_mobile/shared/widgets/upgrade_prompt.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 
@@ -87,7 +85,7 @@ void main() {
           permissions: starterOwnerPermissions(),
           overrides: [
             communityPostsProvider('shop-1').overrideWith(
-              (ref) async => {'content': []},
+              (ref) async => {'content': <Map<String, dynamic>>[]},
             ),
           ],
           child: const CommunityTab(shopId: 'shop-1', canManage: true),

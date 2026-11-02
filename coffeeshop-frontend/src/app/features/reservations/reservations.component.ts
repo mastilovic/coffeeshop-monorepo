@@ -669,6 +669,14 @@ export class ReservationsComponent implements OnInit {
       .subscribe(() => this.requestForm.controls.eventId.setValue(''));
     this.loadData();
     this.applyQueryParamPrefill();
+    this.route.queryParamMap
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(params => this.applyManageTab(params.get('tab')));
+  }
+
+  private applyManageTab(tab: string | null): void {
+    if (!this.isShopOwner()) return;
+    this.ownerMainTab.set(tab === 'manage' ? 'manage' : 'personal');
   }
 
   private applyQueryParamPrefill(): void {
