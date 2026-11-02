@@ -10,17 +10,18 @@ import (
 	"github.com/google/uuid"
 	"github.com/mastilovic/coffeeshop-go/internal/apperror"
 	"github.com/mastilovic/coffeeshop-go/internal/auth"
-	"github.com/mastilovic/coffeeshop-go/internal/middleware"
 	"github.com/mastilovic/coffeeshop-go/internal/model"
 	"gorm.io/gorm"
 )
 
 type UserHandler struct {
-	db *gorm.DB
+	db             *gorm.DB
+	currentUserSvc *auth.CurrentUserService
+	authorizer     *auth.ShopAuthorizer
 }
 
-func NewUserHandler(db *gorm.DB) *UserHandler {
-	return &UserHandler{db: db}
+func NewUserHandler(db *gorm.DB, currentUserSvc *auth.CurrentUserService, authorizer *auth.ShopAuthorizer) *UserHandler {
+	return &UserHandler{db: db, currentUserSvc: currentUserSvc, authorizer: authorizer}
 }
 
 type userResponseDTO struct {
@@ -141,8 +142,12 @@ func (h *UserHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *UserHandler) Create(w http.ResponseWriter, r *http.Request) {
-	if claims := middleware.GetUserClaims(r.Context()); claims == nil {
-		apperror.WriteError(w, apperror.Unauthorized("Authentication required"))
+	if _, err := h.currentUserSvc.RequireCurrentUser(r.Context()); err != nil {
+		apperror.WriteError(w, err)
+		return
+	}
+	if err := h.authorizer.RequireAdmin(r.Context()); err != nil {
+		apperror.WriteError(w, err)
 		return
 	}
 
@@ -172,8 +177,12 @@ func (h *UserHandler) Create(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *UserHandler) Update(w http.ResponseWriter, r *http.Request) {
-	if claims := middleware.GetUserClaims(r.Context()); claims == nil {
-		apperror.WriteError(w, apperror.Unauthorized("Authentication required"))
+	if _, err := h.currentUserSvc.RequireCurrentUser(r.Context()); err != nil {
+		apperror.WriteError(w, err)
+		return
+	}
+	if err := h.authorizer.RequireAdmin(r.Context()); err != nil {
+		apperror.WriteError(w, err)
 		return
 	}
 
@@ -205,8 +214,12 @@ func (h *UserHandler) Update(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *UserHandler) Delete(w http.ResponseWriter, r *http.Request) {
-	if claims := middleware.GetUserClaims(r.Context()); claims == nil {
-		apperror.WriteError(w, apperror.Unauthorized("Authentication required"))
+	if _, err := h.currentUserSvc.RequireCurrentUser(r.Context()); err != nil {
+		apperror.WriteError(w, err)
+		return
+	}
+	if err := h.authorizer.RequireAdmin(r.Context()); err != nil {
+		apperror.WriteError(w, err)
 		return
 	}
 

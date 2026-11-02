@@ -7,16 +7,21 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/mastilovic/coffeeshop-go/internal/apperror"
+	"github.com/mastilovic/coffeeshop-go/internal/auth"
 	"github.com/mastilovic/coffeeshop-go/internal/model"
+	"github.com/mastilovic/coffeeshop-go/internal/subscription"
 	"gorm.io/gorm"
 )
 
 type MenuHandler struct {
-	db *gorm.DB
+	db             *gorm.DB
+	currentUserSvc *auth.CurrentUserService
+	authorizer     *auth.ShopAuthorizer
+	entitlements   *subscription.EntitlementService
 }
 
-func NewMenuHandler(db *gorm.DB) *MenuHandler {
-	return &MenuHandler{db: db}
+func NewMenuHandler(db *gorm.DB, currentUserSvc *auth.CurrentUserService, authorizer *auth.ShopAuthorizer, entitlements *subscription.EntitlementService) *MenuHandler {
+	return &MenuHandler{db: db, currentUserSvc: currentUserSvc, authorizer: authorizer, entitlements: entitlements}
 }
 
 func (h *MenuHandler) GetAll(w http.ResponseWriter, r *http.Request) {
@@ -46,6 +51,16 @@ func (h *MenuHandler) Create(w http.ResponseWriter, r *http.Request) {
 		apperror.WriteError(w, apperror.BadRequest("Invalid request body"))
 		return
 	}
+
+	if err := h.authorizer.RequireShopOwnerOrEmployeeOrAdmin(r.Context(), req.ShopID); err != nil {
+		apperror.WriteError(w, err)
+		return
+	}
+
+	if !h.requireMenuLimit(w, r, req.ShopID) {
+		return
+	}
+
 	req.ID = uuid.New().String()
 	if err := h.db.WithContext(r.Context()).Create(&req).Error; err != nil {
 		apperror.WriteError(w, apperror.Internal("Failed to create menu"))
@@ -63,6 +78,12 @@ func (h *MenuHandler) Update(w http.ResponseWriter, r *http.Request) {
 		apperror.WriteError(w, apperror.NotFound("Menu not found"))
 		return
 	}
+
+	if err := h.authorizer.RequireShopOwnerOrEmployeeOrAdmin(r.Context(), existing.ShopID); err != nil {
+		apperror.WriteError(w, err)
+		return
+	}
+
 	var req model.Menu
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		apperror.WriteError(w, apperror.BadRequest("Invalid request body"))
@@ -79,6 +100,17 @@ func (h *MenuHandler) Update(w http.ResponseWriter, r *http.Request) {
 
 func (h *MenuHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
+	var existing model.Menu
+	if err := h.db.WithContext(r.Context()).First(&existing, "id = ?", id).Error; err != nil {
+		apperror.WriteError(w, apperror.NotFound("Menu not found"))
+		return
+	}
+
+	if err := h.authorizer.RequireShopOwnerOrEmployeeOrAdmin(r.Context(), existing.ShopID); err != nil {
+		apperror.WriteError(w, err)
+		return
+	}
+
 	result := h.db.WithContext(r.Context()).Delete(&model.Menu{}, "id = ?", id)
 	if result.Error != nil {
 		apperror.WriteError(w, apperror.Internal("Failed to delete menu"))
@@ -89,4 +121,31 @@ func (h *MenuHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *MenuHandler) requireMenuLimit(w http.ResponseWriter, r *http.Request, shopID string) bool {
+	user, err := h.currentUserSvc.RequireCurrentUser(r.Context())
+	if err != nil {
+		apperror.WriteError(w, err)
+		return false
+	}
+
+	userID, err := uuid.Parse(user.ID)
+	if err != nil {
+		apperror.WriteError(w, apperror.Internal("Invalid user ID"))
+		return false
+	}
+
+	shopUUID, err := uuid.Parse(shopID)
+	if err != nil {
+		apperror.WriteError(w, apperror.BadRequest("Invalid shop ID"))
+		return false
+	}
+
+	return subscription.RequireLimit(
+		w, r, h.entitlements,
+		userID, shopUUID,
+		subscription.LimitMenus,
+		h.authorizer.IsAdmin(r.Context()),
+	)
 }

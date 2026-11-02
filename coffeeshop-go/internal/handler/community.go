@@ -12,16 +12,29 @@ import (
 	"github.com/mastilovic/coffeeshop-go/internal/apperror"
 	"github.com/mastilovic/coffeeshop-go/internal/auth"
 	"github.com/mastilovic/coffeeshop-go/internal/model"
+	"github.com/mastilovic/coffeeshop-go/internal/subscription"
 	"gorm.io/gorm"
 )
 
 type CommunityHandler struct {
 	db             *gorm.DB
 	currentUserSvc *auth.CurrentUserService
+	authorizer     *auth.ShopAuthorizer
+	entitlements   *subscription.EntitlementService
 }
 
-func NewCommunityHandler(db *gorm.DB, currentUserSvc *auth.CurrentUserService) *CommunityHandler {
-	return &CommunityHandler{db: db, currentUserSvc: currentUserSvc}
+func NewCommunityHandler(
+	db *gorm.DB,
+	currentUserSvc *auth.CurrentUserService,
+	authorizer *auth.ShopAuthorizer,
+	entitlements *subscription.EntitlementService,
+) *CommunityHandler {
+	return &CommunityHandler{
+		db:             db,
+		currentUserSvc: currentUserSvc,
+		authorizer:     authorizer,
+		entitlements:   entitlements,
+	}
 }
 
 type communityPostCreateRequest struct {
@@ -144,6 +157,15 @@ func (h *CommunityHandler) CreateAnnouncement(w http.ResponseWriter, r *http.Req
 
 	shopID := chi.URLParam(r, "shopId")
 
+	if err := h.authorizer.RequireShopOwnerOrEmployeeOrAdmin(r.Context(), shopID); err != nil {
+		apperror.WriteError(w, err)
+		return
+	}
+
+	if !h.requireCommunityPost(w, r, user, shopID) {
+		return
+	}
+
 	var req communityPostCreateRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		apperror.WriteError(w, apperror.BadRequest("Invalid request body"))
@@ -171,7 +193,7 @@ func (h *CommunityHandler) CreateAnnouncement(w http.ResponseWriter, r *http.Req
 }
 
 func (h *CommunityHandler) DeletePost(w http.ResponseWriter, r *http.Request) {
-	_, err := h.currentUserSvc.RequireCurrentUser(r.Context())
+	user, err := h.currentUserSvc.RequireCurrentUser(r.Context())
 	if err != nil {
 		apperror.WriteError(w, err)
 		return
@@ -179,6 +201,25 @@ func (h *CommunityHandler) DeletePost(w http.ResponseWriter, r *http.Request) {
 
 	shopID := chi.URLParam(r, "shopId")
 	postID := chi.URLParam(r, "postId")
+
+	var post model.CommunityPost
+	if err := h.db.WithContext(r.Context()).
+		Where("id = ? AND shop_id = ?", postID, shopID).
+		First(&post).Error; err != nil {
+		apperror.WriteError(w, apperror.NotFound("Post not found"))
+		return
+	}
+
+	canDelete := h.authorizer.IsAdmin(r.Context())
+	if !canDelete && post.AuthorID != nil && *post.AuthorID == user.ID {
+		canDelete = true
+	}
+	if !canDelete {
+		if err := h.authorizer.RequireShopOwnerOrEmployeeOrAdmin(r.Context(), shopID); err != nil {
+			apperror.WriteError(w, err)
+			return
+		}
+	}
 
 	result := h.db.WithContext(r.Context()).
 		Where("id = ? AND shop_id = ?", postID, shopID).
@@ -192,4 +233,25 @@ func (h *CommunityHandler) DeletePost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *CommunityHandler) requireCommunityPost(w http.ResponseWriter, r *http.Request, user *auth.User, shopID string) bool {
+	userID, err := uuid.Parse(user.ID)
+	if err != nil {
+		apperror.WriteError(w, apperror.Internal("Invalid user ID"))
+		return false
+	}
+
+	shopUUID, err := uuid.Parse(shopID)
+	if err != nil {
+		apperror.WriteError(w, apperror.Internal("Invalid shop ID"))
+		return false
+	}
+
+	return subscription.RequireFeature(
+		w, r, h.entitlements,
+		userID, shopUUID,
+		h.authorizer.IsAdmin(r.Context()),
+		subscription.FeatureCommunityPost,
+	)
 }

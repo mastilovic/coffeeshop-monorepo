@@ -1,14 +1,5 @@
-import {
-  Component,
-  inject,
-  Injector,
-  signal,
-  OnInit,
-  ChangeDetectionStrategy,
-} from '@angular/core';
-import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
+import { Component, inject, signal, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { debounceTime, distinctUntilChanged, skip } from 'rxjs';
 import { FormSelectComponent } from '../../shared/form-select/form-select.component';
 import { FormSelectOption } from '../../shared/form-select/form-select-option.model';
 import { UserService } from '../../services/user.service';
@@ -37,7 +28,7 @@ const USER_TYPE_SELECT_OPTIONS: FormSelectOption[] = [
 
         @if (showForm()) {
           <div class="form-card mb-3">
-            <h3 style="color:#fff;margin-bottom:1rem">Edit User</h3>
+            <h3 style="color:#fff;margin-bottom:0.75rem;font-size:1.125rem">Edit User</h3>
             <form [formGroup]="form" (ngSubmit)="onSubmit()">
               <div class="form-row">
                 <div class="form-group">
@@ -81,70 +72,32 @@ const USER_TYPE_SELECT_OPTIONS: FormSelectOption[] = [
         } @else if (totalElements() === 0) {
           <div class="empty-state"><p>{{ emptyStateMessage() }}</p></div>
         } @else {
-          <div class="view-mobile-only list-card-grid mb-3">
+          <div class="compact-list">
             @for (user of users(); track user.id) {
-              <article class="list-card">
-                <div class="list-card__primary">
-                  <span class="list-card__title">{{ user.name }}</span>
-                  <span class="list-card__subtitle">{{ user.username }}</span>
+              <article class="compact-row">
+                <div class="compact-row__start">
+                  <span class="compact-row__avatar">{{ user.name.charAt(0).toUpperCase() }}</span>
+                  <div class="compact-row__text">
+                    <span class="compact-row__primary">{{ user.name }}</span>
+                    <span class="compact-row__secondary">&#64;{{ user.username }}</span>
+                  </div>
                 </div>
-                <div class="list-card__meta">
-                  <span class="badge badge-role">{{ user.userType }}</span>
-                  @for (role of user.roles; track role.id) {
-                    <span class="badge badge-role">{{ role.name }}</span>
-                  }
-                </div>
+                <span class="compact-row__badge" style="background:rgba(212,165,116,0.1);color:#d4a574">{{ user.userType }}</span>
+                @for (role of user.roles; track role.id) {
+                  <span class="compact-row__badge" style="background:rgba(212,165,116,0.1);color:#d4a574">{{ role.name }}</span>
+                }
                 @if (canEdit(user) || isAdmin()) {
-                  <div class="list-card__actions">
+                  <div class="compact-row__end">
                     @if (canEdit(user)) {
-                      <button class="btn btn-sm btn-secondary" (click)="onEdit(user)">Edit</button>
+                      <button class="btn btn--compact btn-secondary" (click)="onEdit(user)">Edit</button>
                     }
                     @if (isAdmin()) {
-                      <button class="btn btn-sm btn-danger" (click)="onDelete(user)">Delete</button>
+                      <button class="btn btn--compact btn-danger" (click)="onDelete(user)">Del</button>
                     }
                   </div>
                 }
               </article>
             }
-          </div>
-          <div class="view-desktop-only">
-            <div class="table-container">
-              <table class="data-table">
-                <thead>
-                  <tr>
-                    <th>Name</th>
-                    <th>Username</th>
-                    <th>Type</th>
-                    <th>Roles</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  @for (user of users(); track user.id) {
-                    <tr>
-                      <td>{{ user.name }}</td>
-                      <td>{{ user.username }}</td>
-                      <td><span class="badge badge-role">{{ user.userType }}</span></td>
-                      <td>
-                        @for (role of user.roles; track role.id) {
-                          <span class="badge badge-role" style="margin-right:0.25rem">{{ role.name }}</span>
-                        }
-                      </td>
-                      <td class="data-table__actions">
-                        <div style="display:flex;gap:0.5rem">
-                          @if (canEdit(user)) {
-                            <button class="btn btn-sm btn-secondary" (click)="onEdit(user)">Edit</button>
-                          }
-                          @if (isAdmin()) {
-                            <button class="btn btn-sm btn-danger" (click)="onDelete(user)">Delete</button>
-                          }
-                        </div>
-                      </td>
-                    </tr>
-                  }
-                </tbody>
-              </table>
-            </div>
           </div>
         }
       </div>
@@ -184,7 +137,6 @@ export class UsersComponent implements OnInit {
   readonly userTypeSelectOptions = USER_TYPE_SELECT_OPTIONS;
 
   private readonly fb = inject(FormBuilder);
-  private readonly injector = inject(Injector);
   private readonly userService = inject(UserService);
   private readonly authService = inject(AuthService);
   private readonly profileService = inject(ProfileService);
@@ -207,15 +159,6 @@ export class UsersComponent implements OnInit {
     roleIds: [[] as string[]],
   });
 
-  constructor() {
-    toObservable(this.searchInput, { injector: this.injector })
-      .pipe(skip(1), debounceTime(300), distinctUntilChanged(), takeUntilDestroyed())
-      .subscribe(() => {
-        this.currentPage.set(0);
-        this.loadUsers();
-      });
-  }
-
   ngOnInit(): void {
     this.loadUsers();
   }
@@ -228,6 +171,8 @@ export class UsersComponent implements OnInit {
   onSearchInput(inputEvent: Event): void {
     const value = (inputEvent.target as HTMLInputElement).value;
     this.searchInput.set(value);
+    this.currentPage.set(0);
+    this.loadUsers();
   }
 
   loadUsers(): void {

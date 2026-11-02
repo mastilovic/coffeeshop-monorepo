@@ -8,10 +8,20 @@ on:
         description: 'GHCR image tag for backend and frontend (e.g. sha-abc1234)'
         required: true
         type: string
+      runs_on:
+        description: 'JSON array of runner labels (GitHub-hosted default; k3s staging uses self-hosted)'
+        required: false
+        type: string
+        default: '["ubuntu-latest"]'
+      kubeconfig_source:
+        description: 'secret (KUBE_CONFIG, managed cluster) or local-k3s (node kubeconfig)'
+        required: false
+        type: string
+        default: secret
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(inputs.runs_on) }}
     permissions:
       contents: read
     steps:
@@ -82,36 +92,75 @@ jobs:
       - name: Install kubectl and kustomize
         run: |
           set -euo pipefail
+          mkdir -p "$HOME/.local/bin"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          export PATH="$HOME/.local/bin:$PATH"
           KUBECTL_VERSION="v1.32.0"
           KUSTOMIZE_VERSION="5.6.0"
-          curl -fsSL "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl" -o kubectl
-          chmod +x kubectl
-          sudo mv kubectl /usr/local/bin/kubectl
+          if ! command -v kubectl >/dev/null 2>&1; then
+            curl -fsSL "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl" -o "$HOME/.local/bin/kubectl"
+            chmod +x "$HOME/.local/bin/kubectl"
+          fi
           kubectl version --client
-          curl -fsSL "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv${KUSTOMIZE_VERSION}/kustomize_v${KUSTOMIZE_VERSION}_linux_amd64.tar.gz" | tar xz
-          sudo mv kustomize /usr/local/bin/kustomize
+          if ! command -v kustomize >/dev/null 2>&1; then
+            curl -fsSL "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv${KUSTOMIZE_VERSION}/kustomize_v${KUSTOMIZE_VERSION}_linux_amd64.tar.gz" \
+              | tar xz -C "$HOME/.local/bin" kustomize
+            chmod +x "$HOME/.local/bin/kustomize"
+          fi
           kustomize version
 
       - name: Configure kubeconfig
         env:
+          KUBECONFIG_SOURCE: ${{ inputs.kubeconfig_source }}
           KUBE_CONFIG: ${{ secrets.KUBE_CONFIG }}
         run: |
+          set -euo pipefail
           mkdir -p "$HOME/.kube"
-          if [ -z "$KUBE_CONFIG" ]; then
-            echo "::error::KUBE_CONFIG secret is empty. Add a kubeconfig for your DOKS cluster (see deploy/README.md)."
-            exit 1
-          fi
-          # Write via env var so multiline YAML is preserved (echo "${{ secrets.* }}" can break newlines).
-          printf '%s' "$KUBE_CONFIG" > "$HOME/.kube/config"
-          chmod 600 "$HOME/.kube/config"
+          case "$KUBECONFIG_SOURCE" in
+            local-k3s)
+              SRC="${K3S_KUBECONFIG:-}"
+              if [ -z "$SRC" ]; then
+                if [ -r /etc/rancher/k3s/k3s.yaml ]; then
+                  SRC=/etc/rancher/k3s/k3s.yaml
+                elif [ -r "$HOME/.kube/config" ]; then
+                  SRC="$HOME/.kube/config"
+                else
+                  echo "::error::local-k3s: cannot read /etc/rancher/k3s/k3s.yaml. Copy kubeconfig for the runner user (mode 0600). See deploy/GITHUB_SETUP.md."
+                  exit 1
+                fi
+              fi
+              if [ "$SRC" != "$HOME/.kube/config" ]; then
+                cp "$SRC" "$HOME/.kube/config"
+              fi
+              chmod 600 "$HOME/.kube/config"
+              ;;
+            secret)
+              if [ -z "$KUBE_CONFIG" ]; then
+                echo "::error::KUBE_CONFIG secret is empty. Managed-cluster deploys need a kubeconfig secret (see deploy/README.md)."
+                exit 1
+              fi
+              printf '%s' "$KUBE_CONFIG" > "$HOME/.kube/config"
+              chmod 600 "$HOME/.kube/config"
+              ;;
+            *)
+              echo "::error::kubeconfig_source must be secret or local-k3s (got: ${KUBECONFIG_SOURCE})"
+              exit 1
+              ;;
+          esac
 
       - name: Verify cluster connection
+        env:
+          KUBECONFIG_SOURCE: ${{ inputs.kubeconfig_source }}
         run: |
-          if ! grep -qE '^\s*server:\s*https://' "$HOME/.kube/config"; then
-            echo "::error::kubeconfig has no https:// API server. Regenerate with: doctl kubernetes cluster kubeconfig save <cluster-name>"
-            kubectl config view --minify 2>/dev/null || true
-            exit 1
+          set -euo pipefail
+          if [ "$KUBECONFIG_SOURCE" = "secret" ]; then
+            if ! grep -qE '^\s*server:\s*https://' "$HOME/.kube/config"; then
+              echo "::error::kubeconfig has no https:// API server. For managed Kubernetes, regenerate the kubeconfig secret."
+              kubectl config view --minify 2>/dev/null || true
+              exit 1
+            fi
           fi
+          echo "kubeconfig_source=${KUBECONFIG_SOURCE}"
           echo "Context: $(kubectl config current-context)"
           echo "API server: $(kubectl config view --minify -o jsonpath='{.clusters[0].cluster.server}')"
           kubectl cluster-info

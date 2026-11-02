@@ -4,7 +4,11 @@ kind: Kustomization
 namespace: coffeeshop-staging
 
 resources:
+  - namespace.yaml
   - ../../base
+
+components:
+  - ../../components/platform-k3s
 
 secretGenerator:
   - name: coffeeshop-secrets

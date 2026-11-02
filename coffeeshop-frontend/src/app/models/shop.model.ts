@@ -23,6 +23,7 @@ export interface ShopResponseDto {
   tables: TableResponseDto[];
   reviews: ReviewResponseDto[];
   reviewCount: number;
+  recentReviewCount?: number;
   averageRating: number | null;
   contacts: ContactResponseDto[];
   favouriteByCurrentUser?: boolean;
@@ -42,6 +43,7 @@ export interface ShopSearchParams {
   q?: string;
   page?: number;
   size?: number;
+  recentReviews?: number;
 }
 
 export type ShopListPage = PageResponseDto<ShopResponseDto>;
@@ -52,6 +54,16 @@ export interface ShopCreateRequest {
   city: string;
   phoneNumber: string;
   email?: string;
-  createdByUserId?: string;
+  ownerUserId?: string;
+  loyaltyPlanId?: string;
+}
+
+export interface ShopUpdateRequest {
+  name: string;
+  address: string;
+  city: string;
+  phoneNumber: string;
+  email?: string;
+  newOwnerUserId?: string;
   loyaltyPlanId?: string;
 }

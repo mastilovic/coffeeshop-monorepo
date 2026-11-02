@@ -41,10 +41,6 @@ import { ShopSummaryDto } from '../../models/shop.model';
                 <label>Username</label>
                 <input class="form-input" formControlName="username" />
               </div>
-              <div class="form-group">
-                <label>Email</label>
-                <input class="form-input" type="email" formControlName="email" />
-              </div>
             </div>
             <div class="form-group">
               <label>Favourite Shops</label>
@@ -70,10 +66,6 @@ import { ShopSummaryDto } from '../../models/shop.model';
             <div>
               <span class="text-muted" style="font-size:0.75rem;display:block">Username</span>
               <span style="color:#fff">{{ user()!.username }}</span>
-            </div>
-            <div>
-              <span class="text-muted" style="font-size:0.75rem;display:block">Email</span>
-              <span style="color:#fff">{{ user()!.email }}</span>
             </div>
             <div>
               <span class="text-muted" style="font-size:0.75rem;display:block">Account Type</span>
@@ -119,7 +111,6 @@ export class ProfileComponent implements OnInit {
   readonly form = this.fb.nonNullable.group({
     name: ['', Validators.required],
     username: ['', [Validators.required, Validators.pattern(/^[a-zA-Z0-9_]{3,30}$/)]],
-    email: ['', [Validators.required, Validators.email]],
     favouriteShopIds: [[] as string[]],
   });
 
@@ -141,7 +132,6 @@ export class ProfileComponent implements OnInit {
     this.form.patchValue({
       name: u.name,
       username: u.username,
-      email: u.email,
       favouriteShopIds: u.favouriteShops?.map(s => s.id) ?? [],
     });
   }
@@ -156,7 +146,7 @@ export class ProfileComponent implements OnInit {
     this.userService.update(u.id, {
       name: val.name,
       username: val.username,
-      email: val.email,
+      email: u.email,
       userType: u.userType,
       roleIds: u.roles.map(r => r.id),
       favouriteShopIds: val.favouriteShopIds,

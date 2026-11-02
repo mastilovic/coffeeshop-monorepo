@@ -2,21 +2,43 @@
 
 The deploy pipeline **writes all runtime config** before `kubectl apply`. You only configure GitHub **Variables** and **Secrets**; do not edit generated files in the repo.
 
-Deploy workflows install pinned `kubectl` and `kustomize` from official release URLs (no `azure/setup-kubectl` or other marketplace install actions).
+Deploy workflows install pinned `kubectl` and `kustomize` from official release URLs into `$HOME/.local/bin` when they are missing (no `sudo`, so the self-hosted runner works). Prefer the k3s `kubectl` already on the VM.
 
 CI workflows avoid third-party marketplace actions that download from `codeload.github.com` (for example `dorny/paths-filter`, `docker/*`, `gradle/actions`). Path filtering uses `git diff` in shell; Docker build/push uses the local composite [`.github/actions/docker-build-push`](../.github/actions/docker-build-push); Gradle runs via `./gradlew` after `actions/setup-java` only. If logs still show `Failed to download archive` from `codeload.github.com`, check **Settings → Actions** allowlists — the shell/local approach does not depend on those downloads.
 
-**Branches:** Every push or merge to **`main`** runs the full **CI/CD Staging** pipeline (tests, three images, DOKS deploy) automatically — including empty commits. Pushes to **`dev`** run path-filtered tests/builds and push `dev-sha-*` only (no deploy). Rollback redeploy only: manual [Deploy Staging (DOKS)](../.github/workflows/deploy-staging.yml) with an existing `image_tag`.
+**Branches:** Every push or merge to **`main`** runs the full **CI/CD Staging** pipeline (tests, images, k3s deploy) automatically — including empty commits. Pushes to **`dev`** run path-filtered tests/builds and push `dev-sha-*` only (no deploy). Rollback redeploy only: manual [Deploy Staging](../.github/workflows/deploy-staging.yml) with an existing `image_tag`.
+
+Staging **apply** runs on a self-hosted runner labeled **`k3s-staging`** using the node kubeconfig (`kubeconfig_source: local-k3s`). Image **builds** stay on `ubuntu-latest`. `KUBE_CONFIG` is **not required** for k3s staging.
+
+Do not destroy the previous DigitalOcean Kubernetes cluster until the public HTTPS smoke test in this file passes. Until then, DNS rollback (A records back to the old load balancer) remains valid.
+
+## Self-hosted runner (`k3s-staging`)
+
+Install the [GitHub Actions runner](https://docs.github.com/en/actions/hosting-your-own-runners/managing-self-hosted-runners/adding-self-hosted-runners) on the staging VM as a systemd service.
+
+1. Repo **Settings → Actions → Runners → New self-hosted runner** (Linux x64).
+2. Labels: `linux` and **`k3s-staging`** (in addition to `self-hosted`).
+3. Run as a dedicated user that can read the k3s kubeconfig (copy `/etc/rancher/k3s/k3s.yaml` to that user's `~/.kube/config`, mode **0600**).
+4. The runner dials out to GitHub; it must **not** listen on a public port. Leave Kubernetes API **6443** closed on the provider firewall.
+
+The reusable deploy workflow selects this runner with:
+
+```yaml
+runs_on: '["self-hosted","linux","k3s-staging"]'
+kubeconfig_source: local-k3s
+```
+
+Managed Kubernetes later can call the same reusable workflow with `runs_on: '["ubuntu-latest"]'` and `kubeconfig_source: secret` plus a `KUBE_CONFIG` secret.
 
 ## When workflows run
 
 | Trigger | What you see |
 |---------|----------------|
-| Push or merge to **`main`** | **CI/CD Staging**: Java backend, Go backend, and frontend tests; three image builds (`sha-*` / `latest`); DOKS deploy. Triggered when `coffeeshop/**`, `coffeeshop-go/**`, `coffeeshop-frontend/**`, `deploy/**`, or workflow files change. |
-| Push to **`dev`** | **CI/CD Staging** starts; tests/builds only when `coffeeshop/**`, `coffeeshop-go/**`, `coffeeshop-frontend/**`, `deploy/**`, or workflow files changed. |
-| **PR** | **Backend CI**, **Backend Go CI**, and **Frontend CI** only — not **CI/CD Staging**. |
-| **Deploy Staging (DOKS)** (manual) | Redeploy an existing image without rebuilding — rollback/hotfix only. |
-| **Install cert-manager (DOKS)** (manual) | One-time: Helm install cert-manager + apply ClusterIssuers (`deploy/k8s/infra/cert-manager/install.sh`). |
+| Push or merge to **`main`** | **CI/CD Staging**: backend and frontend tests; image builds (`sha-*` / `latest`) on GitHub-hosted; deploy on `k3s-staging`. Triggered when `coffeeshop-go/**`, `coffeeshop-frontend/**`, `deploy/**`, or workflow files change. |
+| Push to **`dev`** | **CI/CD Staging** starts; tests/builds only when those paths changed. |
+| **PR** | **Backend CI** and **Frontend CI** only — not **CI/CD Staging**. |
+| **Deploy Staging** (manual) | Redeploy an existing image without rebuilding — rollback/hotfix only. Runs on `k3s-staging`. |
+| **Install cert-manager** (manual) | One-time: Helm install cert-manager + apply ClusterIssuers (`deploy/k8s/infra/cert-manager/install.sh`) on `k3s-staging`. Prefer running `install.sh` over SSH during first bootstrap. |
 
 ### No runs appear in Actions at all?
 
@@ -26,6 +48,7 @@ This is not fixed by workflow YAML — check repository settings:
 2. Confirm `.github/workflows/ci-cd-staging.yml` exists on **`main`** on GitHub (compare with `git ls-remote origin main`).
 3. If this repo is a **fork**, enable Actions under **Actions** tab → “I understand my workflows will run…”.
 4. Actions tab → select **CI/CD Staging**, branch **All branches**, not only failed runs.
+5. Confirm a runner with label **`k3s-staging`** is Idle. Deploy jobs wait if the runner is offline.
 
 ## Generated during deploy (do not commit)
 
@@ -47,22 +70,18 @@ Realm template: `realm-coffeeshop.json.template` uses `${STAGING_APP_HOST}` and 
 
 Hostnames only — **no** `http://` prefix in `STAGING_APP_HOST` / `STAGING_AUTH_HOST`.
 
-Changing variables does **not** update the cluster until the next deploy (push to `main` or **Deploy Staging (DOKS)**).
+Changing variables does **not** update the cluster until the next deploy (push to `main` or **Deploy Staging**).
 
 ### DNS (Namecheap or any registrar)
 
-Point two **A** records at your ingress load balancer IP:
+Point two **A** records at the vServer (`195.234.126.162`), not a cloud load balancer:
 
-```bash
-kubectl get svc -n ingress-nginx ingress-nginx-controller -o jsonpath='{.status.loadBalancer.ingress[0].ip}{"\n"}'
-```
+| Type | Host | Example FQDN | Value |
+|------|------|----------------|--------|
+| A | `app` | `app.kafenerija.online` | `195.234.126.162` |
+| A | `auth` | `auth.kafenerija.online` | `195.234.126.162` |
 
-| Type | Host | Example FQDN |
-|------|------|----------------|
-| A | `app` | `app.kafenerija.online` |
-| A | `auth` | `auth.kafenerija.online` |
-
-Verify: `dig +short app.kafenerija.online` returns the LB IP.
+Verify: `dig +short app.kafenerija.online` returns `195.234.126.162`.
 
 ### Verify Ingress matches GitHub variables
 
@@ -77,21 +96,12 @@ Both columns must match `STAGING_APP_HOST` and `STAGING_AUTH_HOST`. If they show
 
 | Name | Used for |
 |------|----------|
-| `KUBE_CONFIG` | Full kubeconfig (`doctl kubernetes cluster kubeconfig show <cluster-id>`) |
 | `STAGING_POSTGRES_PASSWORD` | App Postgres |
 | `STAGING_KEYCLOAK_POSTGRES_PASSWORD` | Keycloak Postgres |
 | `STAGING_KEYCLOAK_ADMIN` | Keycloak admin username |
 | `STAGING_KEYCLOAK_ADMIN_PASSWORD` | Keycloak admin password |
 | `STAGING_KEYCLOAK_BACKEND_CLIENT_SECRET` | Backend client secret in rendered realm + backend Deployment |
-
-## Kubeconfig
-
-```bash
-doctl kubernetes cluster kubeconfig show <your-cluster-id> > ~/.kube/config-coffeeshop-staging
-kubectl --kubeconfig ~/.kube/config-coffeeshop-staging cluster-info
-```
-
-Paste the entire file into secret `KUBE_CONFIG`.
+| `KUBE_CONFIG` | **Not used for k3s staging.** Optional for a future managed cluster (`kubeconfig_source: secret`). |
 
 ## TLS / cert-manager
 
@@ -99,12 +109,13 @@ cert-manager is **not** installed by **CI/CD Staging** or **Deploy Staging**. In
 
 ### One-time install
 
-1. **Actions → Install cert-manager (DOKS) → Run workflow** (uses `KUBE_CONFIG`), or locally:
+1. On the VM (preferred during bootstrap):
    ```bash
    cd deploy/k8s/infra/cert-manager && ./install.sh
    ```
+   Or **Actions → Install cert-manager → Run workflow** (runs on `k3s-staging`, uses the local kubeconfig — not `KUBE_CONFIG`).
 2. Deploy the app (**CI/CD Staging** on `main` or **Deploy Staging**).
-3. Wait until the certificate is Ready:
+3. Wait until the certificate is Ready (after DNS points at the VM):
    ```bash
    kubectl get certificate coffeeshop-tls -n coffeeshop-staging
    ```
@@ -120,22 +131,22 @@ Keycloak starts with `--import-realm`. If realm `coffeeshop` **already exists** 
 
 After changing `STAGING_APP_HOST` or the realm template:
 
-1. **Keycloak Admin** at `http://<STAGING_AUTH_HOST>/` (or `https://` when TLS is enabled) → **Clients** → `coffeeshop-backend` → add `http://<STAGING_APP_HOST>/*` and `https://<STAGING_APP_HOST>/*` to **Valid redirect URIs** and **Web origins**, or  
+1. **Keycloak Admin** at `http://<STAGING_AUTH_HOST>/` (or `https://` when TLS is enabled) → **Clients** → `coffeeshop-backend` → add `http://<STAGING_APP_HOST>/*` and `https://<STAGING_APP_HOST>/*` to **Valid redirect URIs** and **Web origins**, or
 2. Staging-only: delete the Keycloak deployment and Keycloak Postgres PVC to force a clean import (loses Keycloak users).
 
 ## Post-deploy verification
 
 ```bash
 kubectl exec -n coffeeshop-staging deploy/backend -- env | grep KEYCLOAK_JWT_ISSUER_URI
-# e.g. http://auth.kafenerija.online/realms/coffeeshop
+# e.g. https://auth.kafenerija.online/realms/coffeeshop
 
-curl -sS -o /dev/null -w "%{http_code}\n" "http://app.kafenerija.online/"
-curl -sS -o /dev/null -w "%{http_code}\n" "http://auth.kafenerija.online/health/ready"
+curl -sS -o /dev/null -w "%{http_code}\n" "https://app.kafenerija.online/"
+curl -sS -o /dev/null -w "%{http_code}\n" "https://auth.kafenerija.online/health/ready"
 ```
 
-Browser: `http://<STAGING_APP_HOST>/` — register/login. If **401 after login**, decode the JWT `iss` claim; it must exactly match `KEYCLOAK_JWT_ISSUER_URI` on the backend (same scheme and host).
+Browser: `https://<STAGING_APP_HOST>/` — register/login. If **401 after login**, decode the JWT `iss` claim; it must exactly match `KEYCLOAK_JWT_ISSUER_URI` on the backend (same scheme and host).
 
-If pods stay **Pending** with `Insufficient cpu` or `Insufficient memory`, see [deploy/README.md — Resource sizing](README.md#resource-sizing) and [Bootstrap on 2GB nodes](README.md#bootstrap-on-2gb-nodes). Staging applies reduced memory requests via `patches/resources-small-node.yaml` (Keycloak unchanged).
+If pods stay **Pending** with `Insufficient cpu` or `Insufficient memory`, see [deploy/README.md — Resource sizing](README.md#resource-sizing). Staging applies reduced memory requests via `patches/resources-small-node.yaml` (Keycloak unchanged).
 
 ## Local deploy (same substitution model)
 

@@ -1,7 +1,7 @@
 import { Component, computed, inject, Injector, OnInit, signal, ChangeDetectionStrategy } from '@angular/core';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { debounceTime, distinctUntilChanged, skip } from 'rxjs';
 import { EventService } from '../../services/event.service';
 import { ShopService } from '../../services/shop.service';
@@ -21,6 +21,7 @@ import { DateTimePickerComponent } from '../../shared/date-time-picker/date-time
 import { FormSelectComponent } from '../../shared/form-select/form-select.component';
 import { FormSelectOption } from '../../shared/form-select/form-select-option.model';
 import { DialogService } from '../../services/dialog.service';
+import { SubscriptionService } from '../../services/subscription.service';
 import {
   futureDateValidator,
   normalizeDateTimeLocal,
@@ -35,17 +36,24 @@ import {
 @Component({
   selector: 'app-events',
   standalone: true,
-  imports: [ReactiveFormsModule, DateRangePickerComponent, DateTimePickerComponent, FormSelectComponent],
+  imports: [ReactiveFormsModule, DateRangePickerComponent, DateTimePickerComponent, FormSelectComponent, RouterLink],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="page page--with-footer">
       <div class="page__content">
         <div class="page-header">
-          <h1 class="page-title">Events</h1>
+          <div class="page-header__title-group">
+            <h1 class="page-title">Events</h1>
+            @if (eventsQuotaLabel(); as quota) {
+              <p class="text-muted events-quota">{{ quota }}</p>
+            }
+          </div>
           @if (canCreateEvent()) {
             <button class="btn btn-primary" (click)="toggleForm()">
               {{ showForm() ? 'Cancel' : '+ Add Event' }}
             </button>
+          } @else if (showEventCreateUpgrade()) {
+            <a routerLink="/profile/billing" class="upgrade-link">Upgrade to Growth</a>
           }
         </div>
 
@@ -92,21 +100,21 @@ import {
           </div>
         }
 
-      <div class="events-toolbar mb-3">
-        <input
-          class="form-input events-search"
-          type="search"
-          placeholder="Search by name, shop, city, or description..."
-          aria-label="Search events"
-          [value]="searchInput()"
-          (input)="onSearchInput($event)"
-        />
-        <app-date-range-picker
-          [dateFrom]="dateFrom()"
-          [dateTo]="dateTo()"
-          (rangeChange)="onDateRangeChange($event)"
-        />
-      </div>
+        <div class="events-toolbar mb-3">
+          <input
+            class="form-input events-search"
+            type="search"
+            placeholder="Search by name, shop, city, or description..."
+            aria-label="Search events"
+            [value]="searchInput()"
+            (input)="onSearchInput($event)"
+          />
+          <app-date-range-picker
+            [dateFrom]="dateFrom()"
+            [dateTo]="dateTo()"
+            (rangeChange)="onDateRangeChange($event)"
+          />
+        </div>
 
         @if (loading()) {
           <div class="loading">Loading events...</div>
@@ -115,96 +123,42 @@ import {
             <p>{{ emptyStateMessage() }}</p>
           </div>
         } @else {
-          <div class="view-mobile-only list-card-grid mb-3">
+          <div class="compact-list">
             @for (event of events(); track event.eventId) {
-              <article class="list-card">
-                <div class="list-card__primary">
-                  <span class="list-card__title">{{ event.eventName }}</span>
-                  <span class="list-card__subtitle">{{ event.eventDate }}</span>
+              <article class="compact-row">
+                <div class="compact-row__start">
+                  <div class="compact-row__text">
+                    <span class="compact-row__primary">{{ event.eventName }}</span>
+                    <span class="compact-row__secondary">
+                      {{ displayShopName(event) }} &middot; {{ event.eventDate }}
+                      @if (event.description) { &middot; {{ event.description }} }
+                    </span>
+                  </div>
                 </div>
-                <div class="list-card__meta">
-                  {{ displayShopName(event) }} · {{ event.shopCity ?? '—' }} · {{ availabilityLabel(event) }}
-                </div>
-                @if (event.description) {
-                  <div class="list-card__meta list-card__meta--clamp">{{ event.description }}</div>
-                }
-                <div class="list-card__actions event-row-actions__inner">
+                <span class="badge" [class]="availabilityBadgeClass(event)">{{ availabilityLabel(event) }}</span>
+                <div class="compact-row__end">
                   @if (canManageEvent(event)) {
-                    <button class="btn btn-sm btn-secondary" (click)="onEdit(event)">Edit</button>
-                    <button class="btn btn-sm btn-danger" (click)="onDelete(event)">Delete</button>
+                    <button class="btn btn--compact btn-secondary" (click)="onEdit(event)" aria-label="Edit event">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    </button>
+                    <button class="btn btn--compact btn-danger" (click)="onDelete(event)" aria-label="Delete event">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                    </button>
                   }
                   @if (canShowReserveButton(event)) {
                     <button
                       type="button"
-                      class="btn btn-icon btn-reserve"
+                      class="btn btn--compact btn-primary"
                       [attr.aria-label]="reserveTooltip(event)"
                       [title]="reserveTooltip(event)"
                       (click)="onReserve(event)"
                     >
-                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                        <path d="M6 12V8a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v4" />
-                        <path d="M4 20v-2a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v2" />
-                        <path d="M8 12v6" />
-                        <path d="M16 12v6" />
-                      </svg>
+                      Reserve
                     </button>
                   }
                 </div>
               </article>
             }
-          </div>
-          <div class="view-desktop-only">
-            <div class="table-container">
-              <table class="data-table">
-                <thead>
-                  <tr>
-                    <th>Name</th>
-                    <th>Shop</th>
-                    <th>City</th>
-                    <th>Date</th>
-                    <th>Description</th>
-                    <th>Availability</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  @for (event of events(); track event.eventId) {
-                    <tr>
-                      <td>{{ event.eventName }}</td>
-                      <td>{{ displayShopName(event) }}</td>
-                      <td>{{ event.shopCity ?? '—' }}</td>
-                      <td>{{ event.eventDate }}</td>
-                      <td>{{ event.description }}</td>
-                      <td>{{ availabilityLabel(event) }}</td>
-                      <td class="event-row-actions data-table__actions">
-                        <div class="event-row-actions__inner">
-                          @if (canManageEvent(event)) {
-                            <button class="btn btn-sm btn-secondary" (click)="onEdit(event)">Edit</button>
-                            <button class="btn btn-sm btn-danger" (click)="onDelete(event)">Delete</button>
-                          }
-                          @if (canShowReserveButton(event)) {
-                            <button
-                              type="button"
-                              class="btn btn-icon btn-reserve"
-                              [attr.aria-label]="reserveTooltip(event)"
-                              [title]="reserveTooltip(event)"
-                              (click)="onReserve(event)"
-                            >
-                              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                <path d="M6 12V8a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v4" />
-                                <path d="M4 20v-2a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v2" />
-                                <path d="M8 12v6" />
-                                <path d="M16 12v6" />
-                              </svg>
-                            </button>
-                          }
-                        </div>
-                      </td>
-                    </tr>
-                  }
-                </tbody>
-              </table>
-            </div>
           </div>
         }
       </div>
@@ -238,6 +192,30 @@ import {
       display: block;
       min-height: 100%;
     }
+
+    .page-header__title-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .events-quota {
+      margin: 0;
+      font-size: 0.8125rem;
+    }
+
+    .upgrade-link {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: #d4a574;
+      text-decoration: none;
+      white-space: nowrap;
+      align-self: center;
+    }
+
+    .upgrade-link:hover {
+      text-decoration: underline;
+    }
   `],
 })
 export class EventsComponent implements OnInit {
@@ -251,12 +229,33 @@ export class EventsComponent implements OnInit {
   private readonly injector = inject(Injector);
   private readonly router = inject(Router);
   private readonly dialog = inject(DialogService);
+  private readonly subscriptionService = inject(SubscriptionService);
 
-  readonly canCreateEvent = computed(() => {
+  readonly canManageEvents = computed(() => {
     const profile = this.profileService.currentUser();
     if (!profile) return false;
     return this.authService.isAdmin() || profile.userType === 'SHOP_OWNER';
   });
+
+  readonly eventsQuotaLabel = computed(() => {
+    if (!this.canManageEvents()) return null;
+    const limit = this.subscriptionService.getLimit('events');
+    if (!limit) return null;
+    if (limit.max < 0) return `${limit.used} / Unlimited events this month`;
+    return `${limit.used} / ${limit.max} events this month`;
+  });
+
+  readonly canCreateEvent = computed(() => {
+    if (!this.canManageEvents()) return false;
+    if (!this.subscriptionService.canUseFeature('event_create')) return false;
+    const limit = this.subscriptionService.getLimit('events');
+    if (limit && limit.max >= 0 && limit.used >= limit.max) return false;
+    return true;
+  });
+
+  readonly showEventCreateUpgrade = computed(() =>
+    this.canManageEvents() && !this.subscriptionService.canUseFeature('event_create'),
+  );
 
   readonly todayIsoValue = todayIso;
 
@@ -383,10 +382,24 @@ export class EventsComponent implements OnInit {
     return event.shopName ?? event.shopId.slice(0, 8);
   }
 
+  availabilityBadgeClass(event: EventResponseDto): string {
+    if (isEventFull(event)) return 'badge-denied';
+    return 'badge-accepted';
+  }
+
   canManageEvent(event: EventResponseDto): boolean {
     if (!this.canCreateEvent()) return false;
     if (this.authService.isAdmin()) return true;
     return this.ownedShopIds().has(event.shopId);
+  }
+
+  canShowForm(): boolean {
+    const id = this.editingId();
+    if (id) {
+      const event = this.events().find(e => e.eventId === id);
+      return event ? this.canManageEvent(event) : false;
+    }
+    return this.canCreateEvent();
   }
 
   canShowReserveButton(event: EventResponseDto): boolean {
@@ -436,18 +449,10 @@ export class EventsComponent implements OnInit {
     });
   }
 
-  canShowForm(): boolean {
-    const id = this.editingId();
-    if (id) {
-      const event = this.events().find(e => e.eventId === id);
-      return event ? this.canManageEvent(event) : false;
-    }
-    return this.canCreateEvent();
-  }
-
   onSubmit(): void {
     if (this.form.invalid) return;
     if (!this.editingId() && this.form.controls.eventDate.hasError('pastDate')) return;
+    if (!this.editingId() && !this.canCreateEvent()) return;
 
     const val = this.form.getRawValue();
     const id = this.editingId();

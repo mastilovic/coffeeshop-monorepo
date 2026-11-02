@@ -1,0 +1,20 @@
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+
+# k3s local-path is the default StorageClass; set it explicitly so PVCs
+# do not pick up a cloud CSI if this overlay is applied elsewhere by mistake.
+patches:
+  - target:
+      kind: StatefulSet
+      name: postgres
+    patch: |-
+      - op: add
+        path: /spec/volumeClaimTemplates/0/spec/storageClassName
+        value: local-path
+  - target:
+      kind: StatefulSet
+      name: postgres-keycloak
+    patch: |-
+      - op: add
+        path: /spec/volumeClaimTemplates/0/spec/storageClassName
+        value: local-path

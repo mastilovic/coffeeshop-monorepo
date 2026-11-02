@@ -1,4 +1,4 @@
-name: Install cert-manager (DOKS)
+name: Install cert-manager
 
 on:
   workflow_dispatch:
@@ -9,7 +9,7 @@ concurrency:
 
 jobs:
   install:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, k3s-staging]
     permissions:
       contents: read
     steps:
@@ -18,30 +18,42 @@ jobs:
       - name: Install Helm
         run: |
           set -euo pipefail
-          HELM_VERSION="v3.16.4"
-          curl -fsSL "https://get.helm.sh/helm-${HELM_VERSION}-linux-amd64.tar.gz" | tar xz
-          sudo mv linux-amd64/helm /usr/local/bin/helm
+          mkdir -p "$HOME/.local/bin"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          export PATH="$HOME/.local/bin:$PATH"
+          if ! command -v helm >/dev/null 2>&1; then
+            HELM_VERSION="v3.16.4"
+            curl -fsSL "https://get.helm.sh/helm-${HELM_VERSION}-linux-amd64.tar.gz" | tar xz
+            mv linux-amd64/helm "$HOME/.local/bin/helm"
+            rm -rf linux-amd64
+          fi
           helm version
 
       - name: Install kubectl
         run: |
           set -euo pipefail
-          KUBECTL_VERSION="v1.32.0"
-          curl -fsSL "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl" -o kubectl
-          chmod +x kubectl
-          sudo mv kubectl /usr/local/bin/kubectl
+          mkdir -p "$HOME/.local/bin"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          export PATH="$HOME/.local/bin:$PATH"
+          if ! command -v kubectl >/dev/null 2>&1; then
+            KUBECTL_VERSION="v1.32.0"
+            curl -fsSL "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl" -o "$HOME/.local/bin/kubectl"
+            chmod +x "$HOME/.local/bin/kubectl"
+          fi
           kubectl version --client
 
-      - name: Configure kubeconfig
-        env:
-          KUBE_CONFIG: ${{ secrets.KUBE_CONFIG }}
+      - name: Configure kubeconfig (local k3s)
         run: |
+          set -euo pipefail
           mkdir -p "$HOME/.kube"
-          if [ -z "$KUBE_CONFIG" ]; then
-            echo "::error::KUBE_CONFIG secret is empty. See deploy/GITHUB_SETUP.md."
+          if [ -r /etc/rancher/k3s/k3s.yaml ]; then
+            cp /etc/rancher/k3s/k3s.yaml "$HOME/.kube/config"
+          elif [ -r "$HOME/.kube/config" ]; then
+            true
+          else
+            echo "::error::Cannot read k3s kubeconfig. Copy /etc/rancher/k3s/k3s.yaml for the runner user (mode 0600)."
             exit 1
           fi
-          printf '%s' "$KUBE_CONFIG" > "$HOME/.kube/config"
           chmod 600 "$HOME/.kube/config"
           kubectl cluster-info
 
