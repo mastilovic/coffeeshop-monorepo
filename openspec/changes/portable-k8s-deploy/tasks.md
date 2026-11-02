@@ -38,9 +38,9 @@
 ## 7. Self-hosted runner and CI switch
 
 - [x] 7.1 Install a GitHub Actions runner on the VM as a systemd service with labels `linux` and `k3s-staging`, using a user that can read the local k3s kubeconfig (mode 0600). Verify the runner appears Idle in the repo and does not listen on a public port.
-- [ ] 7.2 Run workflow **Deploy Staging** once with an existing GHCR `image_tag`. Verify the job runs on `k3s-staging`, `kubectl apply` targets this cluster, and rollouts succeed while 6443 remains closed to the internet.
+- [x] 7.2 Run workflow **Deploy Staging** once with an existing GHCR `image_tag`. Verify the job runs on `k3s-staging`, `kubectl apply` targets this cluster, and rollouts succeed while 6443 remains closed to the internet.
 
 ## 8. Cutover integration
 
 - [x] 8.1 Smoke the public names: SPA at `https://app.kafenerija.online/`, API via the frontend proxy, Keycloak ready at `https://auth.kafenerija.online/health/ready`. Verify those three checks pass and login still works.
-- [ ] 8.2 Confirm staging CI/CD no longer needs a working DOKS kubeconfig. Verify a deploy job does not read `KUBE_CONFIG` for k3s and docs state DOKS can be destroyed only after this smoke test (DNS rollback remains valid until then).
+- [x] 8.2 Confirm staging CI/CD no longer needs a working DOKS kubeconfig. Verify a deploy job does not read `KUBE_CONFIG` for k3s and docs state DOKS can be destroyed only after this smoke test (DNS rollback remains valid until then).
