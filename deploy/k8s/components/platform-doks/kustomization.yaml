@@ -1,0 +1,9 @@
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+
+# Managed Kubernetes (DigitalOcean and similar): default StorageClass and
+# LoadBalancer ingress are cluster-provided. No workload patches required.
+# Include from an environment overlay that targets that kind of cluster.
+# Empty patches list so kustomize treats this file as a valid Component.
+patches: []
+

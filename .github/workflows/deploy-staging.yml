@@ -1,4 +1,4 @@
-name: Deploy Staging (DOKS)
+name: Deploy Staging
 
 on:
   workflow_dispatch:
@@ -18,4 +18,6 @@ jobs:
     uses: ./.github/workflows/deploy-staging-reusable.yml
     with:
       image_tag: ${{ inputs.image_tag }}
+      runs_on: '["self-hosted","linux","k3s-staging"]'
+      kubeconfig_source: local-k3s
     secrets: inherit

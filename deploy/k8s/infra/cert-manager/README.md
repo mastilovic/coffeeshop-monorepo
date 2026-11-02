@@ -5,7 +5,7 @@ Installs [cert-manager](https://cert-manager.io/) and applies Let’s Encrypt **
 ## Prerequisites
 
 1. **NGINX Ingress** with `ingressClassName: nginx` (see [deploy/README.md](../../../README.md)).
-2. **DNS:** `APP_HOST` and `AUTH_HOST` A records point at the ingress load balancer IP; port **80** reachable (HTTP-01).
+2. **DNS:** `APP_HOST` and `AUTH_HOST` A records point at the VM public IP (`195.234.126.162` for staging k3s); port **80** reachable (HTTP-01).
 3. **kubectl** and **Helm 3** configured for your cluster.
 
 ## Install
@@ -68,6 +68,6 @@ openssl s_client -connect auth.kafenerija.online:443 -servername auth.kafenerija
 
 ## GitHub Actions
 
-One-time cluster bootstrap: **Actions → Install cert-manager (DOKS)** (`workflow_dispatch`). Uses the same `KUBE_CONFIG` secret as staging deploy.
+One-time cluster bootstrap: **Actions → Install cert-manager** (`workflow_dispatch`). Runs on the `k3s-staging` self-hosted runner with the node kubeconfig (`KUBE_CONFIG` is not used).
 
 App deploy workflows do **not** install cert-manager automatically.

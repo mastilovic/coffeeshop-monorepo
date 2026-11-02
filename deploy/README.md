@@ -1,47 +1,52 @@
-# CoffeeShop — DigitalOcean Kubernetes (staging)
+# CoffeeShop — Kubernetes deploy
 
-Deploy the full stack (Postgres ×2, Keycloak, Spring backend, Go backend, Angular frontend) to a DOKS cluster using [Kustomize](https://kustomize.io/).
+Deploy the full stack (Postgres ×2, Keycloak, Go backend, Angular frontend) with [Kustomize](https://kustomize.io/). Staging runs on a **single-node k3s** VM. The same app base can target a managed cluster later via a platform component.
 
-## Architecture
+## Layers
 
 ```text
-Internet → NGINX Ingress (DO Load Balancer)
-  ├─ APP_HOST  → frontend:80 → nginx proxies /api/v1/* → backend:8080
-  │                          → nginx proxies /api/v2/* → backend-go:8080
-  └─ AUTH_HOST → keycloak:8080
-
-backend, backend-go → postgres (app DB), keycloak (token/admin API)
-keycloak → postgres-keycloak
+Cluster     k3s on a Linux VM (or later: managed Kubernetes)
+Platform    ingress-nginx (class nginx), cert-manager, local-path or cloud CSI
+Environment overlays/staging — hosts, secrets, namespace, image tags
 ```
 
-`backend-go` reads `DATABASE_URL`, Keycloak, and CORS from the shared `coffeeshop-config` ConfigMap and `coffeeshop-secrets` Secret (same as the Java backend).
+```text
+Internet → VM :80/:443 (NGINX Ingress, ingressClassName: nginx)
+  ├─ APP_HOST  → frontend:80 → nginx proxies /api/v1/* and /api/v2/* → backend:8080
+  └─ AUTH_HOST → keycloak:8080
+
+backend → postgres (app DB), keycloak (token/admin API)
+keycloak → postgres-keycloak
+```
 
 Images are built by GitHub Actions and published to GHCR:
 
 - `ghcr.io/mastilovic/coffeeshop-backend-go`
 - `ghcr.io/mastilovic/coffeeshop-frontend`
 
-## One-time cluster setup
+## One-time cluster setup (staging k3s)
 
-### 1. Connect kubectl
+Target: Debian vServer `195.234.126.162` (4 CPU / 8 GB). Do not install Docker.
+
+### 1. k3s
 
 ```bash
-doctl auth init
-doctl kubernetes cluster kubeconfig save <your-cluster-name>
+ssh informaten@195.234.126.162
+sudo ./deploy/bootstrap/k3s/install.sh   # from a clone of this repo
 kubectl get nodes
 ```
 
-### 2. Install NGINX Ingress Controller
+Details: [bootstrap/k3s/README.md](bootstrap/k3s/README.md). Traefik is disabled so Ingress stays `ingressClassName: nginx`.
 
-Use the [DigitalOcean marketplace](https://marketplace.digitalocean.com/apps/nginx-ingress-controller) or Helm:
+### 2. NGINX Ingress Controller
 
 ```bash
 helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
-helm install ingress-nginx ingress-nginx/ingress-nginx \
+helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx \
   --namespace ingress-nginx --create-namespace
 ```
 
-Manifests expect `ingressClassName: nginx`.
+Manifests expect `ingressClassName: nginx`. If 80/443 do not bind, use the hostNetwork fallback in the bootstrap README.
 
 ### 3. GHCR pull secret (if packages are private)
 
@@ -64,9 +69,9 @@ spec:
         - name: ghcr-pull
 ```
 
-### 4. Install cert-manager (once per cluster)
+Skip if GHCR packages are public.
 
-Required for HTTPS on the CoffeeShop Ingress. The app manifests already define TLS and a `letsencrypt-prod` issuer annotation; this step installs the controller and ClusterIssuers.
+### 4. Install cert-manager (once per cluster)
 
 ```bash
 cd deploy/k8s/infra/cert-manager
@@ -74,26 +79,29 @@ chmod +x install.sh
 ./install.sh
 ```
 
-Or use GitHub Actions: **Install cert-manager (DOKS)** (`workflow_dispatch`). See [deploy/k8s/infra/cert-manager/README.md](k8s/infra/cert-manager/README.md) for verification and troubleshooting.
-
-On **2 GB** nodes, install cert-manager after staging memory patches are applied; consider **≥2 vCPU / 4 GB** for a stable single-node stack.
+Or GitHub Actions: **Install cert-manager** (`workflow_dispatch`) on the `k3s-staging` self-hosted runner. See [deploy/k8s/infra/cert-manager/README.md](k8s/infra/cert-manager/README.md).
 
 ### 5. Deploy staging and enable HTTPS
 
-1. Deploy the app (local `kubectl apply -k deploy/k8s/overlays/staging` or push to **`main`** / **Deploy Staging**).
-2. Wait until the certificate is Ready:
+1. Apply the overlay (`kubectl apply -k deploy/k8s/overlays/staging` or **CI/CD Staging** / **Deploy Staging** after the runner is installed).
+2. Prove the SPA via `curl -H 'Host: app.kafenerija.online' http://195.234.126.162/` **before** flipping DNS.
+3. Point DNS (below), then wait until the certificate is Ready:
    ```bash
    kubectl get certificate coffeeshop-tls -n coffeeshop-staging
    ```
-3. Set GitHub variable `STAGING_PUBLIC_SCHEME=https` and redeploy so JWT issuer and CORS use `https://` (see [GITHUB_SETUP.md](GITHUB_SETUP.md)).
+4. Set GitHub variable `STAGING_PUBLIC_SCHEME=https` and redeploy so JWT issuer and CORS use `https://` (see [GITHUB_SETUP.md](GITHUB_SETUP.md)).
 
-HTTP-only smoke tests work before step 3 if `STAGING_PUBLIC_SCHEME` stays `http`.
+HTTP-only smoke tests work before step 4 if `STAGING_PUBLIC_SCHEME` stays `http`.
+
+Keep the previous DigitalOcean cluster until HTTPS works here. Rollback is restoring A records to that load balancer. Destroy DOKS only after the smoke test in [GITHUB_SETUP.md](GITHUB_SETUP.md).
 
 ## GitHub configuration
 
 The deploy pipeline generates `config.env`, `secrets.env`, and `realm-coffeeshop.json` from GitHub **Variables**, **Secrets**, and `realm-coffeeshop.json.template`. You do not commit those generated files.
 
-See **[GITHUB_SETUP.md](GITHUB_SETUP.md)** for the full list of Variables and Secrets.
+Staging apply runs on a **self-hosted runner** labeled `k3s-staging` using the node kubeconfig (`local-k3s`). Image builds stay on GitHub-hosted runners. `KUBE_CONFIG` is **not** required for k3s staging (that secret is the managed-cluster path).
+
+See **[GITHUB_SETUP.md](GITHUB_SETUP.md)**.
 
 ## Local deploy (manual)
 
@@ -112,8 +120,8 @@ kubectl apply -k .
 
 ## GitHub Actions — branch workflow
 
-| Branch | Workflow | Tests + Docker | GHCR tags | DOKS deploy |
-|--------|----------|----------------|-----------|-------------|
+| Branch | Workflow | Tests + Docker | GHCR tags | Staging deploy (k3s) |
+|--------|----------|----------------|-----------|----------------------|
 | **`dev`** | [ci-cd-staging.yml](../.github/workflows/ci-cd-staging.yml) | Yes | `dev-sha-<7>` | No |
 | **`main`** (staging) | Same | Yes | `sha-<7>`, `latest` | Yes |
 | **PR** | [backend-ci.yml](../.github/workflows/backend-ci.yml), [frontend-ci.yml](../.github/workflows/frontend-ci.yml) | Yes | None (`push: false`) | No |
@@ -125,8 +133,8 @@ Recommended flow: feature branch → PR into **`dev`** → PR **`dev` → `main`
 **`main`** — every push or merge (including from `dev`) runs the full pipeline automatically:
 
 1. Backend and frontend tests (always on `main`, no path filter).
-2. Builds and pushes both images as `sha-<7>` and `latest`.
-3. Deploys to `coffeeshop-staging` with `sha-<7>`.
+2. Builds and pushes both images as `sha-<7>` and `latest` (GitHub-hosted).
+3. Deploys to `coffeeshop-staging` with `sha-<7>` on the `k3s-staging` runner.
 
 **`dev`** — every push starts **CI/CD Staging**; tests and builds run only when app, frontend, or deploy paths changed. Images are tagged `dev-sha-<7>` only; deploy is skipped.
 
@@ -154,68 +162,42 @@ Use when you need to redeploy an existing image without rebuilding (e.g. pin `im
 
 | Name | Pipeline writes to |
 |------|-------------------|
-| `KUBE_CONFIG` | `~/.kube/config` in the deploy job |
 | `STAGING_POSTGRES_PASSWORD` | `secrets.env` |
 | `STAGING_KEYCLOAK_POSTGRES_PASSWORD` | `secrets.env` |
 | `STAGING_KEYCLOAK_ADMIN` | `secrets.env` |
 | `STAGING_KEYCLOAK_ADMIN_PASSWORD` | `secrets.env` |
 | `STAGING_KEYCLOAK_BACKEND_CLIENT_SECRET` | `secrets.env` + rendered realm `secret` |
-
-Details: **[GITHUB_SETUP.md](GITHUB_SETUP.md)**
-
-### `KUBE_CONFIG` secret (required)
-
-`kubectl` talks to whatever cluster is in this file. If the secret is missing or malformed, you will see:
-
-`Get "http://localhost:8080/openapi/v2": connection refused` — that means CI is **not** using your DOKS API; fix the secret, do not use `--validate=false`.
-
-**Create a dedicated staging kubeconfig** (`doctl save` does not support `--kubeconfig`; use `show`):
-
-```bash
-doctl kubernetes cluster kubeconfig show <your-cluster-id> > ~/.kube/config-coffeeshop-staging
-chmod 600 ~/.kube/config-coffeeshop-staging
-
-kubectl --kubeconfig ~/.kube/config-coffeeshop-staging config current-context
-kubectl --kubeconfig ~/.kube/config-coffeeshop-staging cluster-info
-```
-
-Copy the **entire file** into GitHub → **Secrets** → `KUBE_CONFIG`.
-
-Checklist for the secret:
-
-- Includes `apiVersion`, `clusters`, `contexts`, `users`, and `current-context`
-- `server:` under `clusters` is `https://...` (DigitalOcean), not `http://localhost:8080`
-- `current-context` matches your staging cluster name
+| `KUBE_CONFIG` | **Not used for k3s staging.** Optional later for a managed cluster (`kubeconfig_source: secret`). |
 
 ### First-time setup
 
-1. Configure variables and secrets below (especially `KUBE_CONFIG`).
-2. Install NGINX Ingress on the cluster (see above).
-3. Push to `main` — **CI/CD Staging** should build, push, and deploy automatically.
+1. Bootstrap k3s, ingress-nginx, cert-manager (above).
+2. Configure `STAGING_*` variables and secrets.
+3. Install the GitHub Actions runner labeled `linux,k3s-staging` (see GITHUB_SETUP.md).
+4. Push to `main` — **CI/CD Staging** should build, push, and deploy automatically.
 
 ### Manual deploy only
 
-1. Actions → **Deploy Staging (DOKS)** → **Run workflow**.
+1. Actions → **Deploy Staging** → **Run workflow**.
 2. Set `image_tag` (e.g. `sha-abc1234` from a prior **CI/CD Staging** run, or `latest`).
 
 ## DNS
 
-After the first apply, get the load balancer IP:
+Point A records at the **vServer**, not a cloud load balancer:
+
+| Type | Host | FQDN | Value |
+|------|------|------|--------|
+| A | `app` | `app.kafenerija.online` | `195.234.126.162` |
+| A | `auth` | `auth.kafenerija.online` | `195.234.126.162` |
 
 ```bash
-kubectl get svc -n ingress-nginx ingress-nginx-controller -o jsonpath='{.status.loadBalancer.ingress[0].ip}{"\n"}'
+dig +short app.kafenerija.online
+dig +short auth.kafenerija.online
 kubectl get ingress coffeeshop -n coffeeshop-staging \
   -o custom-columns='APP:.spec.rules[0].host,AUTH:.spec.rules[1].host'
 ```
 
-At your registrar (e.g. Namecheap **Advanced DNS** for `kafenerija.online`), add two **A** records to that IP:
-
-| Host | FQDN (must match GitHub `STAGING_*_HOST`) |
-|------|------------------------------------------|
-| `app` | `app.kafenerija.online` |
-| `auth` | `auth.kafenerija.online` |
-
-Users open **`http://app.kafenerija.online/`** (or `https://` after TLS). Ingress hosts must match GitHub variables; redeploy after changing variables.
+Users open **`https://app.kafenerija.online/`** after TLS (or `http://` before `STAGING_PUBLIC_SCHEME=https`). Ingress hosts must match GitHub variables; redeploy after changing variables.
 
 ## Verification checklist
 
@@ -226,19 +208,18 @@ kubectl rollout status deployment/backend -n coffeeshop-staging
 
 | Check | Command / action |
 |-------|------------------|
-| SPA loads | `curl -sS "http://$APP_HOST/" \| head` |
-| API via frontend proxy | `curl -sS -o /dev/null -w "%{http_code}" "http://$APP_HOST/api/v1/..."` |
-| Keycloak ready | `curl -sS "http://$AUTH_HOST/health/ready"` |
+| SPA loads | `curl -sS "https://$APP_HOST/" \| head` |
+| API via frontend proxy | `curl -sS -o /dev/null -w "%{http_code}" "https://$APP_HOST/api/v1/..."` |
+| Keycloak ready | `curl -sS "https://$AUTH_HOST/health/ready"` |
 | Login / register | Use the UI; watch backend logs for JWT issuer errors |
 
 ### Common issues
 
-- **401 after login**: JWT `iss` must match `KEYCLOAK_JWT_ISSUER_URI` on the backend (e.g. `http://<AUTH_HOST>/realms/coffeeshop` when `STAGING_PUBLIC_SCHEME=http`), not `http://keycloak:8080/...`.
+- **401 after login**: JWT `iss` must match `KEYCLOAK_JWT_ISSUER_URI` on the backend (e.g. `https://<AUTH_HOST>/realms/coffeeshop` when `STAGING_PUBLIC_SCHEME=https`), not `http://keycloak:8080/...`.
 - **Keycloak redirect errors**: set `STAGING_APP_HOST` variable to the hostname users open in the browser.
 - **Image pull errors**: Add `ghcr-pull` secret or make GHCR packages public.
-- **Postgres pending**: Check PVC provisioning (`kubectl get pvc -n coffeeshop-staging`); DO default StorageClass is usually `do-block-storage`.
-- **`localhost:8080` / openapi connection refused on deploy**: `KUBE_CONFIG` is empty, truncated, or not a valid DOKS kubeconfig. Recreate the secret from a single-cluster file (see **`KUBE_CONFIG` secret** above). The deploy workflow logs `Context:` and `API server:` before `kubectl apply`.
-- **`Insufficient cpu` / pods Pending**: See **Resource sizing** below; resize the DOKS node pool or apply reduced requests from the repo.
+- **Postgres pending**: Check PVC provisioning (`kubectl get pvc -n coffeeshop-staging`); k3s default is `local-path`.
+- **`Insufficient cpu` / pods Pending**: See **Resource sizing** below.
 
 ## Resource sizing
 
@@ -268,11 +249,11 @@ Applied only when using `kubectl apply -k deploy/k8s/overlays/staging`. Keycloak
 
 **Staging steady-state (namespace only):** ~325m CPU, ~640Mi memory requests.
 
-Add headroom for `ingress-nginx` and DOKS system pods (`kube-system`). On a **2 GB** single-node pool, scheduling can still be tight; prefer **≥2 vCPU / 4 GB** droplets for reliable staging.
+The staging vServer is **4 CPU / 8 GB**, which fits k3s + ingress + cert-manager + this patch. On a **2 GB** node, scheduling can still be tight.
 
-If pods are **OOMKilled**, raise limits on the affected workload (e.g. Postgres to `128Mi` request / `320Mi` limit in the staging patch). If Postgres stays **Pending** with `Insufficient memory`, use **Bootstrap on 2GB nodes** below or resize the node pool.
+If pods are **OOMKilled**, raise limits on the affected workload (e.g. Postgres to `128Mi` request / `320Mi` limit in the staging patch). If Postgres stays **Pending** with `Insufficient memory`, use **Bootstrap on small nodes** below.
 
-### Bootstrap on 2GB nodes
+### Bootstrap on small nodes
 
 If Keycloak schedules before `postgres-keycloak` and both DB pods stay **Pending**, free scheduler headroom once:
 
@@ -281,8 +262,6 @@ kubectl scale deployment keycloak backend -n coffeeshop-staging --replicas=0
 kubectl wait --for=condition=ready pod/postgres-0 pod/postgres-keycloak-0 -n coffeeshop-staging --timeout=180s
 kubectl scale deployment keycloak backend -n coffeeshop-staging --replicas=1
 ```
-
-Optional cluster tweaks (not in this repo): lower `ingress-nginx` controller requests via Helm, or reduce/disable DOKS Hubble if you do not need it.
 
 Verify after deploy:
 
@@ -296,9 +275,15 @@ kubectl top pods -n coffeeshop-staging   # requires metrics-server
 ## Layout
 
 ```text
-deploy/k8s/
-  base/                 # Shared manifests
-  overlays/staging/     # Secrets, config, realm, image tags
+deploy/
+  bootstrap/k3s/        # VM cluster install
+  k8s/
+    base/               # Portable app manifests (no environment namespace)
+    components/
+      platform-k3s/     # local-path StorageClass
+      platform-doks/    # stub for managed Kubernetes
+    overlays/staging/   # namespace, secrets, config, realm, image tags
+    infra/cert-manager/
 ```
 
 ## Pull request CI
@@ -312,3 +297,4 @@ Push builds for **`dev`** and staging deploys for **`main`** are handled by **CI
 
 - Managed Postgres instead of in-cluster StatefulSets
 - Production overlay and sealed secrets
+- Flux/Argo for multiple clusters
