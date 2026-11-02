@@ -54,10 +54,24 @@ bool matchesShopFilters(ShopResponseDto shop, ShopListParams params) {
 }
 
 class ShopListScreen extends ConsumerStatefulWidget {
-  const ShopListScreen({super.key});
+  const ShopListScreen({super.key, this.recentReviews});
+
+  final int? recentReviews;
 
   @override
   ConsumerState<ShopListScreen> createState() => _ShopListScreenState();
+}
+
+List<({ShopResponseDto shop, bool isOwned})> sortShopsByRecentReviews(
+  List<({ShopResponseDto shop, bool isOwned})> shops,
+) {
+  final indexed = shops.asMap().entries.toList();
+  indexed.sort((a, b) {
+    final byRecent = b.value.shop.recentReviewCount.compareTo(a.value.shop.recentReviewCount);
+    if (byRecent != 0) return byRecent;
+    return a.key.compareTo(b.key);
+  });
+  return indexed.map((entry) => entry.value).toList();
 }
 
 class _ShopListScreenState extends ConsumerState<ShopListScreen> {
@@ -121,12 +135,15 @@ class _ShopListScreenState extends ConsumerState<ShopListScreen> {
 
   Widget _buildShopCard(ShopResponseDto shop, {required bool isOwned}) {
     final canManage = canManageShopInList(ref, shop.id);
+    final showRecentReviews = widget.recentReviews == 30;
 
     return ShopCard(
       name: shop.name,
       city: shop.city,
       rating: shop.averageRating,
       reviewCount: shop.reviewCount,
+      highlightRecentReviews: showRecentReviews,
+      recentReviewCount: shop.recentReviewCount,
       memberCount: shop.memberCount,
       loyaltyPlanType: loyaltyPlanType(shop.loyaltyPlan),
       isOwned: isOwned,
@@ -140,7 +157,7 @@ class _ShopListScreenState extends ConsumerState<ShopListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final shopListAsync = ref.watch(shopListProvider);
+    final shopListAsync = ref.watch(shopListProvider(widget.recentReviews));
     final params = ref.watch(shopListParamsProvider);
     ref.watch(ownedShopsProvider);
 
@@ -185,12 +202,23 @@ class _ShopListScreenState extends ConsumerState<ShopListScreen> {
               },
             ),
           ),
+          if (widget.recentReviews == 30)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: InputChip(
+                  label: const Text('New reviews · 30 days'),
+                  onDeleted: () => context.go('/shops'),
+                ),
+              ),
+            ),
           Expanded(
             child: shopListAsync.when(
               loading: () => const LoadingIndicator(message: 'Loading shops...'),
               error: (error, _) => ErrorView(
                 message: error.toString(),
-                onRetry: () => ref.invalidate(shopListProvider),
+                onRetry: () => ref.invalidate(shopListProvider(widget.recentReviews)),
               ),
               data: (result) {
                 final isShopOwner =
@@ -199,9 +227,22 @@ class _ShopListScreenState extends ConsumerState<ShopListScreen> {
                 final owned = isShopOwner
                     ? (ref.watch(ownedShopsProvider).valueOrNull ?? [])
                     : <ShopResponseDto>[];
+                final listedById = {for (final shop in result.shops) shop.id: shop};
+                ShopResponseDto withListStats(ShopResponseDto shop) {
+                  final fromPage = listedById[shop.id];
+                  if (fromPage == null) return shop;
+                  return shop.copyWith(
+                    recentReviewCount: fromPage.recentReviewCount,
+                    averageRating: fromPage.averageRating,
+                    reviewCount: fromPage.reviewCount,
+                  );
+                }
+
                 final ownedIds = owned.map((shop) => shop.id).toSet();
-                final myShops =
-                    owned.where((shop) => matchesShopFilters(shop, params)).toList();
+                final myShops = owned
+                    .map(withListStats)
+                    .where((shop) => matchesShopFilters(shop, params))
+                    .toList();
                 final otherShops = result.shops
                     .where((shop) => !ownedIds.contains(shop.id))
                     .where((shop) => matchesShopFilters(shop, params))
@@ -209,13 +250,16 @@ class _ShopListScreenState extends ConsumerState<ShopListScreen> {
                 final (favouriteOtherShops, remainingOtherShops) =
                     splitShopsByFavourite(ref, otherShops);
 
-                final orderedShops = <({ShopResponseDto shop, bool isOwned})>[
+                var orderedShops = <({ShopResponseDto shop, bool isOwned})>[
                   ...myShops.map((shop) => (shop: shop, isOwned: true)),
                   ...favouriteOtherShops
                       .map((shop) => (shop: shop, isOwned: false)),
                   ...remainingOtherShops
                       .map((shop) => (shop: shop, isOwned: false)),
                 ];
+                if (widget.recentReviews == 30) {
+                  orderedShops = sortShopsByRecentReviews(orderedShops);
+                }
 
                 if (orderedShops.isEmpty) {
                   return const EmptyStateView(
@@ -226,9 +270,9 @@ class _ShopListScreenState extends ConsumerState<ShopListScreen> {
 
                 return RefreshIndicator(
                   onRefresh: () async {
-                    ref.invalidate(shopListProvider);
+                    ref.invalidate(shopListProvider(widget.recentReviews));
                     ref.invalidate(ownedShopsProvider);
-                    await ref.read(shopListProvider.future);
+                    await ref.read(shopListProvider(widget.recentReviews).future);
                   },
                   child: Column(
                     children: [

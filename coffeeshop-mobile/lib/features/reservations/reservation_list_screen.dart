@@ -27,20 +27,24 @@ class ReservationListScreen extends ConsumerStatefulWidget {
     super.key,
     this.initialShopId,
     this.initialEventId,
+    this.initialTab,
     this.openRequest = false,
   });
 
   final String? initialShopId;
   final String? initialEventId;
+  final String? initialTab;
   final bool openRequest;
 
   @override
   ConsumerState<ReservationListScreen> createState() => _ReservationListScreenState();
 }
 
-class _ReservationListScreenState extends ConsumerState<ReservationListScreen> {
+class _ReservationListScreenState extends ConsumerState<ReservationListScreen>
+    with TickerProviderStateMixin {
   late bool _showRequestForm;
   bool _appliedQueryPrefill = false;
+  TabController? _ownerTabController;
 
   static bool _shouldOpenForm(ReservationListScreen widget) =>
       widget.openRequest ||
@@ -65,6 +69,34 @@ class _ReservationListScreenState extends ConsumerState<ReservationListScreen> {
         _appliedQueryPrefill = false;
       });
     }
+    if (widget.initialTab != oldWidget.initialTab) {
+      _applyOwnerTab(widget.initialTab);
+    }
+  }
+
+  @override
+  void dispose() {
+    _ownerTabController?.dispose();
+    super.dispose();
+  }
+
+  int _ownerTabIndex(String? tab) => tab == 'manage' ? 2 : 0;
+
+  void _ensureOwnerTabController() {
+    _ownerTabController ??= TabController(
+      length: 3,
+      vsync: this,
+      initialIndex: _ownerTabIndex(widget.initialTab),
+    );
+  }
+
+  void _applyOwnerTab(String? tab) {
+    final controller = _ownerTabController;
+    if (controller == null) return;
+    final index = _ownerTabIndex(tab);
+    if (controller.index != index) {
+      controller.index = index;
+    }
   }
 
   void _openRequestForm() => setState(() => _showRequestForm = true);
@@ -74,9 +106,9 @@ class _ReservationListScreenState extends ConsumerState<ReservationListScreen> {
     final isOwner = isShopOwner(ref);
 
     if (isOwner) {
-      return DefaultTabController(
-        length: 3,
-        child: Scaffold(
+      _ensureOwnerTabController();
+      final ownerTabs = _ownerTabController!;
+      return Scaffold(
           appBar: AppBar(
             title: const Text('Reservations'),
             actions: [
@@ -85,8 +117,9 @@ class _ReservationListScreenState extends ConsumerState<ReservationListScreen> {
                 onPressed: () => setState(() => _showRequestForm = !_showRequestForm),
               ),
             ],
-            bottom: const TabBar(
-              tabs: [
+            bottom: TabBar(
+              controller: ownerTabs,
+              tabs: const [
                 Tab(text: 'My Requests'),
                 Tab(text: 'My Reservations'),
                 Tab(text: 'Manage Shops'),
@@ -111,6 +144,7 @@ class _ReservationListScreenState extends ConsumerState<ReservationListScreen> {
               if (!_showRequestForm)
                 Expanded(
                   child: TabBarView(
+                    controller: ownerTabs,
                     children: [
                       _MyRequestsPanel(onRequestReservation: _openRequestForm),
                       _MyReservationsPanel(onRequestReservation: _openRequestForm),
@@ -120,7 +154,6 @@ class _ReservationListScreenState extends ConsumerState<ReservationListScreen> {
                 ),
             ],
           ),
-        ),
       );
     }
 

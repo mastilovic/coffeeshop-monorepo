@@ -118,7 +118,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: '/shops',
-                builder: (context, state) => const ShopListScreen(),
+                builder: (context, state) {
+                  final recentReviews = int.tryParse(
+                    state.uri.queryParameters['recentReviews'] ?? '',
+                  );
+                  return ShopListScreen(
+                    recentReviews: recentReviews == 30 ? 30 : null,
+                  );
+                },
                 routes: [
                   GoRoute(
                     path: 'new',
@@ -153,6 +160,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                   return ReservationListScreen(
                     initialShopId: params['shopId'],
                     initialEventId: params['eventId'],
+                    initialTab: params['tab'],
                     openRequest: params['request'] == '1' ||
                         params['shopId'] != null ||
                         params['eventId'] != null,

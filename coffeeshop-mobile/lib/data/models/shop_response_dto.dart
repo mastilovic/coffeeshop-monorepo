@@ -16,6 +16,7 @@ class ShopResponseDto with _$ShopResponseDto {
     String? email,
     double? averageRating,
     @Default(0) int reviewCount,
+    @Default(0) int recentReviewCount,
     @Default(0) int memberCount,
     @Default(false) bool favouriteByCurrentUser,
     List<Map<String, dynamic>>? events,

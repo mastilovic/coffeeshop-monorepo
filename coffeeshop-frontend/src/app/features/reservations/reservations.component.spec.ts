@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
 import { signal } from '@angular/core';
-import { of } from 'rxjs';
+import { BehaviorSubject, of } from 'rxjs';
 import { ReservationsComponent } from './reservations.component';
 import { ReservationService } from '../../services/reservation.service';
 import { ReservationRequestService } from '../../services/reservation-request.service';
@@ -20,6 +20,7 @@ import { UserProfileResponseDto } from '../../models/user.model';
 describe('ReservationsComponent', () => {
   let fixture: ComponentFixture<ReservationsComponent>;
   let canUseFeatureMock: ReturnType<typeof vi.fn>;
+  const queryParamMap$ = new BehaviorSubject(convertToParamMap({}));
 
   const ownerProfile: UserProfileResponseDto = {
     id: 'owner-1',
@@ -65,12 +66,20 @@ describe('ReservationsComponent', () => {
   };
 
   beforeEach(async () => {
+    queryParamMap$.next(convertToParamMap({}));
     canUseFeatureMock = vi.fn((featureKey: string) => featureKey === 'reservation_manage');
 
     await TestBed.configureTestingModule({
       imports: [ReservationsComponent],
       providers: [
         provideRouter([]),
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            snapshot: { queryParamMap: convertToParamMap({}) },
+            queryParamMap: queryParamMap$.asObservable(),
+          },
+        },
         {
           provide: ProfileService,
           useValue: { currentUser: signal(ownerProfile) },
@@ -134,6 +143,20 @@ describe('ReservationsComponent', () => {
     const buttons = fixture.nativeElement.querySelectorAll('button') as NodeListOf<HTMLButtonElement>;
     return Array.from(buttons).find(button => button.textContent?.trim() === label);
   }
+
+  it('keeps personal reservations when tab is absent', () => {
+    expect(fixture.componentInstance.ownerMainTab()).toBe('personal');
+    expect(fixture.componentInstance.ownerSubTab()).toBe('pending');
+  });
+
+  it('opens Manage my Shops when the tab query becomes manage', () => {
+    queryParamMap$.next(convertToParamMap({ tab: 'manage' }));
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.ownerMainTab()).toBe('manage');
+    expect(fixture.componentInstance.ownerSubTab()).toBe('pending');
+    expect(fixture.nativeElement.textContent).toContain('Manage my Shops');
+  });
 
   it('enables accept/deny when reservation_manage is entitled', () => {
     openManagePendingTab();

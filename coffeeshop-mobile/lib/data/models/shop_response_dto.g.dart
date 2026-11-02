@@ -17,6 +17,7 @@ _$ShopResponseDtoImpl _$$ShopResponseDtoImplFromJson(
   email: json['email'] as String?,
   averageRating: (json['averageRating'] as num?)?.toDouble(),
   reviewCount: (json['reviewCount'] as num?)?.toInt() ?? 0,
+  recentReviewCount: (json['recentReviewCount'] as num?)?.toInt() ?? 0,
   memberCount: (json['memberCount'] as num?)?.toInt() ?? 0,
   favouriteByCurrentUser: json['favouriteByCurrentUser'] as bool? ?? false,
   events: (json['events'] as List<dynamic>?)
@@ -46,6 +47,7 @@ Map<String, dynamic> _$$ShopResponseDtoImplToJson(
   'email': instance.email,
   'averageRating': instance.averageRating,
   'reviewCount': instance.reviewCount,
+  'recentReviewCount': instance.recentReviewCount,
   'memberCount': instance.memberCount,
   'favouriteByCurrentUser': instance.favouriteByCurrentUser,
   'events': instance.events,

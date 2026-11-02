@@ -29,6 +29,7 @@ mixin _$ShopResponseDto {
   String? get email => throw _privateConstructorUsedError;
   double? get averageRating => throw _privateConstructorUsedError;
   int get reviewCount => throw _privateConstructorUsedError;
+  int get recentReviewCount => throw _privateConstructorUsedError;
   int get memberCount => throw _privateConstructorUsedError;
   bool get favouriteByCurrentUser => throw _privateConstructorUsedError;
   List<Map<String, dynamic>>? get events => throw _privateConstructorUsedError;
@@ -65,6 +66,7 @@ abstract class $ShopResponseDtoCopyWith<$Res> {
     String? email,
     double? averageRating,
     int reviewCount,
+    int recentReviewCount,
     int memberCount,
     bool favouriteByCurrentUser,
     List<Map<String, dynamic>>? events,
@@ -99,6 +101,7 @@ class _$ShopResponseDtoCopyWithImpl<$Res, $Val extends ShopResponseDto>
     Object? email = freezed,
     Object? averageRating = freezed,
     Object? reviewCount = null,
+    Object? recentReviewCount = null,
     Object? memberCount = null,
     Object? favouriteByCurrentUser = null,
     Object? events = freezed,
@@ -141,6 +144,10 @@ class _$ShopResponseDtoCopyWithImpl<$Res, $Val extends ShopResponseDto>
             reviewCount: null == reviewCount
                 ? _value.reviewCount
                 : reviewCount // ignore: cast_nullable_to_non_nullable
+                      as int,
+            recentReviewCount: null == recentReviewCount
+                ? _value.recentReviewCount
+                : recentReviewCount // ignore: cast_nullable_to_non_nullable
                       as int,
             memberCount: null == memberCount
                 ? _value.memberCount
@@ -198,6 +205,7 @@ abstract class _$$ShopResponseDtoImplCopyWith<$Res>
     String? email,
     double? averageRating,
     int reviewCount,
+    int recentReviewCount,
     int memberCount,
     bool favouriteByCurrentUser,
     List<Map<String, dynamic>>? events,
@@ -231,6 +239,7 @@ class __$$ShopResponseDtoImplCopyWithImpl<$Res>
     Object? email = freezed,
     Object? averageRating = freezed,
     Object? reviewCount = null,
+    Object? recentReviewCount = null,
     Object? memberCount = null,
     Object? favouriteByCurrentUser = null,
     Object? events = freezed,
@@ -273,6 +282,10 @@ class __$$ShopResponseDtoImplCopyWithImpl<$Res>
         reviewCount: null == reviewCount
             ? _value.reviewCount
             : reviewCount // ignore: cast_nullable_to_non_nullable
+                  as int,
+        recentReviewCount: null == recentReviewCount
+            ? _value.recentReviewCount
+            : recentReviewCount // ignore: cast_nullable_to_non_nullable
                   as int,
         memberCount: null == memberCount
             ? _value.memberCount
@@ -323,6 +336,7 @@ class _$ShopResponseDtoImpl implements _ShopResponseDto {
     this.email,
     this.averageRating,
     this.reviewCount = 0,
+    this.recentReviewCount = 0,
     this.memberCount = 0,
     this.favouriteByCurrentUser = false,
     final List<Map<String, dynamic>>? events,
@@ -358,6 +372,9 @@ class _$ShopResponseDtoImpl implements _ShopResponseDto {
   @override
   @JsonKey()
   final int reviewCount;
+  @override
+  @JsonKey()
+  final int recentReviewCount;
   @override
   @JsonKey()
   final int memberCount;
@@ -426,7 +443,7 @@ class _$ShopResponseDtoImpl implements _ShopResponseDto {
 
   @override
   String toString() {
-    return 'ShopResponseDto(id: $id, name: $name, address: $address, city: $city, phoneNumber: $phoneNumber, email: $email, averageRating: $averageRating, reviewCount: $reviewCount, memberCount: $memberCount, favouriteByCurrentUser: $favouriteByCurrentUser, events: $events, tables: $tables, reviews: $reviews, contacts: $contacts, currentMenu: $currentMenu, loyaltyPlan: $loyaltyPlan)';
+    return 'ShopResponseDto(id: $id, name: $name, address: $address, city: $city, phoneNumber: $phoneNumber, email: $email, averageRating: $averageRating, reviewCount: $reviewCount, recentReviewCount: $recentReviewCount, memberCount: $memberCount, favouriteByCurrentUser: $favouriteByCurrentUser, events: $events, tables: $tables, reviews: $reviews, contacts: $contacts, currentMenu: $currentMenu, loyaltyPlan: $loyaltyPlan)';
   }
 
   @override
@@ -445,6 +462,8 @@ class _$ShopResponseDtoImpl implements _ShopResponseDto {
                 other.averageRating == averageRating) &&
             (identical(other.reviewCount, reviewCount) ||
                 other.reviewCount == reviewCount) &&
+            (identical(other.recentReviewCount, recentReviewCount) ||
+                other.recentReviewCount == recentReviewCount) &&
             (identical(other.memberCount, memberCount) ||
                 other.memberCount == memberCount) &&
             (identical(other.favouriteByCurrentUser, favouriteByCurrentUser) ||
@@ -475,6 +494,7 @@ class _$ShopResponseDtoImpl implements _ShopResponseDto {
     email,
     averageRating,
     reviewCount,
+    recentReviewCount,
     memberCount,
     favouriteByCurrentUser,
     const DeepCollectionEquality().hash(_events),
@@ -512,6 +532,7 @@ abstract class _ShopResponseDto implements ShopResponseDto {
     final String? email,
     final double? averageRating,
     final int reviewCount,
+    final int recentReviewCount,
     final int memberCount,
     final bool favouriteByCurrentUser,
     final List<Map<String, dynamic>>? events,
@@ -541,6 +562,8 @@ abstract class _ShopResponseDto implements ShopResponseDto {
   double? get averageRating;
   @override
   int get reviewCount;
+  @override
+  int get recentReviewCount;
   @override
   int get memberCount;
   @override

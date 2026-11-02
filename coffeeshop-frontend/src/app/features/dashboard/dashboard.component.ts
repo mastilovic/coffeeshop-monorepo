@@ -215,7 +215,11 @@ import {
                 <ul class="widget-list">
                   @for (note of notifications(); track note.type) {
                     <li class="widget-list__item">
-                      <a class="widget-list__link" [routerLink]="note.link">
+                      <a
+                        class="widget-list__link"
+                        [routerLink]="notificationLink(note.link).commands"
+                        [queryParams]="notificationLink(note.link).queryParams"
+                      >
                         <span class="widget-list__count">{{ note.count }}</span>
                         <span class="widget-list__text">{{ note.message }}</span>
                       </a>
@@ -871,6 +875,20 @@ export class DashboardComponent implements OnInit {
     reviewsWritten: 0,
   });
   readonly notifications = signal<DashboardNotification[]>([]);
+
+  notificationLink(link: string): { commands: string[]; queryParams: Record<string, string> } {
+    const [path, query = ''] = link.split('?');
+    const queryParams: Record<string, string> = {};
+    if (query) {
+      for (const part of query.split('&')) {
+        const [key, value = ''] = part.split('=');
+        if (key) {
+          queryParams[decodeURIComponent(key)] = decodeURIComponent(value);
+        }
+      }
+    }
+    return { commands: [path || '/'], queryParams };
+  }
 
   ngOnInit(): void {
     this.dashboardService.getActivity().subscribe({

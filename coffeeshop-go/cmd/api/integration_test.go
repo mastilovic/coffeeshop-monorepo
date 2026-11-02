@@ -312,6 +312,221 @@ func TestShop_PaginatedSearch_IncludesReviewStats(t *testing.T) {
 	if unrated["averageRating"] != nil {
 		t.Errorf("expected averageRating null for unreviewed shop, got %v", unrated["averageRating"])
 	}
+	if rated["recentReviewCount"].(float64) != 1 {
+		t.Errorf("expected recentReviewCount 1, got %v", rated["recentReviewCount"])
+	}
+	if unrated["recentReviewCount"].(float64) != 0 {
+		t.Errorf("expected recentReviewCount 0 for unreviewed shop, got %v", unrated["recentReviewCount"])
+	}
+}
+
+func TestDashboardActivity_NotificationLinks(t *testing.T) {
+	h := setupTestHarness(t)
+	h.seedSubscriptionCatalog(t)
+	ownerID := h.createUser(t, "Notify Owner", "notify-owner@example.com", "SHOP_OWNER")
+	ownerToken := h.tokenForUser(ownerID, []string{"SHOP_OWNER"})
+	growthTier := model.PlanTierGrowth
+	h.createOwnerSubscription(t, ownerID, model.PlanModePreset, &growthTier)
+
+	shopW := h.doJSON(http.MethodPost, "/api/v2/shop", map[string]interface{}{
+		"name": "Notify Shop", "address": "1 St", "city": "Beograd", "phoneNumber": "123",
+		"ownerUserId": ownerID,
+	}, ownerToken)
+	if shopW.Code != http.StatusCreated {
+		t.Fatalf("create shop: expected 201, got %d; body: %s", shopW.Code, shopW.Body.String())
+	}
+	var shop map[string]interface{}
+	json.Unmarshal(shopW.Body.Bytes(), &shop)
+	shopID := shop["id"].(string)
+
+	customerID := h.createUser(t, "Notify Customer", "notify-customer@example.com", "CUSTOMER")
+	customerToken := h.tokenForUser(customerID, []string{"CUSTOMER"})
+	reviewW := h.doJSON(http.MethodPost, "/api/v2/review", map[string]interface{}{
+		"title": "Fresh", "description": "Recent", "rating": 5,
+		"shopId": shopID, "commentsEnabled": true,
+	}, customerToken)
+	if reviewW.Code != http.StatusCreated {
+		t.Fatalf("create review: expected 201, got %d; body: %s", reviewW.Code, reviewW.Body.String())
+	}
+
+	oldUserID := h.createUser(t, "Old Reviewer", "old-reviewer@example.com", "CUSTOMER")
+	oldDate := time.Now().AddDate(0, 0, -31).Format("2006-01-02")
+	if err := h.db.Create(&model.Review{
+		ID:              uuid.New().String(),
+		Title:           "Stale",
+		Description:     "Too old",
+		Rating:          2,
+		ReviewDate:      oldDate,
+		CommentsEnabled: true,
+		UserID:          &oldUserID,
+		ShopID:          &shopID,
+	}).Error; err != nil {
+		t.Fatalf("create old review: %v", err)
+	}
+	if err := h.db.Create(&model.ReservationRequest{
+		ID:        uuid.New().String(),
+		PartySize: 2,
+		Status:    "PENDING",
+		UserID:    &customerID,
+		ShopID:    &shopID,
+	}).Error; err != nil {
+		t.Fatalf("create pending request: %v", err)
+	}
+
+	w := h.doJSON(http.MethodGet, "/api/v2/dashboard/activity", nil, ownerToken)
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d; body: %s", w.Code, w.Body.String())
+	}
+	var body map[string]interface{}
+	json.Unmarshal(w.Body.Bytes(), &body)
+	notes, ok := body["notifications"].([]interface{})
+	if !ok {
+		t.Fatalf("expected notifications array; body: %s", w.Body.String())
+	}
+	byType := map[string]map[string]interface{}{}
+	for _, item := range notes {
+		note, ok := item.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		noteType, _ := note["type"].(string)
+		byType[noteType] = note
+	}
+
+	pending := byType["pending_requests"]
+	if pending == nil {
+		t.Fatal("expected pending_requests notification")
+	}
+	if pending["link"] != "/reservations?tab=manage" {
+		t.Errorf("pending link: got %v", pending["link"])
+	}
+	if pending["count"].(float64) != 1 {
+		t.Errorf("pending count: got %v", pending["count"])
+	}
+
+	reviews := byType["new_reviews"]
+	if reviews == nil {
+		t.Fatal("expected new_reviews notification")
+	}
+	if reviews["link"] != "/shops?recentReviews=30" {
+		t.Errorf("reviews link: got %v", reviews["link"])
+	}
+	if reviews["count"].(float64) != 1 {
+		t.Errorf("expected 30-day review count 1, got %v", reviews["count"])
+	}
+}
+
+func TestShop_RecentReviewsOrder(t *testing.T) {
+	h := setupTestHarness(t)
+	h.seedSubscriptionCatalog(t)
+	ownerID := h.createUser(t, "Order Owner", "order-owner@example.com", "SHOP_OWNER")
+	ownerToken := h.tokenForUser(ownerID, []string{"SHOP_OWNER"})
+	growthTier := model.PlanTierGrowth
+	h.createOwnerSubscription(t, ownerID, model.PlanModePreset, &growthTier)
+
+	plainW := h.doJSON(http.MethodPost, "/api/v2/shop", map[string]interface{}{
+		"name": "RecentOrder Plain", "address": "1 St", "city": "Beograd", "phoneNumber": "123",
+		"ownerUserId": ownerID,
+	}, ownerToken)
+	if plainW.Code != http.StatusCreated {
+		t.Fatalf("create plain shop: expected 201, got %d; body: %s", plainW.Code, plainW.Body.String())
+	}
+	var plain map[string]interface{}
+	json.Unmarshal(plainW.Body.Bytes(), &plain)
+	plainID := plain["id"].(string)
+
+	ratedW := h.doJSON(http.MethodPost, "/api/v2/shop", map[string]interface{}{
+		"name": "RecentOrder Rated", "address": "2 St", "city": "Beograd", "phoneNumber": "456",
+		"ownerUserId": ownerID,
+	}, ownerToken)
+	if ratedW.Code != http.StatusCreated {
+		t.Fatalf("create rated shop: expected 201, got %d; body: %s", ratedW.Code, ratedW.Body.String())
+	}
+	var rated map[string]interface{}
+	json.Unmarshal(ratedW.Body.Bytes(), &rated)
+	ratedID := rated["id"].(string)
+
+	customerID := h.createUser(t, "Order Customer", "order-customer@example.com", "CUSTOMER")
+	customerToken := h.tokenForUser(customerID, []string{"CUSTOMER"})
+	reviewW := h.doJSON(http.MethodPost, "/api/v2/review", map[string]interface{}{
+		"title": "New", "description": "Recent", "rating": 4,
+		"shopId": ratedID, "commentsEnabled": true,
+	}, customerToken)
+	if reviewW.Code != http.StatusCreated {
+		t.Fatalf("create review: expected 201, got %d; body: %s", reviewW.Code, reviewW.Body.String())
+	}
+
+	ordered := h.doJSON(http.MethodGet, "/api/v2/shop?q=RecentOrder&page=0&size=10&recentReviews=30", nil, ownerToken)
+	if ordered.Code != http.StatusOK {
+		t.Fatalf("ordered search: expected 200, got %d; body: %s", ordered.Code, ordered.Body.String())
+	}
+	ids := shopIDsFromPage(t, ordered.Body.Bytes())
+	if len(ids) < 2 || ids[0] != ratedID || ids[1] != plainID {
+		t.Fatalf("expected rated shop before plain shop, got %v", ids)
+	}
+
+	flat := h.doJSON(http.MethodGet, "/api/v2/shop?recentReviews=30", nil, "")
+	if flat.Code != http.StatusOK {
+		t.Fatalf("flat list: expected 200, got %d; body: %s", flat.Code, flat.Body.String())
+	}
+	flatIDs := shopIDsFromList(t, flat.Body.Bytes())
+	if indexOf(flatIDs, ratedID) > indexOf(flatIDs, plainID) {
+		t.Fatalf("flat list expected rated shop before plain shop, got %v", flatIDs)
+	}
+
+	unordered := h.doJSON(http.MethodGet, "/api/v2/shop?q=RecentOrder&page=0&size=10", nil, ownerToken)
+	if unordered.Code != http.StatusOK {
+		t.Fatalf("unordered search: expected 200, got %d; body: %s", unordered.Code, unordered.Body.String())
+	}
+	defaultIDs := shopIDsFromPage(t, unordered.Body.Bytes())
+	if len(defaultIDs) < 2 || defaultIDs[0] != plainID {
+		t.Fatalf("without recentReviews, expected creation order starting with plain shop, got %v", defaultIDs)
+	}
+}
+
+func shopIDsFromPage(t *testing.T, body []byte) []string {
+	t.Helper()
+	var page map[string]interface{}
+	if err := json.Unmarshal(body, &page); err != nil {
+		t.Fatalf("decode page: %v", err)
+	}
+	content, ok := page["content"].([]interface{})
+	if !ok {
+		t.Fatalf("expected content array; body: %s", body)
+	}
+	ids := make([]string, 0, len(content))
+	for _, item := range content {
+		shop, ok := item.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		id, _ := shop["id"].(string)
+		ids = append(ids, id)
+	}
+	return ids
+}
+
+func shopIDsFromList(t *testing.T, body []byte) []string {
+	t.Helper()
+	var shops []map[string]interface{}
+	if err := json.Unmarshal(body, &shops); err != nil {
+		t.Fatalf("decode list: %v; body: %s", err, body)
+	}
+	ids := make([]string, 0, len(shops))
+	for _, shop := range shops {
+		id, _ := shop["id"].(string)
+		ids = append(ids, id)
+	}
+	return ids
+}
+
+func indexOf(ids []string, id string) int {
+	for i, candidate := range ids {
+		if candidate == id {
+			return i
+		}
+	}
+	return -1
 }
 
 func TestShop_PaginatedSearch_FiltersByCity(t *testing.T) {

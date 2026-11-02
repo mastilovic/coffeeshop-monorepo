@@ -1,9 +1,9 @@
 import { NgTemplateOutlet } from '@angular/common';
-import { Component, computed, inject, Injector, OnInit, signal, ChangeDetectionStrategy } from '@angular/core';
+import { Component, computed, inject, Injector, signal, ChangeDetectionStrategy } from '@angular/core';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
-import { debounceTime, distinctUntilChanged, skip } from 'rxjs';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { debounceTime, distinctUntilChanged, map, skip } from 'rxjs';
 import { ShopService } from '../../services/shop.service';
 import { AuthService } from '../../services/auth.service';
 import { ProfileService } from '../../services/profile.service';
@@ -72,6 +72,13 @@ import { DialogService } from '../../services/dialog.service';
             }
           </div>
 
+          @if (recentReviewsView()) {
+            <button type="button" class="recent-reviews-chip" (click)="clearRecentReviews()">
+              New reviews · 30 days
+              <span aria-hidden="true">×</span>
+            </button>
+          }
+
           <div class="events-toolbar mb-3">
             <input
               class="form-input events-search"
@@ -87,6 +94,12 @@ import { DialogService } from '../../services/dialog.service';
             <div class="loading">Loading shops...</div>
           } @else if (totalElements() === 0) {
             <div class="empty-state"><p>{{ emptyStateMessage() }}</p></div>
+          } @else if (recentReviewsView()) {
+            <div class="shop-card-grid">
+              @for (shop of recentReviewShops(); track shop.id) {
+                <ng-container *ngTemplateOutlet="shopCard; context: { $implicit: shop }" />
+              }
+            </div>
           } @else {
             @if (favouriteShopsList().length > 0) {
               <h2 class="shops-section-title">Your communities</h2>
@@ -194,13 +207,17 @@ import { DialogService } from '../../services/dialog.service';
                 </div>
               }
             </div>
-            @if (hasSecondaryMeta(shop)) {
-              <div class="shop-card__stats">
+            <div class="shop-card__stats">
                 @if (shop.reviewCount > 0) {
                   <span class="shop-card__rating">
                     <app-star-rating [rating]="roundedRating(shop)" [readonly]="true" />
                     <span class="shop-card__rating-value">{{ shop.averageRating!.toFixed(1) }} ({{ shop.reviewCount }})</span>
                   </span>
+                } @else {
+                  <span class="shop-card__rating-value">No rating yet</span>
+                }
+                @if (recentReviewsView() && (shop.recentReviewCount ?? 0) > 0) {
+                  <span class="shop-card__recent-badge">{{ shop.recentReviewCount }} new</span>
                 }
                 @if (shop.memberCount != null && shop.memberCount > 0) {
                   @if (shop.reviewCount > 0) {
@@ -209,7 +226,6 @@ import { DialogService } from '../../services/dialog.service';
                   <span class="shop-card__members">{{ shop.memberCount }} member{{ shop.memberCount === 1 ? '' : 's' }}</span>
                 }
               </div>
-            }
           </div>
         </div>
         @if (canManage(shop)) {
@@ -358,6 +374,29 @@ import { DialogService } from '../../services/dialog.service';
       font-size: 0.75rem;
     }
 
+    .shop-card__recent-badge {
+      margin-left: 0.35rem;
+      padding: 0.05rem 0.4rem;
+      border-radius: 999px;
+      background: var(--color-primary, #6f4e37);
+      color: #fff;
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
+
+    .recent-reviews-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      margin-bottom: 0.75rem;
+      padding: 0.2rem 0.6rem;
+      border: 0;
+      border-radius: 999px;
+      background: var(--color-primary, #6f4e37);
+      color: #fff;
+      cursor: pointer;
+    }
+
     .shop-card__rating-value {
       font-size: 0.8125rem;
       color: #aaa;
@@ -418,12 +457,13 @@ import { DialogService } from '../../services/dialog.service';
     }
   `],
 })
-export class ShopsComponent implements OnInit {
+export class ShopsComponent {
   private readonly fb = inject(FormBuilder);
   private readonly shopService = inject(ShopService);
   private readonly authService = inject(AuthService);
   private readonly profileService = inject(ProfileService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   private readonly dialog = inject(DialogService);
   private readonly injector = inject(Injector);
 
@@ -433,6 +473,7 @@ export class ShopsComponent implements OnInit {
   readonly editingId = signal<string | null>(null);
   readonly togglingFavouriteId = signal<string | null>(null);
   readonly searchInput = signal('');
+  readonly recentReviewsView = signal(false);
   readonly currentPage = signal(0);
   readonly pageSizeOptions = [10, 25, 50] as const;
   readonly pageSize = signal(10);
@@ -445,6 +486,14 @@ export class ShopsComponent implements OnInit {
     );
     return this.shops().filter(s => favIds.has(s.id));
   });
+
+  readonly recentReviewShops = computed(() =>
+    [...this.shops()].sort((a, b) => {
+      const byRecent = (b.recentReviewCount ?? 0) - (a.recentReviewCount ?? 0);
+      if (byRecent !== 0) return byRecent;
+      return 0;
+    }),
+  );
 
   readonly otherShopsList = computed(() => {
     const favIds = new Set(
@@ -462,16 +511,24 @@ export class ShopsComponent implements OnInit {
   });
 
   constructor() {
+    this.route.queryParamMap
+      .pipe(
+        map(params => params.get('recentReviews') === '30'),
+        distinctUntilChanged(),
+        takeUntilDestroyed(),
+      )
+      .subscribe(active => {
+        this.recentReviewsView.set(active);
+        this.currentPage.set(0);
+        this.loadShops();
+      });
+
     toObservable(this.searchInput, { injector: this.injector })
       .pipe(skip(1), debounceTime(300), distinctUntilChanged(), takeUntilDestroyed())
       .subscribe(() => {
         this.currentPage.set(0);
         this.loadShops();
       });
-  }
-
-  ngOnInit(): void {
-    this.loadShops();
   }
 
   onSearchInput(inputEvent: Event): void {
@@ -500,6 +557,7 @@ export class ShopsComponent implements OnInit {
         q: q || undefined,
         page: this.currentPage(),
         size: this.pageSize(),
+        recentReviews: this.recentReviewsView() ? 30 : undefined,
       })
       .subscribe({
         next: page => {
@@ -516,6 +574,10 @@ export class ShopsComponent implements OnInit {
           }
         },
       });
+  }
+
+  clearRecentReviews(): void {
+    void this.router.navigate(['/shops'], { queryParams: {} });
   }
 
   goToPage(page: number): void {
@@ -535,10 +597,6 @@ export class ShopsComponent implements OnInit {
   emptyStateMessage(): string {
     if (this.searchInput().trim()) return 'No shops match your search.';
     return 'No shops yet. Create one to get started!';
-  }
-
-  hasSecondaryMeta(shop: ShopResponseDto): boolean {
-    return shop.reviewCount > 0 || (shop.memberCount != null && shop.memberCount > 0);
   }
 
   canManage(shop: ShopResponseDto): boolean {

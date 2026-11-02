@@ -32,6 +32,8 @@ class ShopCard extends StatelessWidget {
     this.loyaltyPlanType,
     this.isFavourite = false,
     this.isOwned = false,
+    this.highlightRecentReviews = false,
+    this.recentReviewCount = 0,
     this.onTap,
     this.onFavouriteToggle,
     this.onEmployees,
@@ -47,6 +49,8 @@ class ShopCard extends StatelessWidget {
   final String? loyaltyPlanType;
   final bool isFavourite;
   final bool isOwned;
+  final bool highlightRecentReviews;
+  final int recentReviewCount;
   final VoidCallback? onTap;
   final VoidCallback? onFavouriteToggle;
   final VoidCallback? onEmployees;
@@ -217,6 +221,26 @@ class ShopCard extends StatelessWidget {
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
+                            if (highlightRecentReviews && recentReviewCount > 0) ...[
+                              const SizedBox(width: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: theme.colorScheme.primary,
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Text(
+                                  '$recentReviewCount new',
+                                  style: theme.textTheme.labelSmall?.copyWith(
+                                    color: theme.colorScheme.onPrimary,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ],
                             if (loyaltyPlanType != null) ...[
                               const SizedBox(width: 8),
                               LoyaltyBadge(
