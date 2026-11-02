@@ -9,10 +9,10 @@ void main() {
       'username': 'johndoe',
       'email': 'john@example.com',
       'userType': 'CUSTOMER',
-      'roles': [],
-      'favouriteShops': [],
-      'reviews': [],
-      'reservations': [],
+      'roles': <String>[],
+      'favouriteShops': <Map<String, dynamic>>[],
+      'reviews': <Map<String, dynamic>>[],
+      'reservations': <Map<String, dynamic>>[],
     };
 
     test('fromJson parses Go profile response', () {

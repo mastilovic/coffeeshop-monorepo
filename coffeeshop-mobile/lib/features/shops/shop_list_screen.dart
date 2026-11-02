@@ -12,10 +12,10 @@ import '../../shared/widgets/confirm_dialog.dart';
 import '../../shared/widgets/empty_state_view.dart';
 import '../../shared/widgets/error_view.dart';
 import '../../shared/widgets/loading_indicator.dart';
+import '../../shared/widgets/loyalty_badge.dart';
 import '../../shared/widgets/pagination_controls.dart';
 import '../../shared/widgets/search_bar.dart';
 import '../../shared/widgets/shop_card.dart';
-import '../../shared/widgets/loyalty_badge.dart';
 import '../dashboard/dashboard_provider.dart';
 import '../shop_details/shop_manage_permission.dart';
 import 'shop_providers.dart';
@@ -190,7 +190,6 @@ class _ShopListScreenState extends ConsumerState<ShopListScreen> {
             child: CitySearchSelect(
               value: params.city,
               allowAll: true,
-              hint: 'All cities',
               onChanged: (city) {
                 ref.read(shopListParamsProvider.notifier).update(
                       (current) => current.copyWith(

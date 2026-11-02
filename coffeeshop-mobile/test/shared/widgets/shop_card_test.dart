@@ -16,7 +16,7 @@ void main() {
     });
 
     test('returns No rating yet when rating is null', () {
-      expect(shopRatingLabel(rating: null, reviewCount: 5), 'No rating yet');
+      expect(shopRatingLabel(reviewCount: 5), 'No rating yet');
     });
 
     test('returns No rating yet when rating is zero', () {
