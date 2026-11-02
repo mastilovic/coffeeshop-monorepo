@@ -322,7 +322,7 @@ void main() {
   });
 
   group('ShopDetailScreen customer tab order', () {
-    testWidgets('customer first tab is Menu', (tester) async {
+    testWidgets('customer first tab is Overview', (tester) async {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
@@ -345,6 +345,7 @@ void main() {
 
       final tabs = tester.widgetList<Tab>(tabFinder).toList();
       expect(tabs.map((t) => t.text).toList(), [
+        'Overview',
         'Menu',
         'Events',
         'Community',
