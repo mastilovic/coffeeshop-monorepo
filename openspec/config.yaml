@@ -1,32 +1,29 @@
 schema: spec-driven
 
-# Project context (optional)
-# This is shown to AI when creating artifacts.
-# Add your tech stack, conventions, style guides, domain knowledge, etc.
-# Example:
-#   context: |
-#     Tech stack: TypeScript, React, Node.js
-#     We use conventional commits
-#     Domain: e-commerce platform
+context: |
+  Development follows strict Test-Driven Development.
+  All behavior changes must follow Red -> Green -> Refactor.
+  Requirements must be testable and expressed using Given/When/Then.
+  Never implement functionality before a failing test exists.
+  Preserve existing architecture and conventions.
+  Never mark unverified tasks as complete.
 
-# Per-artifact rules (optional)
-# Add custom rules for specific artifacts.
-# Example:
-#   rules:
-#     proposal:
-#       - Keep proposals under 500 words
-#       - Always include a "Non-goals" section
-#     tasks:
-#       - Break tasks into chunks of max 2 hours
+rules:
+  specs:
+    - Every requirement must have testable acceptance scenarios.
+    - Include positive, negative, and boundary scenarios.
+  tasks:
+    - Every behavior-changing task must include a test-first implementation step.
+    - Separate unit, integration, and end-to-end testing where appropriate.
+    - Keep tasks small and independently verifiable.
 
-# Per-operation guidance (optional)
-# Add advisory guidance for how apply and archive work should be conducted.
-# This is separate from artifact rules above.
-# Example:
-#   operations:
-#     apply:
-#       guidance:
-#         - Keep test summaries concise
-#     archive:
-#       guidance:
-#         - Summarize the archive outcome before finishing
+operations:
+  apply:
+    guidance:
+      - Follow strict Red -> Green -> Refactor for each behavior.
+      - Run tests after every implementation and refactoring step.
+      - Never mark a task complete without verification.
+  archive:
+    guidance:
+      - Verify all requirements against the implementation.
+      - Ensure all tests pass before archiving.
