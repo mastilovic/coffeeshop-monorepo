@@ -1,6 +1,6 @@
 {
-    "name": "coffeeshop_mobile",
-    "short_name": "coffeeshop_mobile",
+    "name": "Find: Cafes & Events",
+    "short_name": "Find",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
