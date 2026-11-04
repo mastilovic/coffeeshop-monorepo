@@ -3,7 +3,7 @@ class AppConfig {
 
   static bool _initialized = false;
 
-  static const String appName = 'CoffeeShop';
+  static const String appName = 'na bleji';
   static const String packageName = 'com.coffeeshop.mobile';
 
   static void initialize() {

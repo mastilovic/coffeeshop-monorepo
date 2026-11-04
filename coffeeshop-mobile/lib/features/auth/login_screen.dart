@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/auth/auth_notifier.dart';
 import '../../core/auth/auth_service.dart';
+import '../../core/config/app_config.dart';
 import '../../core/network/api_exception.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -97,7 +98,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     Icon(Icons.coffee, size: 80, color: colorScheme.primary),
                     const SizedBox(height: 16),
                     Text(
-                      'CoffeeShop',
+                      AppConfig.appName,
                       style: Theme.of(context).textTheme.headlineMedium
                           ?.copyWith(fontWeight: FontWeight.bold),
                     ),

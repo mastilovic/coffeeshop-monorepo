@@ -26,7 +26,7 @@ import { MobileNavComponent } from '../mobile-nav/mobile-nav.component';
         <div class="sidebar-header">
           <span class="sidebar-logo">&#9749;</span>
           @if (!sidebarCollapsed()) {
-            <span class="sidebar-brand">CoffeeShop</span>
+            <span class="sidebar-brand">na bleji</span>
           }
           <button
             type="button"
