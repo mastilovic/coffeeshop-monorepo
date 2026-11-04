@@ -13,7 +13,7 @@ import { ProfileService } from '../../services/profile.service';
     <div class="auth-page">
       <div class="auth-card">
         <h1 class="auth-title">Welcome Back</h1>
-        <p class="auth-subtitle">Sign in to your na bleji account</p>
+        <p class="auth-subtitle">Sign in to your Find account</p>
 
         @if (errorMessage()) {
           <div class="error-message">{{ errorMessage() }}</div>

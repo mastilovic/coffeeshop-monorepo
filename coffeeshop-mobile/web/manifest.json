@@ -1,6 +1,6 @@
 {
-    "name": "na bleji",
-    "short_name": "na bleji",
+    "name": "Find: Cafes & Events",
+    "short_name": "Find",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

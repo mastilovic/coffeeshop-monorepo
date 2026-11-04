@@ -20,7 +20,7 @@ const ROLE_SELECT_OPTIONS: FormSelectOption[] = [
     <div class="auth-page">
       <div class="auth-card">
         <h1 class="auth-title">Create Account</h1>
-        <p class="auth-subtitle">Join na bleji today</p>
+        <p class="auth-subtitle">Join Find today</p>
 
         @if (errorMessage()) {
           <div class="error-message">{{ errorMessage() }}</div>
