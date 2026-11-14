@@ -1,4 +1,4 @@
-package com.coffeeshop.coffeeshop_mobile
+package com.findcafesandevents.app
 
 import io.flutter.embedding.android.FlutterActivity
 
