@@ -53,6 +53,7 @@ Before implementation:
 - Use TDD for every behavior-changing implementation.
 - Update `tasks.md` as tasks are completed.
 - Do not skip requirements or silently change their intended behavior.
+- After the behavior is implemented and verified, write `obsidian/knowledge/features/<change-name>.md` from `obsidian/templates/feature-note.md` and link it in `obsidian/INDEX.md`.
 
 ### Verify
 - Run the complete relevant test suite.
@@ -64,6 +65,7 @@ Before implementation:
 ### Archive
 - Archive only after all implementation tasks and verification steps are complete.
 - Ensure the permanent specifications reflect the delivered behavior.
+- Confirm the feature note matches the delivered behavior and is linked from `obsidian/INDEX.md`.
 - Never archive unfinished work or mark unverified tasks as complete.
 
 ## 3. Strict TDD Rules
@@ -210,6 +212,7 @@ A change is complete only when:
 - [ ] No unrelated changes were introduced.
 - [ ] Implementation matches the OpenSpec requirements.
 - [ ] OpenSpec artifacts and task statuses are up to date.
+- [ ] `obsidian/knowledge/features/<change-name>.md` records the delivered feature and is linked from `obsidian/INDEX.md`.
 - [ ] Change is ready for verification and archiving.
 
 ## 9. Agent Communication

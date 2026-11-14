@@ -19,6 +19,10 @@ The product name users see is `na bleji`. Repository modules, the Keycloak realm
 - [Plans and entitlements](knowledge/plans-and-entitlements.md) — owner subscriptions versus shop loyalty plans.
 - [Staging deploy](knowledge/staging-deploy.md) — k3s staging and what local Compose is for.
 
+## Features
+
+Implemented OpenSpec changes are recorded in `knowledge/features/<change-name>.md`, using `templates/feature-note.md`. Link each note here when it is created.
+
 ## Workflows
 
 - [Feature development commands](feature-development-commands.md) — OpenSpec commands for ideas, plans, implementation, and bug investigations.
