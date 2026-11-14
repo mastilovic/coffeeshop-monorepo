@@ -16,6 +16,7 @@ rules:
     - Every behavior-changing task must include a test-first implementation step.
     - Separate unit, integration, and end-to-end testing where appropriate.
     - Keep tasks small and independently verifiable.
+    - End the task list with a step that writes obsidian/knowledge/features/<change-name>.md from obsidian/templates/feature-note.md and links it in obsidian/INDEX.md.
 
 operations:
   apply:
@@ -23,7 +24,9 @@ operations:
       - Follow strict Red -> Green -> Refactor for each behavior.
       - Run tests after every implementation and refactoring step.
       - Never mark a task complete without verification.
+      - After the feature behavior is implemented and verified, write or update obsidian/knowledge/features/<change-name>.md using obsidian/templates/feature-note.md. Record what it does, the important scenarios, where the code lives, and how it was verified. Link the note from obsidian/INDEX.md. Do not paste the OpenSpec plan into the note.
   archive:
     guidance:
       - Verify all requirements against the implementation.
       - Ensure all tests pass before archiving.
+      - Confirm obsidian/knowledge/features/<change-name>.md matches the delivered behavior and is linked from obsidian/INDEX.md before archiving.

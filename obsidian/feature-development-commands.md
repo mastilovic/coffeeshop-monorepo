@@ -89,6 +89,8 @@ Typical checks, depending on what changed:
 - Web: `ng test` in `coffeeshop-frontend`
 - Mobile: `flutter test` in `coffeeshop-mobile`
 
+When the feature behavior is implemented and verified, write `obsidian/knowledge/features/<change-name>.md` from `obsidian/templates/feature-note.md`. Record what it does, the important scenarios, where the code lives, and how it was verified. Link that note from `INDEX.md`. Link to the OpenSpec change instead of pasting the plan.
+
 When implementation and required tasks are complete, sync delta specs if they should land in `openspec/specs/` before archive, then archive the change:
 
 ```text
@@ -96,4 +98,4 @@ When implementation and required tasks are complete, sync delta specs if they sh
 /opsx-archive <change-name>
 ```
 
-Then add only durable, reusable discoveries to the relevant Obsidian note and update `INDEX.md`. Do not copy the entire OpenSpec plan into Obsidian.
+Archive only after that feature note matches the delivered behavior. Keep cross-cutting discoveries in the relevant knowledge note, and do not copy the entire OpenSpec plan into Obsidian.
