@@ -6,6 +6,8 @@ class AppConfig {
   static const String appName = 'Find: Cafes & Events';
   static const String appShortName = 'Find';
   static const String packageName = 'com.coffeeshop.mobile';
+  static const String privacyPolicyUrl =
+      'https://app.kafenerija.online/privacy-policy';
 
   static void initialize() {
     if (_initialized) return;

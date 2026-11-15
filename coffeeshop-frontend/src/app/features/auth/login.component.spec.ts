@@ -26,4 +26,10 @@ describe('LoginComponent brand', () => {
     const subtitle = fixture.nativeElement.querySelector('.auth-subtitle') as HTMLElement;
     expect(subtitle.textContent?.trim()).toBe('Sign in to your Find account');
   });
+
+  it('links to the privacy policy', () => {
+    const link = fixture.nativeElement.querySelector('a[href="/privacy-policy"]') as HTMLAnchorElement | null;
+    expect(link).toBeTruthy();
+    expect(link!.textContent?.toLowerCase()).toContain('privacy');
+  });
 });

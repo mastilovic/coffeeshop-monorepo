@@ -98,6 +98,9 @@ const ROLE_SELECT_OPTIONS: FormSelectOption[] = [
         <p class="auth-footer">
           Already have an account? <a routerLink="/login">Sign in</a>
         </p>
+        <p class="auth-footer">
+          <a routerLink="/privacy-policy">Privacy Policy</a>
+        </p>
       </div>
     </div>
   `,

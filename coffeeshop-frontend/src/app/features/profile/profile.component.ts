@@ -1,5 +1,6 @@
 import { Component, computed, inject, signal, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { FormMultiSelectComponent } from '../../shared/form-multi-select/form-multi-select.component';
 import { FormSelectOption } from '../../shared/form-select/form-select-option.model';
 import { ProfileService } from '../../services/profile.service';
@@ -11,7 +12,7 @@ import { ShopSummaryDto } from '../../models/shop.model';
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [ReactiveFormsModule, FormMultiSelectComponent],
+  imports: [ReactiveFormsModule, FormMultiSelectComponent, RouterLink],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="page">
@@ -86,6 +87,9 @@ import { ShopSummaryDto } from '../../models/shop.model';
               } @empty {
                 <span class="text-muted">None</span>
               }
+            </div>
+            <div>
+              <a routerLink="/privacy-policy">Privacy Policy</a>
             </div>
           </div>
         </div>

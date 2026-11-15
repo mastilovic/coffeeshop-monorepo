@@ -10,5 +10,12 @@ void main() {
     test('appShortName is the short product name', () {
       expect(AppConfig.appShortName, 'Find');
     });
+
+    test('privacyPolicyUrl is the canonical hosted policy', () {
+      expect(
+        AppConfig.privacyPolicyUrl,
+        'https://app.kafenerija.online/privacy-policy',
+      );
+    });
   });
 }
