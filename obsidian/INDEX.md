@@ -24,6 +24,7 @@ The product name users see is `na bleji`. Repository modules, the Keycloak realm
 Implemented OpenSpec changes are recorded in `knowledge/features/<change-name>.md`, using `templates/feature-note.md`. Link each note here when it is created.
 
 - [Coffee magnifier logo](knowledge/features/coffee-magnifier-logo.md) — coffee-cup magnifier on launchers, favicons, and the Play listing.
+- [Privacy policy page](knowledge/features/add-privacy-policy.md) — public `/privacy-policy` on web; Profile opens the hosted URL on mobile.
 
 ## Workflows
 

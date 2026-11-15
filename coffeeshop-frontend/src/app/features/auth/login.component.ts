@@ -42,6 +42,9 @@ import { ProfileService } from '../../services/profile.service';
         <p class="auth-footer">
           Don't have an account? <a routerLink="/register">Create one</a>
         </p>
+        <p class="auth-footer">
+          <a routerLink="/privacy-policy">Privacy Policy</a>
+        </p>
       </div>
     </div>
   `,

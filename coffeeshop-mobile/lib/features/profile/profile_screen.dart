@@ -1,15 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/auth/auth_notifier.dart';
 import '../../core/auth/auth_service.dart';
 import '../../core/auth/user_role.dart';
+import '../../core/config/app_config.dart';
 import '../../core/utils/extensions.dart';
 import '../../data/services/reservation_api_service.dart';
 import '../../data/services/review_api_service.dart';
 import '../../data/services/user_api_service.dart';
 import '../billing/billing_screen.dart';
+
+typedef ProfileUrlOpener = Future<bool> Function(Uri url);
 
 final _userReservationsCountProvider = FutureProvider<int>((ref) async {
   final userId = ref.watch(authNotifierProvider).user?.id;
@@ -39,7 +43,10 @@ final _userReviewsCountProvider = FutureProvider<int>((ref) async {
 });
 
 class ProfileScreen extends ConsumerStatefulWidget {
-  const ProfileScreen({super.key});
+  const ProfileScreen({super.key, this.openUrl});
+
+  /// Test seam; defaults to opening the URL in the system browser.
+  final ProfileUrlOpener? openUrl;
 
   @override
   ConsumerState<ProfileScreen> createState() => _ProfileScreenState();
@@ -50,6 +57,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   late final TextEditingController _nameController;
   late final TextEditingController _usernameController;
   bool _isSaving = false;
+
+  Future<void> _openPrivacyPolicy() async {
+    final uri = Uri.parse(AppConfig.privacyPolicyUrl);
+    final opener = widget.openUrl ??
+        (url) => launchUrl(url, mode: LaunchMode.externalApplication);
+    await opener(uri);
+  }
 
   @override
   void initState() {
@@ -165,6 +179,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     ),
                     const SizedBox(height: 16),
                   ],
+                  OutlinedButton.icon(
+                    onPressed: _openPrivacyPolicy,
+                    icon: const Icon(Icons.privacy_tip_outlined),
+                    label: const Text('Privacy Policy'),
+                  ),
+                  const SizedBox(height: 16),
                   OutlinedButton.icon(
                     onPressed: () async {
                       await ref.read(authNotifierProvider.notifier).logout();

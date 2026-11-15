@@ -15,6 +15,11 @@ export const routes: Routes = [
     canActivate: [guestGuard],
   },
   {
+    path: 'privacy-policy',
+    loadComponent: () =>
+      import('./features/privacy-policy/privacy-policy.component').then(m => m.PrivacyPolicyComponent),
+  },
+  {
     path: '',
     loadComponent: () => import('./shared/layout/layout.component').then(m => m.LayoutComponent),
     canActivate: [authGuard],
