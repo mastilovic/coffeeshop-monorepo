@@ -2,3 +2,12 @@
 deploy/k8s/overlays/staging/secrets.env
 deploy/k8s/overlays/staging/config.env
 deploy/k8s/overlays/staging/realm-coffeeshop.json
+
+# Local machine and build artifacts
+.DS_Store
+.gradle/
+__pycache__/
+*.pyc
+
+# Personal Play Console tester list — keep local, do not commit
+coffeeshop-mobile/store/google-play/testers.csv
