@@ -7,5 +7,5 @@
 
 ## 2. CI verification and docs
 
-- [ ] 2.1 After the workflow change is on a branch that triggers Mobile CI (or after merge to `main`), confirm `build-android` succeeds and the `android-apk` artifact is uploaded. Record the run URL and conclusion.
-- [ ] 2.2 Write `obsidian/knowledge/features/pin-mobile-ci-java.md` from `obsidian/templates/feature-note.md`. Record the JDK pin, the contract script, and the verification run. Link it from the Features section of `obsidian/INDEX.md`.
+- [x] 2.1 After the workflow change is on a branch that triggers Mobile CI (or after merge to `main`), confirm `build-android` succeeds and the `android-apk` artifact is uploaded. Record the run URL and conclusion.
+- [x] 2.2 Write `obsidian/knowledge/features/pin-mobile-ci-java.md` from `obsidian/templates/feature-note.md`. Record the JDK pin, the contract script, and the verification run. Link it from the Features section of `obsidian/INDEX.md`.
