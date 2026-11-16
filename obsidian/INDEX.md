@@ -25,6 +25,7 @@ Implemented OpenSpec changes are recorded in `knowledge/features/<change-name>.m
 
 - [Coffee magnifier logo](knowledge/features/coffee-magnifier-logo.md) — coffee-cup magnifier on launchers, favicons, and the Play listing.
 - [Privacy policy page](knowledge/features/add-privacy-policy.md) — public `/privacy-policy` on web; Profile opens the hosted URL on mobile.
+- [Pin Mobile CI Java 17](knowledge/features/pin-mobile-ci-java.md) — Temurin 17 for Android release APK builds on main.
 
 ## Workflows
 
